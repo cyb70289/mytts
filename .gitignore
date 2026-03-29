@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Android
+app/release/
+app/debug/
+*.apk
+*.aab
+
+# Binary model files (too large for git)
+app/src/main/assets/
+
+# Signing
+*.jks
+*.keystore

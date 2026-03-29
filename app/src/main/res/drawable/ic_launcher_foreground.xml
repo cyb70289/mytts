@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Foreground: speech bubble with sound waves -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Speech bubble body -->
+    <path
+        android:pathData="M30,32 C30,27.6 33.6,24 38,24 L70,24 C74.4,24 78,27.6 78,32 L78,56 C78,60.4 74.4,64 70,64 L50,64 L40,76 L42,64 L38,64 C33.6,64 30,60.4 30,56 Z"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Sound wave arc 1 (small) -->
+    <path
+        android:pathData="M58,38 C61,40 61,48 58,50"
+        android:strokeColor="#1976D2"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- Sound wave arc 2 (medium) -->
+    <path
+        android:pathData="M63,34 C68,38 68,50 63,54"
+        android:strokeColor="#1976D2"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- Sound wave arc 3 (large) -->
+    <path
+        android:pathData="M68,30 C75,36 75,52 68,58"
+        android:strokeColor="#1976D2"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- Speaker/text symbol (stylized "T") -->
+    <path
+        android:pathData="M40,36 L52,36 M46,36 L46,52"
+        android:strokeColor="#1976D2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+</vector>
