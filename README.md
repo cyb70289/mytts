@@ -33,10 +33,11 @@ app/src/main/java/com/example/mytts/
 
 ## Build
 
-See [BUILD.md](BUILD.md) for setup and build instructions.
+- See [BUILD.md](BUILD.md) for setup and build instructions.
+- See [opencode-session.md](opencode-session.md) for full opencode session logs.
 
 ## Credits
 
 - [Kokoro-82M v1.0 ONNX](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX) -- the TTS model
 - [Kokoro-82M-Android](https://github.com/puff-dayo/Kokoro-82M-Android) -- reference project for running Kokoro on Android with a pure Kotlin phonemizer
-- Claude Opus 4.6 + OpenCode -- all the coding and documentation
+- **Claude Opus 4.6 + OpenCode** -- all the coding and documentation
