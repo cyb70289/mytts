@@ -87,7 +87,11 @@ class PhonemeConverter(context: Context) {
      */
     fun phonemize(text: String): String {
         val normalized = normalizeText(text)
-        val tokens = normalized.split(Regex("(?<=\\W)|(?=\\W)")).filter { it.isNotBlank() }
+        // Tokenize keeping contractions/possessives intact (e.g. "isn't" as one token).
+        // Pattern: letters optionally followed by apostrophe+letters (contractions),
+        // OR any non-letter sequence (punctuation, spaces).
+        val tokens = Regex("[a-zA-Z]+(?:'[a-zA-Z]+)*|[^a-zA-Z]+")
+            .findAll(normalized).map { it.value }.filter { it.isNotBlank() }.toList()
 
         val result = StringBuilder()
         for ((index, token) in tokens.withIndex()) {
