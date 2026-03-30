@@ -17,6 +17,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -70,10 +71,10 @@ fun MainScreen(
     val isLoading = playbackState == PlaybackController.State.LOADING
     val isStopped = playbackState == PlaybackController.State.STOPPED
     val isStopping = playbackState == PlaybackController.State.STOPPING
-    val textEditable = isStopped
 
     val focusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
+    val clipboardManager = LocalClipboardManager.current
 
     // Pre-initialize engine to get voice list
     LaunchedEffect(Unit) {
@@ -131,12 +132,33 @@ fun MainScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Voice selector + slow mode in one row at the top
+        // Top row: Paste | Speaker dropdown | Slow checkbox
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            // Paste button
+            OutlinedButton(
+                onClick = {
+                    val clip = clipboardManager.getText()?.text
+                    if (!clip.isNullOrBlank()) {
+                        textFieldValue = TextFieldValue(
+                            text = clip,
+                            selection = TextRange(0)
+                        )
+                        prefs.saveText(clip)
+                        prefs.saveCursorPosition(0)
+                        controller.resetPlaybackPosition()
+                    }
+                },
+                enabled = isStopped,
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                modifier = Modifier.height(36.dp)
+            ) {
+                Text("Paste", style = MaterialTheme.typography.bodyMedium)
+            }
+
             // "Speaker" label
             Text(
                 text = "Speaker",
@@ -206,7 +228,7 @@ fun MainScreen(
                     modifier = Modifier.size(32.dp)
                 )
                 Text(
-                    text = "Slow voice",
+                    text = "Slow",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -225,7 +247,7 @@ fun MainScreen(
             )
         }
 
-        // Text input area (scrollable, with highlight)
+        // Text area (scrollable, read-only with cursor when stopped, highlighted during playback)
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -236,14 +258,18 @@ fun MainScreen(
                 )
                 .padding(12.dp)
         ) {
-            if (textEditable) {
-                // Editable text field when stopped
+            if (isStopped) {
+                // Read-only text field when stopped — allows cursor positioning and scrolling
                 BasicTextField(
                     value = textFieldValue,
                     onValueChange = { newValue ->
-                        textFieldValue = newValue
-                        prefs.saveCursorPosition(newValue.selection.start)
+                        // Only allow selection/cursor changes, not text edits
+                        if (newValue.text == textFieldValue.text) {
+                            textFieldValue = newValue
+                            prefs.saveCursorPosition(newValue.selection.start)
+                        }
                     },
+                    readOnly = true,
                     modifier = Modifier
                         .fillMaxSize()
                         .focusRequester(focusRequester)
@@ -257,7 +283,7 @@ fun MainScreen(
                     decorationBox = { innerTextField ->
                         if (textFieldValue.text.isEmpty()) {
                             Text(
-                                text = "Type or paste text here...",
+                                text = "Paste text to begin...",
                                 style = TextStyle(
                                     fontSize = 16.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -334,7 +360,6 @@ fun MainScreen(
                 Text(
                     text = when {
                         isLoading -> "Loading..."
-                        isStopping -> "Stopping..."
                         isPlaying -> "Pause"
                         isPaused -> "Resume"
                         else -> "Play"

@@ -257,6 +257,16 @@ class PlaybackController(
     }
 
     /**
+     * Reset playback position state. Call when the text content changes
+     * (e.g. paste) so stale offsets don't cause incorrect cursor placement.
+     */
+    fun resetPlaybackPosition() {
+        _stoppedAtOffset.value = -1
+        _currentChunkIndex.value = -1
+        chunks = emptyList()
+    }
+
+    /**
      * Find which chunk contains the given character offset.
      * Returns 0 if offset is before all chunks.
      */
