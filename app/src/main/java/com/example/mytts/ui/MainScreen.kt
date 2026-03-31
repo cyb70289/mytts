@@ -46,6 +46,7 @@ fun MainScreen(
     val currentChunkIndex by controller.currentChunkIndex.collectAsState()
     val statusMessage by controller.statusMessage.collectAsState()
     val stoppedAtOffset by controller.stoppedAtOffset.collectAsState()
+    val isProcessing by controller.isProcessing.collectAsState()
 
     val savedText by prefs.text.collectAsState()
     val savedCursor by prefs.cursorPosition.collectAsState()
@@ -83,6 +84,10 @@ fun MainScreen(
             if (selectedVoice.isEmpty() && availableVoices.isNotEmpty()) {
                 selectedVoice = availableVoices.first()
                 prefs.saveVoice(selectedVoice)
+            }
+            // Pre-process saved text after engine init
+            if (textFieldValue.text.isNotBlank()) {
+                controller.processText(textFieldValue.text)
             }
         }
     }
@@ -150,9 +155,10 @@ fun MainScreen(
                         prefs.saveText(clip)
                         prefs.saveCursorPosition(0)
                         controller.resetPlaybackPosition()
+                        controller.processText(clip)
                     }
                 },
-                enabled = isStopped,
+                enabled = isStopped && !isProcessing,
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                 modifier = Modifier.height(36.dp)
             ) {
@@ -354,7 +360,7 @@ fun MainScreen(
                         slowMode = slowMode
                     )
                 },
-                enabled = textFieldValue.text.isNotBlank() && selectedVoice.isNotEmpty() && !isLoading && !isStopping,
+                enabled = textFieldValue.text.isNotBlank() && selectedVoice.isNotEmpty() && !isLoading && !isStopping && !isProcessing,
                 modifier = Modifier.weight(2f)
             ) {
                 Text(

@@ -28,21 +28,21 @@ class AudioProducer(
     private val running = AtomicBoolean(false)
     private var producerThread: Thread? = null
 
-    private var chunks: List<TextChunk> = emptyList()
+    private var chunks: List<PreparedChunk> = emptyList()
     private var voiceName: String = ""
     private var speed: Float = 1.0f
     private var startIndex: Int = 0
 
     /**
-     * Start producing audio from the given text chunks.
+     * Start producing audio from the given prepared chunks.
      *
-     * @param chunks list of text chunks to synthesize
+     * @param chunks list of pre-processed chunks (already normalized at paste time)
      * @param voice voice name to use
      * @param speed speed multiplier (model-level, not playback rate)
      * @param fromIndex start from this chunk index
      */
     fun start(
-        chunks: List<TextChunk>,
+        chunks: List<PreparedChunk>,
         voice: String,
         speed: Float = 1.0f,
         fromIndex: Int = 0
@@ -67,7 +67,7 @@ class AudioProducer(
                 if (!running.get()) break
 
                 val chunk = chunks[i]
-                val text = chunk.text.trim()
+                val text = chunk.normalizedText.trim()
                 if (text.isEmpty()) continue
 
                 // Wait if player queue is full (backpressure)
@@ -80,7 +80,7 @@ class AudioProducer(
                     Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
                     val startTime = System.currentTimeMillis()
 
-                    val pcm = engine.speak(text, voiceName, speed)
+                    val pcm = engine.speakNormalized(text, voiceName, speed)
 
                     val elapsed = System.currentTimeMillis() - startTime
                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE

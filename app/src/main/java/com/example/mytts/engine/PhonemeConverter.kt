@@ -110,6 +110,30 @@ class PhonemeConverter(context: Context) {
         return postProcess(result.toString())
     }
 
+    /**
+     * Convert pre-normalized text to IPA phonemes.
+     * Skips normalizeText() since the caller already did it.
+     */
+    fun phonemizeNormalized(normalizedText: String): String {
+        val tokens = Regex("[a-zA-Z]+(?:'[a-zA-Z]+)*|[^a-zA-Z]+")
+            .findAll(normalizedText).map { it.value }.filter { it.isNotBlank() }.toList()
+
+        val result = StringBuilder()
+        for ((index, token) in tokens.withIndex()) {
+            if (token.matches(Regex("[^a-zA-Z']+"))) {
+                result.append(token)
+            } else {
+                if (index > 0 && result.isNotEmpty() && !result.last().isWhitespace()) {
+                    result.append(" ")
+                }
+                val ipa = convertWord(token)
+                result.append(ipa)
+            }
+        }
+
+        return postProcess(result.toString())
+    }
+
     private fun convertWord(word: String): String {
         if (word.matches(Regex("[^a-zA-Z']+"))) return word
 
@@ -168,7 +192,7 @@ class PhonemeConverter(context: Context) {
         return builder.toString()
     }
 
-    private fun normalizeText(text: String): String {
+    fun normalizeText(text: String): String {
         var t = text
             .lines().joinToString("\n") { it.trim() }
             .replace(Regex("[\u2018\u2019]"), "'")

@@ -19,8 +19,12 @@ class KokoroEngine(private val context: Context) {
 
     private var environment: OrtEnvironment? = null
     private var session: OrtSession? = null
-    private var phonemeConverter: PhonemeConverter? = null
+    private var _phonemeConverter: PhonemeConverter? = null
     private var voiceStyleLoader: VoiceStyleLoader? = null
+
+    /** Expose PhonemeConverter so TextProcessor can use normalizeText(). */
+    val phonemeConverter: PhonemeConverter?
+        get() = _phonemeConverter
 
     val isLoaded: Boolean get() = session != null
 
@@ -46,7 +50,7 @@ class KokoroEngine(private val context: Context) {
         val modelBytes = context.assets.open(MODEL_FILE).use { it.readBytes() }
         session = environment!!.createSession(modelBytes, options)
 
-        phonemeConverter = PhonemeConverter(context)
+        _phonemeConverter = PhonemeConverter(context)
         voiceStyleLoader = VoiceStyleLoader(context)
 
         val elapsed = System.currentTimeMillis() - startTime
@@ -64,7 +68,15 @@ class KokoroEngine(private val context: Context) {
      * Convert text to phonemes (for pre-processing/chunking).
      */
     fun textToPhonemes(text: String): String {
-        return phonemeConverter?.phonemize(text)
+        return _phonemeConverter?.phonemize(text)
+            ?: throw IllegalStateException("Engine not initialized")
+    }
+
+    /**
+     * Convert pre-normalized text to phonemes (skips normalizeText()).
+     */
+    fun textToPhonemeNormalized(normalizedText: String): String {
+        return _phonemeConverter?.phonemizeNormalized(normalizedText)
             ?: throw IllegalStateException("Engine not initialized")
     }
 
@@ -136,12 +148,21 @@ class KokoroEngine(private val context: Context) {
         return synthesize(phonemes, voiceName, speed)
     }
 
+    /**
+     * Full pipeline for pre-normalized text: normalizedText -> phonemes -> synthesize.
+     * Skips normalizeText() since the caller already did it at paste time.
+     */
+    fun speakNormalized(normalizedText: String, voiceName: String, speed: Float = 1.0f): FloatArray {
+        val phonemes = textToPhonemeNormalized(normalizedText)
+        return synthesize(phonemes, voiceName, speed)
+    }
+
     fun release() {
         session?.close()
         session = null
         environment?.close()
         environment = null
-        phonemeConverter = null
+        _phonemeConverter = null
         voiceStyleLoader = null
         Log.i(TAG, "Engine released")
     }

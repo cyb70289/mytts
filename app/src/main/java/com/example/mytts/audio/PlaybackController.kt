@@ -38,6 +38,10 @@ class PlaybackController(
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
+    /** Whether text is being pre-processed (chunking + normalization). */
+    private val _isProcessing = MutableStateFlow(false)
+    val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
+
     /**
      * Character offset where playback was stopped (or ended naturally).
      * -1 means no meaningful position. UI should watch this to restore cursor.
@@ -48,7 +52,8 @@ class PlaybackController(
     private var engine: KokoroEngine? = null
     private var player: AudioPlayer? = null
     private var producer: AudioProducer? = null
-    private var chunks: List<TextChunk> = emptyList()
+    private var textProcessor: TextProcessor? = null
+    private var preparedChunks: List<PreparedChunk> = emptyList()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var initJob: Job? = null
@@ -78,11 +83,24 @@ class PlaybackController(
                     val eng = KokoroEngine(context)
                     eng.initialize()
                     engine = eng
+                    // Ensure textProcessor exists
+                    if (textProcessor == null) {
+                        eng.phonemeConverter?.let { converter ->
+                            textProcessor = TextProcessor(converter)
+                        }
+                    }
                 }
 
-                // Chunk the text
-                chunks = TextChunker.chunk(text)
-                if (chunks.isEmpty()) {
+                // If chunks weren't pre-processed (e.g. processText wasn't called),
+                // do it now as a fallback
+                if (preparedChunks.isEmpty() && text.isNotBlank()) {
+                    textProcessor?.let { tp ->
+                        preparedChunks = tp.processText(text)
+                    }
+                }
+
+                // Use pre-processed chunks (already chunked + normalized at paste time)
+                if (preparedChunks.isEmpty()) {
                     withContext(Dispatchers.Main) {
                         _state.value = State.STOPPED
                         _statusMessage.value = "No text to speak"
@@ -133,7 +151,7 @@ class PlaybackController(
 
                 // Start player first, then producer
                 audioPlayer.start(slow = slowMode)
-                audioProducer.start(chunks, voiceName, speed = 1.0f, fromIndex = startIndex)
+                audioProducer.start(preparedChunks, voiceName, speed = 1.0f, fromIndex = startIndex)
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start playback", e)
@@ -187,7 +205,6 @@ class PlaybackController(
             }
 
             withContext(Dispatchers.Main) {
-                chunks = emptyList()
                 _state.value = State.STOPPED
                 _currentChunkIndex.value = -1
                 _statusMessage.value = null
@@ -202,8 +219,8 @@ class PlaybackController(
      */
     private fun getCurrentPlaybackOffset(): Int {
         val index = _currentChunkIndex.value
-        if (index < 0 || index >= chunks.size) return -1
-        return chunks[index].startOffset
+        if (index < 0 || index >= preparedChunks.size) return -1
+        return preparedChunks[index].startOffset
     }
 
     /**
@@ -212,8 +229,8 @@ class PlaybackController(
      */
     fun getCurrentChunkRange(): Pair<Int, Int>? {
         val index = _currentChunkIndex.value
-        if (index < 0 || index >= chunks.size) return null
-        val chunk = chunks[index]
+        if (index < 0 || index >= preparedChunks.size) return null
+        val chunk = preparedChunks[index]
         return Pair(chunk.startOffset, chunk.endOffset)
     }
 
@@ -241,6 +258,10 @@ class PlaybackController(
                 val eng = KokoroEngine(context)
                 eng.initialize()
                 engine = eng
+                // Create TextProcessor now that PhonemeConverter is available
+                eng.phonemeConverter?.let { converter ->
+                    textProcessor = TextProcessor(converter)
+                }
                 val voices = eng.getAvailableVoices()
                 withContext(Dispatchers.Main) {
                     _statusMessage.value = null
@@ -263,7 +284,35 @@ class PlaybackController(
     fun resetPlaybackPosition() {
         _stoppedAtOffset.value = -1
         _currentChunkIndex.value = -1
-        chunks = emptyList()
+        preparedChunks = emptyList()
+    }
+
+    /**
+     * Pre-process text: chunk and normalize. Call on paste or app startup.
+     * Runs on Dispatchers.Default. UI should observe [isProcessing] to show status.
+     */
+    fun processText(text: String) {
+        val tp = textProcessor ?: return // Engine not initialized yet
+        if (text.isBlank()) {
+            preparedChunks = emptyList()
+            return
+        }
+        _isProcessing.value = true
+        _statusMessage.value = "Processing text..."
+        scope.launch(Dispatchers.Default) {
+            try {
+                val chunks = tp.processText(text)
+                preparedChunks = chunks
+                Log.d(TAG, "Text processed: ${chunks.size} chunks")
+            } catch (e: Exception) {
+                Log.e(TAG, "Text processing failed", e)
+            } finally {
+                withContext(Dispatchers.Main) {
+                    _isProcessing.value = false
+                    _statusMessage.value = null
+                }
+            }
+        }
     }
 
     /**
@@ -271,7 +320,7 @@ class PlaybackController(
      * Returns 0 if offset is before all chunks.
      */
     private fun findChunkAtOffset(offset: Int): Int {
-        for ((i, chunk) in chunks.withIndex()) {
+        for ((i, chunk) in preparedChunks.withIndex()) {
             if (offset < chunk.endOffset) return i
         }
         return 0 // Default to beginning
@@ -286,7 +335,8 @@ class PlaybackController(
         producer = null
         player?.stop()
         player = null
-        chunks = emptyList()
+        preparedChunks = emptyList()
+        textProcessor = null
         _state.value = State.STOPPED
         _currentChunkIndex.value = -1
         initJob?.cancel()
