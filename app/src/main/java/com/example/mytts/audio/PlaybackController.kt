@@ -316,14 +316,48 @@ class PlaybackController(
     }
 
     /**
-     * Find which chunk contains the given character offset.
-     * Returns 0 if offset is before all chunks.
+     * Find which chunk contains the given character offset using binary search.
+     * Chunks are sorted by startOffset (non-overlapping, contiguous).
+     * Returns 0 if offset is before all chunks or chunks are empty.
      */
     private fun findChunkAtOffset(offset: Int): Int {
-        for ((i, chunk) in preparedChunks.withIndex()) {
-            if (offset < chunk.endOffset) return i
+        val chunks = preparedChunks
+        if (chunks.isEmpty()) return 0
+
+        var lo = 0
+        var hi = chunks.size - 1
+        while (lo < hi) {
+            val mid = (lo + hi) ushr 1
+            if (chunks[mid].endOffset <= offset) {
+                lo = mid + 1
+            } else {
+                hi = mid
+            }
         }
-        return 0 // Default to beginning
+        // lo is now the first chunk where endOffset > offset
+        return if (lo < chunks.size && offset < chunks[lo].endOffset) lo else 0
+    }
+
+    /**
+     * Get the text range (startOffset, endOffset) of the chunk containing the
+     * given character offset. Uses binary search. Returns null if no chunks exist.
+     */
+    fun getChunkRangeAtOffset(offset: Int): Pair<Int, Int>? {
+        val chunks = preparedChunks
+        if (chunks.isEmpty()) return null
+
+        var lo = 0
+        var hi = chunks.size - 1
+        while (lo < hi) {
+            val mid = (lo + hi) ushr 1
+            if (chunks[mid].endOffset <= offset) {
+                lo = mid + 1
+            } else {
+                hi = mid
+            }
+        }
+        val chunk = chunks[lo]
+        return if (offset < chunk.endOffset) Pair(chunk.startOffset, chunk.endOffset) else null
     }
 
     /**

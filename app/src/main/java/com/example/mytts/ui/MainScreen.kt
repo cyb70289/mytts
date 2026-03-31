@@ -3,26 +3,22 @@ package com.example.mytts.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,14 +50,8 @@ fun MainScreen(
     val savedSlowMode by prefs.slowMode.collectAsState()
 
     // Local UI state
-    var textFieldValue by remember(savedText) {
-        mutableStateOf(
-            TextFieldValue(
-                text = savedText,
-                selection = TextRange(savedCursor.coerceIn(0, savedText.length))
-            )
-        )
-    }
+    var currentText by remember(savedText) { mutableStateOf(savedText) }
+    var cursorPosition by remember(savedCursor) { mutableIntStateOf(savedCursor.coerceIn(0, savedText.length)) }
     var voices by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedVoice by remember(savedVoice) { mutableStateOf(savedVoice) }
     var slowMode by remember(savedSlowMode) { mutableStateOf(savedSlowMode) }
@@ -73,9 +63,27 @@ fun MainScreen(
     val isStopped = playbackState == PlaybackController.State.STOPPED
     val isStopping = playbackState == PlaybackController.State.STOPPING
 
-    val focusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
     val clipboardManager = LocalClipboardManager.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Stopped-state highlight range (computed from cursor position via binary search)
+    var stoppedHighlightRange by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+
+    // TextLayoutResult for mapping tap coordinates to character offsets
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+    // Flag to ensure auto-scroll on app open only happens once
+    var initialScrollDone by remember { mutableStateOf(false) }
+
+    // Compute stopped highlight whenever cursor changes, text changes, or processing finishes
+    LaunchedEffect(cursorPosition, currentText, isStopped, isProcessing) {
+        if (isStopped && currentText.isNotEmpty() && !isProcessing) {
+            stoppedHighlightRange = controller.getChunkRangeAtOffset(
+                cursorPosition.coerceIn(0, currentText.length)
+            )
+        }
+    }
 
     // Pre-initialize engine to get voice list
     LaunchedEffect(Unit) {
@@ -86,9 +94,20 @@ fun MainScreen(
                 prefs.saveVoice(selectedVoice)
             }
             // Pre-process saved text after engine init
-            if (textFieldValue.text.isNotBlank()) {
-                controller.processText(textFieldValue.text)
+            if (currentText.isNotBlank()) {
+                controller.processText(currentText)
             }
+        }
+    }
+
+    // Auto-scroll to saved cursor position on app open
+    // Wait until scrollState.maxValue > 0 (content has been laid out)
+    LaunchedEffect(scrollState.maxValue) {
+        if (!initialScrollDone && scrollState.maxValue > 0 && cursorPosition > 0 && currentText.isNotEmpty()) {
+            val ratio = cursorPosition.toFloat() / currentText.length
+            val target = (scrollState.maxValue * ratio).toInt()
+            scrollState.scrollTo(target)
+            initialScrollDone = true
         }
     }
 
@@ -96,8 +115,7 @@ fun MainScreen(
     val chunkRange = controller.getCurrentChunkRange()
     LaunchedEffect(currentChunkIndex) {
         if (chunkRange != null && !isStopped) {
-            // Estimate scroll position based on text offset
-            val textLen = textFieldValue.text.length
+            val textLen = currentText.length
             if (textLen > 0) {
                 val ratio = chunkRange.first.toFloat() / textLen
                 val target = (scrollState.maxValue * ratio).toInt()
@@ -109,27 +127,23 @@ fun MainScreen(
     // Restore cursor position when playback stops
     LaunchedEffect(stoppedAtOffset) {
         if (stoppedAtOffset >= 0 && isStopped) {
-            val pos = stoppedAtOffset.coerceIn(0, textFieldValue.text.length)
-            textFieldValue = textFieldValue.copy(
-                selection = TextRange(pos)
-            )
+            val pos = stoppedAtOffset.coerceIn(0, currentText.length)
+            cursorPosition = pos
             prefs.saveCursorPosition(pos)
-            // Scroll so stopped position is visible (center-ish)
-            val textLen = textFieldValue.text.length
+            // Scroll so stopped position is visible
+            val textLen = currentText.length
             if (textLen > 0) {
                 val ratio = pos.toFloat() / textLen
                 val target = (scrollState.maxValue * ratio).toInt()
                 scrollState.animateScrollTo(target)
             }
-            // Focus the text field
-            try { focusRequester.requestFocus() } catch (_: Exception) {}
         }
     }
 
     // Save text whenever it changes (debounced)
-    LaunchedEffect(textFieldValue.text) {
+    LaunchedEffect(currentText) {
         delay(500) // debounce
-        prefs.saveText(textFieldValue.text)
+        prefs.saveText(currentText)
     }
 
     Column(
@@ -148,14 +162,14 @@ fun MainScreen(
                 onClick = {
                     val clip = clipboardManager.getText()?.text
                     if (!clip.isNullOrBlank()) {
-                        textFieldValue = TextFieldValue(
-                            text = clip,
-                            selection = TextRange(0)
-                        )
+                        currentText = clip
+                        cursorPosition = 0
                         prefs.saveText(clip)
                         prefs.saveCursorPosition(0)
                         controller.resetPlaybackPosition()
                         controller.processText(clip)
+                        // Scroll to top on paste
+                        coroutineScope.launch { scrollState.scrollTo(0) }
                     }
                 },
                 enabled = isStopped && !isProcessing,
@@ -253,7 +267,7 @@ fun MainScreen(
             )
         }
 
-        // Text area (scrollable, read-only with cursor when stopped, highlighted during playback)
+        // Text area (scrollable, highlighted in both stopped and playing states)
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -264,49 +278,28 @@ fun MainScreen(
                 )
                 .padding(12.dp)
         ) {
-            if (isStopped) {
-                // Read-only text field when stopped — allows cursor positioning and scrolling
-                BasicTextField(
-                    value = textFieldValue,
-                    onValueChange = { newValue ->
-                        // Only allow selection/cursor changes, not text edits
-                        if (newValue.text == textFieldValue.text) {
-                            textFieldValue = newValue
-                            prefs.saveCursorPosition(newValue.selection.start)
-                        }
-                    },
-                    readOnly = true,
+            if (currentText.isEmpty()) {
+                // Placeholder when no text
+                Text(
+                    text = "Paste text to begin...",
                     modifier = Modifier
                         .fillMaxSize()
-                        .focusRequester(focusRequester)
                         .verticalScroll(scrollState),
-                    textStyle = TextStyle(
+                    style = TextStyle(
                         fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 24.sp
-                    ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    decorationBox = { innerTextField ->
-                        if (textFieldValue.text.isEmpty()) {
-                            Text(
-                                text = "Paste text to begin...",
-                                style = TextStyle(
-                                    fontSize = 16.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            )
-                        }
-                        innerTextField()
-                    }
+                    )
                 )
             } else {
-                // Read-only text with highlighted current chunk during playback
+                // Determine which range to highlight
+                val highlightRange = if (isStopped) stoppedHighlightRange else chunkRange
+
                 val annotated = buildAnnotatedString {
-                    val text = textFieldValue.text
-                    val range = chunkRange
-                    if (range != null) {
-                        val start = range.first.coerceIn(0, text.length)
-                        val end = range.second.coerceIn(0, text.length)
+                    val text = currentText
+                    if (highlightRange != null) {
+                        val start = highlightRange.first.coerceIn(0, text.length)
+                        val end = highlightRange.second.coerceIn(0, text.length)
                         append(text.substring(0, start))
                         withStyle(SpanStyle(background = HighlightYellow)) {
                             append(text.substring(start, end))
@@ -316,16 +309,46 @@ fun MainScreen(
                         append(text)
                     }
                 }
+
                 Text(
                     text = annotated,
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(scrollState),
+                        .verticalScroll(scrollState)
+                        .then(
+                            if (isStopped) {
+                                Modifier.pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onDoubleTap = { tapOffset ->
+                                            // Map tap position to character offset
+                                            textLayoutResult?.let { layout ->
+                                                val charOffset = layout.getOffsetForPosition(tapOffset)
+                                                // Find the chunk at this position and highlight it
+                                                val range = controller.getChunkRangeAtOffset(charOffset)
+                                                if (range != null) {
+                                                    cursorPosition = range.first
+                                                    prefs.saveCursorPosition(range.first)
+                                                    stoppedHighlightRange = range
+                                                }
+                                            }
+                                        },
+                                        onTap = {
+                                            // Consume single taps — do nothing
+                                        }
+                                    )
+                                }
+                            } else {
+                                Modifier
+                            }
+                        ),
                     style = TextStyle(
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 24.sp
-                    )
+                    ),
+                    onTextLayout = { result ->
+                        textLayoutResult = result
+                    }
                 )
             }
         }
@@ -333,7 +356,6 @@ fun MainScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Playback controls: << (1/6) | Play (1/3) | Stop (1/3) | >> (1/6)
-        val coroutineScope = rememberCoroutineScope()
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -354,13 +376,13 @@ fun MainScreen(
             Button(
                 onClick = {
                     controller.togglePlayPause(
-                        text = textFieldValue.text,
-                        cursorPosition = textFieldValue.selection.start,
+                        text = currentText,
+                        cursorPosition = cursorPosition,
                         voiceName = selectedVoice,
                         slowMode = slowMode
                     )
                 },
-                enabled = textFieldValue.text.isNotBlank() && selectedVoice.isNotEmpty() && !isLoading && !isStopping && !isProcessing,
+                enabled = currentText.isNotBlank() && selectedVoice.isNotEmpty() && !isLoading && !isStopping && !isProcessing,
                 modifier = Modifier.weight(2f)
             ) {
                 Text(
