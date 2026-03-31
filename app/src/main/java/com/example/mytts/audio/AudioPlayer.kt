@@ -93,6 +93,7 @@ class AudioPlayer(
             var previousTail: FloatArray? = null
 
             while (running.get()) {
+                // Wait while paused (between chunks)
                 if (paused.get()) {
                     try { Thread.sleep(50) } catch (_: InterruptedException) { break }
                     continue
@@ -139,9 +140,14 @@ class AudioPlayer(
                     }
                 }
 
-                // Write PCM to AudioTrack
+                // Write PCM to AudioTrack — pause-aware: waits inside the loop
+                // so remaining data is written after resume (not lost)
                 var offset = 0
-                while (offset < pcm.size && running.get() && !paused.get()) {
+                while (offset < pcm.size && running.get()) {
+                    if (paused.get()) {
+                        try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+                        continue
+                    }
                     val written = track.write(pcm, offset, pcm.size - offset, AudioTrack.WRITE_BLOCKING)
                     if (written < 0) {
                         Log.e(TAG, "AudioTrack write error: $written")

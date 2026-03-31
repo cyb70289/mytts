@@ -292,8 +292,9 @@ fun MainScreen(
                     )
                 )
             } else {
-                // Determine which range to highlight
-                val highlightRange = if (isStopped) stoppedHighlightRange else chunkRange
+                // Determine which range to highlight: use playback chunk if available,
+                // otherwise keep the stopped highlight (persists through LOADING state)
+                val highlightRange = chunkRange ?: stoppedHighlightRange
 
                 val annotated = buildAnnotatedString {
                     val text = currentText
