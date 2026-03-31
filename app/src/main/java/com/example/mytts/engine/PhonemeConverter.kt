@@ -189,6 +189,41 @@ class PhonemeConverter(context: Context) {
             .replace(Regex("\\b(?:Mrs\\.|MRS\\.(?= [A-Z]))"), "Missus")
             .replace(Regex("\\betc\\.(?! [A-Z])"), "etcetera")
 
+        // --- Currency, units, symbols (BEFORE number-to-words) ---
+
+        // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000
+        t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
+            .replace(t) { match ->
+                val number = match.groupValues[2]
+                val mag = match.groupValues[3].uppercase()
+                val currency = when (match.groupValues[1]) {
+                    "\$" -> "dollars"; "\u20AC" -> "euros"
+                    "\u00A3" -> "pounds"; "\u00A5" -> "yen"
+                    else -> "dollars"
+                }
+                val magnitude = when (mag) {
+                    "T" -> " trillion"; "B" -> " billion"
+                    "M" -> " million"; "K" -> " thousand"
+                    else -> ""
+                }
+                "$number$magnitude $currency"
+            }
+
+        // Percentage: 50% → 50 percent
+        t = t.replace(Regex("(\\d+(?:\\.\\d+)?)\\s*%"), "$1 percent")
+
+        // Hashtag number: #1 → number 1
+        t = t.replace(Regex("#\\s*(\\d+)"), "number $1")
+
+        // Common symbols
+        t = t.replace("&", " and ")
+        t = t.replace("@", " at ")
+
+        // Clean up any stray currency/symbol characters that weren't part of a pattern
+        t = t.replace(Regex("[\\$\u20AC\u00A3\u00A5#]"), " ")
+
+        // --- End currency/units/symbols ---
+
         // Number formatting
         t = t.replace(Regex("(?<=\\d),(?=\\d)"), "")
         t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ")
@@ -197,6 +232,9 @@ class PhonemeConverter(context: Context) {
         t = t.replace(Regex("\\d+(\\.\\d+)?")) { match ->
             numberToWords(match.value)
         }
+
+        // Collapse multiple spaces
+        t = t.replace(Regex("\\s{2,}"), " ")
 
         return t.trim()
     }
@@ -273,6 +311,11 @@ class PhonemeConverter(context: Context) {
 
         // American English adjustments
         result = result.replace("ti", "di")
+
+        // Strip $ BEFORE the VALID_CHARS filter — $ is the pad token (token ID 0)
+        // in Kokoro's vocabulary. Any stray $ that leaks through text normalization
+        // would be tokenized as pad and corrupt the model input.
+        result = result.replace("\$", "")
 
         // Filter to only valid VOCAB characters + punctuation
         result = result.filter { ch ->
