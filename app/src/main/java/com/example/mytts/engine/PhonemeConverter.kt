@@ -7,8 +7,8 @@ import android.util.Log
  * Converts English text to IPA phonemes for Kokoro TTS.
  *
  * Uses eSpeak-ng (via NDK/JNI) for grapheme-to-phoneme conversion, with
- * post-processing based on the misaki library's E2M mapping to produce
- * phonemes compatible with how the Kokoro model was trained.
+ * minimal IPA normalization to produce phonemes compatible with the Kokoro
+ * model (raw IPA diphthongs, no E2M compact tokens).
  */
 class PhonemeConverter(context: Context) {
     companion object {
@@ -43,39 +43,11 @@ class PhonemeConverter(context: Context) {
             "sixtieth", "seventieth", "eightieth", "ninetieth"
         )
 
-        // Misaki E2M (eSpeak-to-Misaki) replacements for American English.
-        // Applied longest-first to eSpeak IPA output with '^' tie characters.
-        // Source: hexgrad/misaki espeak.py
-        private val E2M_REPLACEMENTS = listOf(
-            // Multi-char sequences first (longest match wins)
-            "\u0294\u02CCn\u0329" to "\u0294n",   // ʔˌn̩ → ʔn
-            "\u0294n\u0329" to "\u0294n",           // ʔn̩ → ʔn
-            "a^\u026A" to "I",                      // a^ɪ → I (PRICE)
-            "a^\u028A" to "W",                      // a^ʊ → W (MOUTH)
-            "d^\u0292" to "\u02A4",                 // d^ʒ → ʤ (JUDGE)
-            "t^\u0283" to "\u02A7",                 // t^ʃ → ʧ (CHURCH)
-            "e^\u026A" to "A",                      // e^ɪ → A (FACE)
-            "\u0254^\u026A" to "Y",                 // ɔ^ɪ → Y (CHOICE)
-            "\u0259^l" to "\u1D4Al",                // ə^l → ᵊl (syllabic l)
-            "\u02B2o" to "jo",                      // ʲo → jo
-            "\u02B2\u0259" to "j\u0259",            // ʲə → jə
-            "\u02B2" to "",                         // ʲ → (delete)
-            "\u025A" to "\u0259\u0279",             // ɚ → əɹ (rhotacized schwa)
-            "r" to "\u0279",                        // r → ɹ
-            "x" to "k",                             // x → k
-            "\u00E7" to "k",                        // ç → k
-            "\u0250" to "\u0259",                   // ɐ → ə
-            "\u026C" to "l",                        // ɬ → l
-            "\u0303" to "",                         // combining tilde → delete
-        )
-
-        // American English dialect-specific replacements (applied after E2M)
-        private val AMERICAN_REPLACEMENTS = listOf(
-            "o^\u028A" to "O",                      // o^ʊ → O (GOAT American)
-            "\u025C\u02D0\u0279" to "\u025C\u0279", // ɜːɹ → ɜɹ (NURSE)
-            "\u025C\u02D0" to "\u025C\u0279",       // ɜː → ɜɹ (NURSE without explicit r)
-            "\u026A\u0259" to "i\u0259",            // ɪə → iə (NEAR)
-        )
+        // IPA normalizations for eSpeak-ng output.
+        // These only normalize eSpeak-specific symbols to standard IPA that
+        // the Kokoro model was trained on. NO diphthong/affricate compression
+        // (the model expects raw IPA like eɪ, aɪ, oʊ — not E2M compact tokens
+        // like A, I, O which are uppercase letters with different meaning).
     }
 
     private val espeakBridge = EspeakBridge(context)
@@ -100,14 +72,11 @@ class PhonemeConverter(context: Context) {
      * Skips normalizeText() since the caller already did it.
      */
     fun phonemizeNormalized(normalizedText: String): String {
-        // Get raw IPA from eSpeak-ng (with '^' tie characters)
         val rawIpa = espeakBridge.textToPhonemes(normalizedText)
         if (rawIpa.isEmpty()) {
             Log.w(TAG, "eSpeak returned empty phonemes for: $normalizedText")
             return ""
         }
-
-        // Apply misaki E2M mapping
         return postProcess(rawIpa)
     }
 
@@ -119,46 +88,27 @@ class PhonemeConverter(context: Context) {
     }
 
     /**
-     * Apply misaki E2M post-processing to convert eSpeak IPA output
-     * to Kokoro-compatible phoneme format.
+     * Apply post-processing to convert eSpeak IPA output to Kokoro-compatible
+     * phoneme format. Only normalizes eSpeak-specific symbols; keeps raw IPA
+     * diphthongs (eɪ, aɪ, oʊ, etc.) intact — the model expects them as
+     * individual IPA characters, not compressed single-letter tokens.
      */
     private fun postProcess(phonemes: String): String {
-        var result = phonemes
+        // Strip tie characters (eSpeak may or may not produce them)
+        var result = phonemes.replace("^", "")
 
-        // Apply E2M replacements (longest-first ordering)
-        for ((from, to) in E2M_REPLACEMENTS) {
-            result = result.replace(from, to)
-        }
+        // Basic IPA normalizations
+        result = result.replace("r", "\u0279")           // r → ɹ
+        result = result.replace("x", "k")                // x → k
+        result = result.replace("\u00E7", "k")            // ç → k
+        result = result.replace("\u026C", "l")            // ɬ → l
+        result = result.replace("\u02B2", "j")            // ʲ → j
+        result = result.replace("\u025A", "\u0259\u0279") // ɚ → əɹ
+        result = result.replace("\u0250", "\u0259")       // ɐ → ə
+        result = result.replace("\u0303", "")             // strip combining tilde
 
-        // Handle syllabic consonants: combining character below (U+0329)
-        // → small schwa (ᵊ) before the consonant
-        result = Regex("(\\S)\u0329").replace(result) { match ->
-            "\u1D4A${match.groupValues[1]}"
-        }
-        // Remove any remaining combining marks
+        // Strip syllabic consonant marks (combining char below)
         result = result.replace("\u0329", "")
-
-        // American English dialect
-        for ((from, to) in AMERICAN_REPLACEMENTS) {
-            result = result.replace(from, to)
-        }
-
-        // Strip ALL remaining length marks (American English doesn't use them)
-        result = result.replace("\u02D0", "")
-
-        // eSpeak compatibility: bare 'e' → A (FACE vowel) — only bare 'e' not part of other sequences
-        // Note: at this point, e^ɪ is already mapped to A, but bare 'e' can still appear
-        result = result.replace("e", "A")
-
-        // Kokoro model-specific mappings (for v1.0, non-2.0 models)
-        result = result.replace("\u027E", "T")    // ɾ (flap) → T
-        result = result.replace("\u0294", "t")     // ʔ (glottal stop) → t
-
-        // Remove remaining tie characters
-        result = result.replace("^", "")
-
-        // Map bare 'o' → ɔ (eSpeak compatibility for older versions)
-        result = result.replace("o", "\u0254")
 
         // Strip $ pad token — must not leak into phoneme stream
         result = result.replace("\$", "")
