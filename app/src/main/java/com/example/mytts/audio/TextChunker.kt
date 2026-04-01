@@ -14,44 +14,19 @@ data class TextChunk(
 
 /**
  * Splits text into chunks suitable for TTS inference.
- *
- * The int8 Kokoro model's duration predictor under-allocates samples per token
- * as token count grows (>~80 phoneme tokens → truncation). Since 1 English word
- * ≈ 5-8 phoneme tokens, we keep chunks to ~12 words (~60-96 tokens) to stay in
- * the safe zone.
- *
- * Split priority:
- * 1. Sentence boundaries (ICU4J BreakIterator — handles abbreviations, decimals)
- * 2. Clause boundaries (commas, semicolons, colons, dashes)
- * 3. Conjunction/preposition boundaries ("and", "but", "or", "that", "which", etc.)
- * 4. Hard word-count split as last resort
- *
- * The 300ms inter-chunk silence gap (applied by AudioProducer) serves as a
- * natural breath pause between chunks.
+ * Each chunk should produce phonemes within the model's token limit (~400).
+ * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
+ * abbreviation/decimal handling), then clause boundaries, then word boundaries.
  */
 object TextChunker {
 
-    // Target max words per chunk. 12 words ≈ 60-96 phoneme tokens, safely under
-    // the ~80-token threshold where the int8 model starts truncating.
-    private const val MAX_WORDS_PER_CHUNK = 12
-    // Minimum chunk size to avoid tiny fragments that sound unnatural
+    // Approximate: 1 word ≈ 5-8 phoneme tokens. 400 tokens ≈ 50-80 words.
+    // Use conservative limit of ~50 words per chunk for safety.
+    private const val MAX_WORDS_PER_CHUNK = 50
+    // Minimum chunk size to avoid tiny fragments
     private const val MIN_WORDS_PER_CHUNK = 3
 
-    // Clause-level punctuation: commas, semicolons, colons, dashes
     private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
-
-    // Words that serve as natural phrase boundaries. We split BEFORE these words.
-    // Includes coordinating conjunctions, subordinating conjunctions, relative
-    // pronouns, and common prepositions that start new phrases.
-    private val SPLIT_BEFORE_WORDS = setOf(
-        "and", "but", "or", "nor", "yet", "so",          // coordinating conjunctions
-        "that", "which", "who", "whom", "whose", "where", // relative
-        "because", "although", "though", "while", "when",  // subordinating
-        "after", "before", "since", "until", "unless",     // subordinating
-        "if", "whether", "as", "than",                     // subordinating
-        "however", "therefore", "moreover", "furthermore",  // conjunctive adverbs
-        "including", "especially", "particularly",          // phrase starters
-    )
 
     /**
      * Split text into chunks with offset tracking.
@@ -67,102 +42,27 @@ object TextChunker {
         for (sentence in sentences) {
             if (sentence.text.isBlank()) continue
 
-            val wordCount = countWords(sentence.text)
+            val wordCount = sentence.text.trim().split(Regex("\\s+")).size
             if (wordCount <= MAX_WORDS_PER_CHUNK) {
                 chunks.add(sentence)
             } else {
-                // Sentence too long — try clause boundaries first
-                chunks.addAll(splitSentence(sentence))
+                // Sentence too long - split at clause boundaries
+                val clauses = splitKeepingDelimiters(sentence.text, CLAUSE_SEPARATORS, sentence.startOffset)
+                for (clause in clauses) {
+                    if (clause.text.isBlank()) continue
+                    val clauseWordCount = clause.text.trim().split(Regex("\\s+")).size
+                    if (clauseWordCount <= MAX_WORDS_PER_CHUNK) {
+                        chunks.add(clause)
+                    } else {
+                        // Still too long - split at word boundaries
+                        chunks.addAll(splitByWords(clause.text, clause.startOffset))
+                    }
+                }
             }
         }
 
         // Merge tiny chunks with their neighbors
         return mergeSmallChunks(chunks)
-    }
-
-    /**
-     * Split a single sentence that exceeds [MAX_WORDS_PER_CHUNK].
-     * Tries clause boundaries first, then conjunction/preposition boundaries,
-     * then falls back to hard word-count splitting.
-     */
-    private fun splitSentence(sentence: TextChunk): List<TextChunk> {
-        // Try splitting at clause boundaries (commas, semicolons, etc.)
-        val clauses = splitAtClauseBoundaries(sentence.text, sentence.startOffset)
-        if (clauses.size > 1) {
-            // Recursively split any clauses that are still too long
-            val result = mutableListOf<TextChunk>()
-            for (clause in clauses) {
-                if (countWords(clause.text) <= MAX_WORDS_PER_CHUNK) {
-                    result.add(clause)
-                } else {
-                    // Clause still too long — try conjunction split
-                    result.addAll(splitAtConjunctions(clause))
-                }
-            }
-            return result
-        }
-
-        // No clause boundaries — try conjunction/preposition split
-        return splitAtConjunctions(sentence)
-    }
-
-    /**
-     * Split a chunk at conjunction/preposition boundaries.
-     * Falls back to hard word-count split if no suitable boundary found.
-     */
-    private fun splitAtConjunctions(chunk: TextChunk): List<TextChunk> {
-        val text = chunk.text
-        val words = splitIntoWordSpans(text)
-        if (words.size <= MAX_WORDS_PER_CHUNK) return listOf(chunk)
-
-        val result = mutableListOf<TextChunk>()
-        var segStart = 0  // char offset within text
-        var wordsSinceSplit = 0
-
-        for ((idx, span) in words.withIndex()) {
-            val word = text.substring(span.first, span.second).trim().lowercase()
-            wordsSinceSplit++
-
-            // Consider splitting BEFORE this word if:
-            // 1. It's a known split word
-            // 2. We have enough words accumulated (at least MIN_WORDS_PER_CHUNK)
-            // 3. The segment would exceed MAX_WORDS_PER_CHUNK without splitting
-            val needsSplit = wordsSinceSplit > MAX_WORDS_PER_CHUNK
-            val canSplitHere = word in SPLIT_BEFORE_WORDS && wordsSinceSplit >= MIN_WORDS_PER_CHUNK
-
-            if (canSplitHere || needsSplit) {
-                val splitCharPos = if (canSplitHere || needsSplit) {
-                    // Split before this word
-                    span.first
-                } else {
-                    continue
-                }
-                val segText = text.substring(segStart, splitCharPos)
-                if (segText.isNotBlank()) {
-                    result.add(TextChunk(
-                        segText,
-                        chunk.startOffset + segStart,
-                        chunk.startOffset + splitCharPos
-                    ))
-                }
-                segStart = splitCharPos
-                wordsSinceSplit = 1  // current word starts new segment
-            }
-        }
-
-        // Remaining text
-        if (segStart < text.length) {
-            val remaining = text.substring(segStart)
-            if (remaining.isNotBlank()) {
-                result.add(TextChunk(
-                    remaining,
-                    chunk.startOffset + segStart,
-                    chunk.startOffset + text.length
-                ))
-            }
-        }
-
-        return if (result.isEmpty()) listOf(chunk) else result
     }
 
     /**
@@ -186,7 +86,7 @@ object TextChunker {
             end = bi.next()
         }
 
-        // Handle any remaining text
+        // Handle any remaining text (shouldn't happen with BreakIterator, but be safe)
         if (start < text.length) {
             val remaining = text.substring(start)
             if (remaining.isNotBlank()) {
@@ -202,17 +102,18 @@ object TextChunker {
     }
 
     /**
-     * Split text at clause-level punctuation, keeping delimiters attached to
-     * the preceding segment.
+     * Split text while keeping delimiters attached to the preceding segment.
+     * Tracks offsets relative to the original text.
      */
-    private fun splitAtClauseBoundaries(
+    private fun splitKeepingDelimiters(
         text: String,
-        baseOffset: Int
+        pattern: Regex,
+        baseOffset: Int = 0
     ): List<TextChunk> {
         val result = mutableListOf<TextChunk>()
         var lastEnd = 0
 
-        val matches = CLAUSE_SEPARATORS.findAll(text)
+        val matches = pattern.findAll(text)
         for (match in matches) {
             val segEnd = match.range.last + 1
             if (segEnd > lastEnd) {
@@ -240,16 +141,32 @@ object TextChunker {
     }
 
     /**
-     * Get word spans (start, end char offsets) within text.
-     * Each span includes trailing whitespace so concatenation reproduces the original.
+     * Split by word boundaries when clause splitting isn't enough.
      */
-    private fun splitIntoWordSpans(text: String): List<Pair<Int, Int>> {
-        val spans = mutableListOf<Pair<Int, Int>>()
-        val matcher = Regex("\\S+\\s*")
-        for (match in matcher.findAll(text)) {
-            spans.add(Pair(match.range.first, match.range.last + 1))
+    private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
+        val words = text.split(Regex("(?<=\\s)"))
+        val chunks = mutableListOf<TextChunk>()
+        var currentWords = mutableListOf<String>()
+        var chunkStart = 0
+        var pos = 0
+
+        for (word in words) {
+            currentWords.add(word)
+            pos += word.length
+            if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
+                val chunkText = currentWords.joinToString("")
+                chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
+                chunkStart = pos
+                currentWords = mutableListOf()
+            }
         }
-        return spans
+
+        if (currentWords.isNotEmpty()) {
+            val chunkText = currentWords.joinToString("")
+            chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
+        }
+
+        return chunks
     }
 
     /**
@@ -262,7 +179,7 @@ object TextChunker {
         var i = 0
         while (i < chunks.size) {
             var current = chunks[i]
-            val wordCount = countWords(current.text)
+            val wordCount = current.text.trim().split(Regex("\\s+")).size
 
             // If tiny and there's a next chunk, merge with next
             if (wordCount < MIN_WORDS_PER_CHUNK && i + 1 < chunks.size) {
@@ -279,10 +196,5 @@ object TextChunker {
             merged.add(current)
         }
         return merged
-    }
-
-    private fun countWords(text: String): Int {
-        val trimmed = text.trim()
-        return if (trimmed.isEmpty()) 0 else trimmed.split(Regex("\\s+")).size
     }
 }
