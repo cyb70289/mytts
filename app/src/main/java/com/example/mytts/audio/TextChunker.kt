@@ -1,5 +1,8 @@
 package com.example.mytts.audio
 
+import android.icu.text.BreakIterator
+import java.util.Locale
+
 /**
  * A chunk of text with its position in the original input.
  */
@@ -12,7 +15,8 @@ data class TextChunk(
 /**
  * Splits text into chunks suitable for TTS inference.
  * Each chunk should produce phonemes within the model's token limit (~400).
- * Splits at sentence boundaries first, then clause boundaries, then word boundaries.
+ * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
+ * abbreviation/decimal handling), then clause boundaries, then word boundaries.
  */
 object TextChunker {
 
@@ -22,22 +26,7 @@ object TextChunker {
     // Minimum chunk size to avoid tiny fragments
     private const val MIN_WORDS_PER_CHUNK = 3
 
-    // Sentence-ending punctuation followed by whitespace (or end of string).
-    // But NOT periods that are part of abbreviations.
-    // We use a custom split function instead of a simple regex.
     private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
-
-    // Common abbreviations that end with a dot but aren't sentence endings.
-    // These are checked case-insensitively.
-    private val ABBREVIATIONS = setOf(
-        "mr", "mrs", "ms", "dr", "prof", "sr", "jr", "st", "ave", "blvd",
-        "dept", "est", "approx", "govt", "inc", "corp", "ltd", "co",
-        "vs", "etc", "vol", "no", "jan", "feb", "mar", "apr", "jun",
-        "jul", "aug", "sep", "sept", "oct", "nov", "dec",
-        "al",  // et al.
-        "gen", "gov", "sgt", "cpl", "pvt", "capt", "lt", "col", "cmdr",
-        "ft", "mt", "pt"
-    )
 
     /**
      * Split text into chunks with offset tracking.
@@ -46,7 +35,7 @@ object TextChunker {
     fun chunk(text: String): List<TextChunk> {
         if (text.isBlank()) return emptyList()
 
-        // First split into sentences using abbreviation-aware splitter
+        // First split into sentences using ICU4J BreakIterator
         val sentences = splitIntoSentences(text)
         val chunks = mutableListOf<TextChunk>()
 
@@ -77,42 +66,31 @@ object TextChunker {
     }
 
     /**
-     * Split text into sentences, being careful about abbreviations.
-     * A period is considered a sentence end only if:
-     * - It is NOT preceded by a single uppercase letter (e.g., U. S. A.)
-     * - The word before the period is NOT a known abbreviation (Mr. Dr. etc.)
-     * - It IS followed by whitespace + uppercase letter, or end of text.
+     * Split text into sentences using ICU4J BreakIterator.
+     * Handles abbreviations (Dr., Mr., U.S.A.), decimal numbers (3.14),
+     * ellipses (...), and other edge cases automatically.
      */
     private fun splitIntoSentences(text: String): List<TextChunk> {
         val result = mutableListOf<TextChunk>()
-        var sentenceStart = 0
+        val bi = BreakIterator.getSentenceInstance(Locale.US)
+        bi.setText(text)
 
-        // Match punctuation (.!?) followed by whitespace
-        val punctPattern = Regex("[.!?]+\\s+")
-        val matches = punctPattern.findAll(text).toList()
-
-        for (match in matches) {
-            val punctEnd = match.range.last + 1
-            val punctStart = match.range.first
-
-            // Check if this period is actually a sentence end
-            if (text[punctStart] == '.' && isAbbreviationDot(text, punctStart)) {
-                continue // Skip — this dot is part of an abbreviation
+        var start = bi.first()
+        var end = bi.next()
+        while (end != BreakIterator.DONE) {
+            val segment = text.substring(start, end)
+            if (segment.isNotBlank()) {
+                result.add(TextChunk(segment, start, end))
             }
-
-            // This looks like a real sentence boundary
-            val segText = text.substring(sentenceStart, punctEnd)
-            if (segText.isNotBlank()) {
-                result.add(TextChunk(segText, sentenceStart, punctEnd))
-            }
-            sentenceStart = punctEnd
+            start = end
+            end = bi.next()
         }
 
-        // Remaining text after last sentence break
-        if (sentenceStart < text.length) {
-            val remaining = text.substring(sentenceStart)
+        // Handle any remaining text (shouldn't happen with BreakIterator, but be safe)
+        if (start < text.length) {
+            val remaining = text.substring(start)
             if (remaining.isNotBlank()) {
-                result.add(TextChunk(remaining, sentenceStart, text.length))
+                result.add(TextChunk(remaining, start, text.length))
             }
         }
 
@@ -121,48 +99,6 @@ object TextChunker {
         }
 
         return result
-    }
-
-    /**
-     * Check if the period at position [dotIndex] is part of an abbreviation rather
-     * than a sentence terminator.
-     *
-     * Returns true if:
-     * - The dot is preceded by a single uppercase letter (U.S., D.C., etc.)
-     * - The word before the dot is a known abbreviation (Mr., Dr., etc.)
-     */
-    private fun isAbbreviationDot(text: String, dotIndex: Int): Boolean {
-        if (dotIndex <= 0) return false
-
-        // Find the word immediately before the dot
-        var wordEnd = dotIndex
-        // Skip any preceding dots (for chained abbreviations like U.S.)
-        var pos = dotIndex - 1
-        while (pos >= 0 && (text[pos].isLetter() || text[pos] == '.')) {
-            pos--
-        }
-        val wordStart = pos + 1
-        if (wordStart >= wordEnd) return false
-
-        val wordBeforeDot = text.substring(wordStart, wordEnd)
-
-        // Single uppercase letter before dot: U. S. A. I. etc.
-        if (wordBeforeDot.length == 1 && wordBeforeDot[0].isUpperCase()) {
-            return true
-        }
-
-        // Chained abbreviations like "U.S" (the chars between dots are single letters)
-        if (wordBeforeDot.contains('.')) {
-            val parts = wordBeforeDot.split('.')
-            val allSingleLetters = parts.all { it.length <= 1 }
-            if (allSingleLetters) return true
-        }
-
-        // Known abbreviation (case-insensitive)
-        val cleanWord = wordBeforeDot.replace(".", "").lowercase()
-        if (cleanWord in ABBREVIATIONS) return true
-
-        return false
     }
 
     /**
