@@ -33,6 +33,15 @@ class PhonemeConverter(context: Context) {
         private val TENS = arrayOf(
             "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"
         )
+        private val ORDINAL_ONES = arrayOf(
+            "", "first", "second", "third", "fourth", "fifth", "sixth", "seventh",
+            "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
+            "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"
+        )
+        private val ORDINAL_TENS = arrayOf(
+            "", "", "twentieth", "thirtieth", "fortieth", "fiftieth",
+            "sixtieth", "seventieth", "eightieth", "ninetieth"
+        )
 
         // Misaki E2M (eSpeak-to-Misaki) replacements for American English.
         // Applied longest-first to eSpeak IPA output with '^' tie characters.
@@ -176,15 +185,63 @@ class PhonemeConverter(context: Context) {
             .replace("\uFF1B", "; ")
             .replace("\uFF1F", "? ")
 
-        // Common abbreviations (eSpeak handles Dr./Mr. itself, but we keep these
-        // for consistency with text display)
+        // Common abbreviations (eSpeak handles Dr./Mr. itself, but we expand
+        // for consistency with what the user sees in the text display)
         t = t.replace(Regex("\\bD[Rr]\\.(?= [A-Z])"), "Doctor")
             .replace(Regex("\\b(?:Mr\\.|MR\\.(?= [A-Z]))"), "Mister")
             .replace(Regex("\\b(?:Ms\\.|MS\\.(?= [A-Z]))"), "Miss")
             .replace(Regex("\\b(?:Mrs\\.|MRS\\.(?= [A-Z]))"), "Missus")
             .replace(Regex("\\betc\\.(?! [A-Z])"), "etcetera")
 
+        // --- Time expressions (BEFORE number-to-words) ---
+        // 3:30pm → three thirty p m, 12:00 → twelve o'clock
+        t = Regex("(\\d{1,2}):(\\d{2})\\s*([AaPp][Mm])?").replace(t) { match ->
+            val hour = match.groupValues[1].toIntOrNull() ?: return@replace match.value
+            val min = match.groupValues[2].toIntOrNull() ?: return@replace match.value
+            val ampm = match.groupValues[3]
+            if (hour > 24 || min > 59) return@replace match.value
+            val hourWord = integerToWords(hour.toLong())
+            val minWord = when {
+                min == 0 -> "o'clock"
+                min < 10 -> "oh ${integerToWords(min.toLong())}"
+                else -> integerToWords(min.toLong())
+            }
+            val suffix = when (ampm.lowercase()) {
+                "am" -> " a m"
+                "pm" -> " p m"
+                else -> ""
+            }
+            "$hourWord $minWord$suffix"
+        }
+
         // --- Currency, units, symbols (BEFORE number-to-words) ---
+
+        // Currency with cents: $3.50 → three dollars and fifty cents
+        t = Regex("([\\$\u20AC\u00A3])\\s*(\\d+)\\.(\\d{2})\\b").replace(t) { match ->
+            val dollars = match.groupValues[2].toLongOrNull() ?: return@replace match.value
+            val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value
+            val currency = when (match.groupValues[1]) {
+                "\$" -> "dollar" to "cent"
+                "\u20AC" -> "euro" to "cent"
+                "\u00A3" -> "pound" to "penny"
+                else -> "dollar" to "cent"
+            }
+            val dollarWord = integerToWords(dollars)
+            val dollarUnit = if (dollars == 1L) currency.first else "${currency.first}s"
+            if (cents == 0) {
+                "$dollarWord $dollarUnit"
+            } else {
+                val centWord = integerToWords(cents.toLong())
+                val centUnit = if (cents == 1) {
+                    currency.second
+                } else if (currency.second == "penny") {
+                    "pence"
+                } else {
+                    "${currency.second}s"
+                }
+                "$dollarWord $dollarUnit and $centWord $centUnit"
+            }
+        }
 
         // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000
         t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
@@ -219,11 +276,25 @@ class PhonemeConverter(context: Context) {
 
         // --- End currency/units/symbols ---
 
+        // --- Ordinals: 1st, 2nd, 3rd, 21st, etc. (BEFORE general number conversion) ---
+        t = Regex("(\\d+)(?:st|nd|rd|th)\\b").replace(t) { match ->
+            val n = match.groupValues[1].toLongOrNull() ?: return@replace match.value
+            ordinalToWords(n)
+        }
+
+        // --- Year-like numbers: 4-digit numbers 1000-2099 in likely year contexts ---
+        // Standalone years or years preceded by "in", "of", "from", "since", "by", etc.
+        t = Regex("(?<=\\b(?:in|of|from|since|by|year|circa|around|before|after|during)\\s)(\\d{4})\\b")
+            .replace(t) { match ->
+                val n = match.groupValues[1].toLongOrNull() ?: return@replace match.value
+                yearToWords(n)
+            }
+
         // Number formatting
         t = t.replace(Regex("(?<=\\d),(?=\\d)"), "")
         t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ")
 
-        // Convert numbers to words
+        // Convert remaining numbers to words
         t = t.replace(Regex("\\d+(\\.\\d+)?")) { match ->
             numberToWords(match.value)
         }
@@ -236,7 +307,7 @@ class PhonemeConverter(context: Context) {
 
     /**
      * Convert a number string to English words.
-     * Handles integers up to 999,999,999 and simple decimals.
+     * Handles integers up to 999 trillion and simple decimals.
      */
     private fun numberToWords(numStr: String): String {
         // Handle decimals
@@ -257,6 +328,63 @@ class PhonemeConverter(context: Context) {
         else -> ch.toString()
     }
 
+    /**
+     * Convert a year number to natural speech.
+     * 2024 → "twenty twenty four", 1999 → "nineteen ninety nine",
+     * 2000 → "two thousand", 2001 → "two thousand one".
+     */
+    private fun yearToWords(n: Long): String {
+        if (n < 1000 || n > 2099) return integerToWords(n)
+
+        // 2000-2009: "two thousand [N]"
+        if (n in 2000..2009) {
+            return if (n == 2000L) "two thousand"
+            else "two thousand ${ONES[n.toInt() - 2000]}"
+        }
+
+        // Split into century + remainder: 2024 → "twenty" + "twenty four"
+        val century = (n / 100).toInt()
+        val remainder = (n % 100).toInt()
+        val centuryWord = integerToWords(century.toLong())
+        return if (remainder == 0) {
+            "${centuryWord} hundred"
+        } else if (remainder < 10) {
+            "$centuryWord oh ${ONES[remainder]}"
+        } else {
+            "$centuryWord ${integerToWords(remainder.toLong())}"
+        }
+    }
+
+    /**
+     * Convert a number to its ordinal form.
+     * 1 → "first", 21 → "twenty first", 100 → "one hundredth".
+     */
+    private fun ordinalToWords(n: Long): String {
+        if (n <= 0) return integerToWords(n)
+
+        // Simple cases: 1-19
+        if (n < 20) return ORDINAL_ONES[n.toInt()]
+
+        // 20, 30, ..., 90
+        if (n < 100 && n % 10 == 0L) return ORDINAL_TENS[(n / 10).toInt()]
+
+        // 21-99: "twenty first", "thirty second", etc.
+        if (n < 100) {
+            val tens = TENS[(n / 10).toInt()]
+            val ones = ORDINAL_ONES[(n % 10).toInt()]
+            return "$tens $ones"
+        }
+
+        // For larger numbers, use cardinal for the leading part + ordinal suffix
+        // 100th → "one hundredth", 101st → "one hundred and first"
+        val remainder = n % 100
+        if (remainder == 0L) {
+            return "${integerToWords(n / 100)} hundredth"
+        }
+        val leading = integerToWords(n - remainder)
+        return "$leading and ${ordinalToWords(remainder)}"
+    }
+
     private fun integerToWords(n: Long): String {
         if (n == 0L) return "zero"
         if (n < 0) return "negative ${integerToWords(-n)}"
@@ -264,6 +392,10 @@ class PhonemeConverter(context: Context) {
         val parts = mutableListOf<String>()
         var remaining = n
 
+        if (remaining >= 1_000_000_000_000) {
+            parts.add("${integerToWords(remaining / 1_000_000_000_000)} trillion")
+            remaining %= 1_000_000_000_000
+        }
         if (remaining >= 1_000_000_000) {
             parts.add("${integerToWords(remaining / 1_000_000_000)} billion")
             remaining %= 1_000_000_000
