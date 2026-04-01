@@ -83,9 +83,14 @@ class KokoroEngine(private val context: Context) {
 
     /**
      * Synthesize speech from phoneme string.
-     * If the phoneme string exceeds the model's token limit, it is split at
-     * a word boundary (IPA space) and each part is synthesized separately,
-     * then the audio segments are concatenated with a short crossfade.
+     *
+     * If the token count exceeds the model's hard limit
+     * ([Tokenizer.MAX_PHONEME_LENGTH] + 2 for BOS/EOS), splits the phoneme
+     * string at the nearest word boundary and crossfade-concatenates the parts.
+     *
+     * Shorter-sentence truncation (the int8 duration-predictor issue) is handled
+     * upstream by [TextChunker], which keeps sentences short enough that the
+     * model stays in its safe samples-per-token zone.
      *
      * @param phonemes IPA phoneme string
      * @param voiceName name of the voice style to use
@@ -100,14 +105,14 @@ class KokoroEngine(private val context: Context) {
             return synthesizeTokens(tokens, voiceName, speed)
         }
 
-        // Phonemes exceed model limit — split at word boundary and concatenate
-        Log.i(TAG, "Phonemes exceed limit (${tokens.size} tokens, max $maxTokens), splitting")
-        val maxChars = Tokenizer.MAX_PHONEME_LENGTH
-        val splitPos = phonemes.lastIndexOf(' ', maxChars - 1)
+        // Hard limit exceeded — split at nearest word boundary
+        Log.i(TAG, "Splitting phonemes: hard token limit (${tokens.size}/$maxTokens)")
+        val splitPos = phonemes.lastIndexOf(' ', Tokenizer.MAX_PHONEME_LENGTH - 1)
+
         if (splitPos <= 0) {
-            // No word boundary — truncate as last resort
-            Log.w(TAG, "No word boundary found for splitting, truncating")
-            return synthesizeTokens(tokens.take(maxTokens).toLongArray(), voiceName, speed)
+            Log.w(TAG, "No word boundary found for splitting, synthesizing as-is (clamped)")
+            val clamped = tokens.take(maxTokens).toLongArray()
+            return synthesizeTokens(clamped, voiceName, speed)
         }
 
         val firstPart = phonemes.substring(0, splitPos).trim()
@@ -117,7 +122,6 @@ class KokoroEngine(private val context: Context) {
 
         val audio1 = synthesize(firstPart, voiceName, speed)
         val audio2 = synthesize(secondPart, voiceName, speed)
-
         return crossfadeConcat(audio1, audio2)
     }
 

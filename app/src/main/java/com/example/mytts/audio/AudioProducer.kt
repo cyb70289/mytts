@@ -20,9 +20,11 @@ class AudioProducer(
         // Max chunks to queue ahead of playback
         private const val MAX_QUEUE_AHEAD = 4
         // Silence threshold: samples below this absolute value are considered silent
-        private const val SILENCE_THRESHOLD = 0.01f
+        private const val SILENCE_THRESHOLD = 0.002f
         // Target silence gap between chunks in milliseconds
         private const val GAP_BETWEEN_CHUNKS_MS = 300
+        // Safety margin after last non-silent sample to preserve decays
+        private const val TRIM_MARGIN_SAMPLES = 480  // ~20ms at 24kHz
     }
 
     private val running = AtomicBoolean(false)
@@ -77,14 +79,7 @@ class AudioProducer(
                 if (!running.get()) break
 
                 try {
-                    Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
-                    val startTime = System.currentTimeMillis()
-
                     val pcm = engine.speakNormalized(text, voiceName, speed)
-
-                    val elapsed = System.currentTimeMillis() - startTime
-                    val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
-                    Log.d(TAG, "Chunk $i: ${elapsed}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsed.toFloat() / audioDuration))
 
                     if (pcm.isNotEmpty() && running.get()) {
                         // Trim trailing silence and add a controlled gap
@@ -100,13 +95,11 @@ class AudioProducer(
                 }
             }
         } catch (_: InterruptedException) {
-            Log.d(TAG, "Producer interrupted")
             return
         }
 
         // Signal end: let player drain its queue naturally then stop
         if (running.get()) {
-            Log.d(TAG, "Producer finished all chunks")
             player.markProducerDone()
         }
     }
@@ -132,14 +125,17 @@ class AudioProducer(
     private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int): FloatArray {
         if (pcm.isEmpty()) return pcm
 
-        // Find last non-silent sample (scanning backwards)
+        // Find last sample above the silence threshold (scanning backwards).
+        // Using a lower threshold (0.002 ≈ -54dB) to avoid cutting off quiet
+        // tail content that the model actually generated.
         var lastNonSilent = pcm.size - 1
         while (lastNonSilent >= 0 && kotlin.math.abs(pcm[lastNonSilent]) < SILENCE_THRESHOLD) {
             lastNonSilent--
         }
 
-        // Keep audio up to last non-silent sample (with small margin to avoid cutting off decay)
-        val margin = minOf(64, pcm.size - lastNonSilent - 1)
+        // Keep audio up to last non-silent sample plus a safety margin (~20ms)
+        // to preserve any natural decay or release that falls below threshold.
+        val margin = minOf(TRIM_MARGIN_SAMPLES, pcm.size - lastNonSilent - 1)
         val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)
 
         // Calculate desired gap in samples
