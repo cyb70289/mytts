@@ -158,6 +158,7 @@ class KokoroEngine(private val context: Context) {
     }
 
     fun release() {
+        _phonemeConverter?.release()
         session?.close()
         session = null
         environment?.close()

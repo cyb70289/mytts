@@ -17,6 +17,18 @@ android {
         ndk {
             abiFilters += "arm64-v8a"
         }
+        externalNativeBuild {
+            cmake {
+                arguments += "-DANDROID_STL=c++_shared"
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     signingConfigs {
@@ -68,9 +80,6 @@ android {
 dependencies {
     // ONNX Runtime - pinned to 1.20.0 (newer uses ARM SME unsupported on target device)
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
-
-    // IPA transcriber fallback for unknown words
-    implementation("com.github.medavox:IPA-Transcribers:v0.2")
 
     // Compose
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))

@@ -2,18 +2,17 @@ package com.example.mytts.engine
 
 import android.content.Context
 import android.util.Log
-import com.github.medavox.ipa_transcribers.Language
 
 /**
  * Converts English text to IPA phonemes for Kokoro TTS.
  *
- * Uses a CMU Pronouncing Dictionary (IPA format) for known words,
- * with fallback to medavox rule-based transcriber for unknown words.
+ * Uses eSpeak-ng (via NDK/JNI) for grapheme-to-phoneme conversion, with
+ * post-processing based on the misaki library's E2M mapping to produce
+ * phonemes compatible with how the Kokoro model was trained.
  */
 class PhonemeConverter(context: Context) {
     companion object {
         private const val TAG = "PhonemeConverter"
-        private const val DICT_FILE = "cmudict_ipa.txt"
 
         // Characters that exist in the Kokoro VOCAB
         val VALID_CHARS: Set<Char> = run {
@@ -25,29 +24,6 @@ class PhonemeConverter(context: Context) {
             (listOf(pad) + punctuation.toList() + letters.toList() + lettersIpa.toList()).toSet()
         }
 
-        // Override CMU dict entries that are wrong for common usage
-        // (CMU dict treats these as acronyms/letter names, not common words)
-        private val WORD_OVERRIDES = mapOf(
-            "A" to "\u0259",             // ə (article, not letter name)
-            "AN" to "\u0259n",           // ən
-            "IT" to "\u026At",           // ɪt
-            "IT'S" to "\u026Ats",        // ɪts
-            "ITS" to "\u026Ats",         // ɪts
-            "I" to "a\u026A",            // aɪ
-            "AM" to "\u00E6m",           // æm
-            "AS" to "\u00E6z",           // æz
-            "AT" to "\u00E6t",           // æt
-            "IF" to "\u026Af",           // ɪf
-            "IN" to "\u026An",           // ɪn
-            "IS" to "\u026Az",           // ɪz
-            "OF" to "\u0259v",           // əv
-            "ON" to "\u0252n",           // ɒn
-            "OR" to "\u0254\u0279",      // ɔɹ
-            "TO" to "tu\u02D0",          // tuː
-            "UP" to "\u028Ap",           // ʊp
-            "US" to "\u028As",           // ʊs
-        )
-
         // Number words for text-to-speech
         private val ONES = arrayOf(
             "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
@@ -57,28 +33,48 @@ class PhonemeConverter(context: Context) {
         private val TENS = arrayOf(
             "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"
         )
+
+        // Misaki E2M (eSpeak-to-Misaki) replacements for American English.
+        // Applied longest-first to eSpeak IPA output with '^' tie characters.
+        // Source: hexgrad/misaki espeak.py
+        private val E2M_REPLACEMENTS = listOf(
+            // Multi-char sequences first (longest match wins)
+            "\u0294\u02CCn\u0329" to "\u0294n",   // ʔˌn̩ → ʔn
+            "\u0294n\u0329" to "\u0294n",           // ʔn̩ → ʔn
+            "a^\u026A" to "I",                      // a^ɪ → I (PRICE)
+            "a^\u028A" to "W",                      // a^ʊ → W (MOUTH)
+            "d^\u0292" to "\u02A4",                 // d^ʒ → ʤ (JUDGE)
+            "t^\u0283" to "\u02A7",                 // t^ʃ → ʧ (CHURCH)
+            "e^\u026A" to "A",                      // e^ɪ → A (FACE)
+            "\u0254^\u026A" to "Y",                 // ɔ^ɪ → Y (CHOICE)
+            "\u0259^l" to "\u1D4Al",                // ə^l → ᵊl (syllabic l)
+            "\u02B2o" to "jo",                      // ʲo → jo
+            "\u02B2\u0259" to "j\u0259",            // ʲə → jə
+            "\u02B2" to "",                         // ʲ → (delete)
+            "\u025A" to "\u0259\u0279",             // ɚ → əɹ (rhotacized schwa)
+            "r" to "\u0279",                        // r → ɹ
+            "x" to "k",                             // x → k
+            "\u00E7" to "k",                        // ç → k
+            "\u0250" to "\u0259",                   // ɐ → ə
+            "\u026C" to "l",                        // ɬ → l
+            "\u0303" to "",                         // combining tilde → delete
+        )
+
+        // American English dialect-specific replacements (applied after E2M)
+        private val AMERICAN_REPLACEMENTS = listOf(
+            "o^\u028A" to "O",                      // o^ʊ → O (GOAT American)
+            "\u025C\u02D0\u0279" to "\u025C\u0279", // ɜːɹ → ɜɹ (NURSE)
+            "\u025C\u02D0" to "\u025C\u0279",       // ɜː → ɜɹ (NURSE without explicit r)
+            "\u026A\u0259" to "i\u0259",            // ɪə → iə (NEAR)
+        )
     }
 
-    private val phonemeMap = mutableMapOf<String, String>()
-    private val englishTranscriber by lazy { Language.ENGLISH.transcriber }
+    private val espeakBridge = EspeakBridge(context)
 
     init {
-        loadDictionary(context)
-    }
-
-    private fun loadDictionary(context: Context) {
-        try {
-            context.assets.open(DICT_FILE).bufferedReader().useLines { lines ->
-                lines.filter { !it.startsWith(";;;") && it.isNotBlank() }.forEach { line ->
-                    val parts = line.split("\t", limit = 2)
-                    if (parts.size == 2) {
-                        phonemeMap[parts[0].trim()] = parts[1].trim()
-                    }
-                }
-            }
-            Log.i(TAG, "Dictionary loaded: ${phonemeMap.size} entries")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load dictionary", e)
+        val success = espeakBridge.initialize()
+        if (!success) {
+            Log.e(TAG, "Failed to initialize eSpeak-ng!")
         }
     }
 
@@ -87,27 +83,7 @@ class PhonemeConverter(context: Context) {
      */
     fun phonemize(text: String): String {
         val normalized = normalizeText(text)
-        // Tokenize keeping contractions/possessives intact (e.g. "isn't" as one token).
-        // Pattern: letters optionally followed by apostrophe+letters (contractions),
-        // OR any non-letter sequence (punctuation, spaces).
-        val tokens = Regex("[a-zA-Z]+(?:'[a-zA-Z]+)*|[^a-zA-Z]+")
-            .findAll(normalized).map { it.value }.filter { it.isNotBlank() }.toList()
-
-        val result = StringBuilder()
-        for ((index, token) in tokens.withIndex()) {
-            if (token.matches(Regex("[^a-zA-Z']+"))) {
-                // Punctuation/whitespace - keep as-is
-                result.append(token)
-            } else {
-                if (index > 0 && result.isNotEmpty() && !result.last().isWhitespace()) {
-                    result.append(" ")
-                }
-                val ipa = convertWord(token)
-                result.append(ipa)
-            }
-        }
-
-        return postProcess(result.toString())
+        return phonemizeNormalized(normalized)
     }
 
     /**
@@ -115,81 +91,75 @@ class PhonemeConverter(context: Context) {
      * Skips normalizeText() since the caller already did it.
      */
     fun phonemizeNormalized(normalizedText: String): String {
-        val tokens = Regex("[a-zA-Z]+(?:'[a-zA-Z]+)*|[^a-zA-Z]+")
-            .findAll(normalizedText).map { it.value }.filter { it.isNotBlank() }.toList()
-
-        val result = StringBuilder()
-        for ((index, token) in tokens.withIndex()) {
-            if (token.matches(Regex("[^a-zA-Z']+"))) {
-                result.append(token)
-            } else {
-                if (index > 0 && result.isNotEmpty() && !result.last().isWhitespace()) {
-                    result.append(" ")
-                }
-                val ipa = convertWord(token)
-                result.append(ipa)
-            }
+        // Get raw IPA from eSpeak-ng (with '^' tie characters)
+        val rawIpa = espeakBridge.textToPhonemes(normalizedText)
+        if (rawIpa.isEmpty()) {
+            Log.w(TAG, "eSpeak returned empty phonemes for: $normalizedText")
+            return ""
         }
 
-        return postProcess(result.toString())
-    }
-
-    private fun convertWord(word: String): String {
-        if (word.matches(Regex("[^a-zA-Z']+"))) return word
-
-        val clean = word.replace(Regex("[^a-zA-Z']"), "").uppercase()
-
-        // Check overrides first (fixes CMU dict treating common words as acronyms)
-        val override = WORD_OVERRIDES[clean]
-        if (override != null) return override
-
-        val lookup = phonemeMap[clean]
-
-        val raw = if (lookup != null) {
-            lookup.split(",").first().trim()
-        } else {
-            // Fallback to rule-based transcription
-            try {
-                englishTranscriber.transcribe(word)
-            } catch (e: Exception) {
-                Log.w(TAG, "Transcription failed for '$word'", e)
-                word.lowercase()
-            }
-        }
-
-        val cleaned = raw.replace(" ", "").replace("\u02CC", "")
-        return adjustStressMarkers(cleaned)
+        // Apply misaki E2M mapping
+        return postProcess(rawIpa)
     }
 
     /**
-     * Move stress markers to just before the stressed vowel.
+     * Release eSpeak-ng resources.
      */
-    private fun adjustStressMarkers(input: String): String {
-        val vowels = setOf(
-            'a', 'e', 'i', 'o', 'u',
-            '\u0251', '\u0250', '\u0252', '\u00E6', '\u0254', '\u0259', '\u0258', '\u025A',
-            '\u025B', '\u025C', '\u025D', '\u025E',
-            '\u026A', '\u0268', '\u00F8', '\u0275', '\u0153', '\u0276', '\u0289', '\u028A', '\u028C',
-            '\u02D0', '\u02D1'
-        )
+    fun release() {
+        espeakBridge.terminate()
+    }
 
-        val builder = StringBuilder(input)
-        var i = 0
-        while (i < builder.length) {
-            if (builder[i] == '\u02C8') {
-                val stressIndex = i
-                for (j in stressIndex + 1 until builder.length) {
-                    if (builder[j] in vowels) {
-                        builder.deleteCharAt(stressIndex)
-                        builder.insert(j - 1, '\u02C8')
-                        i = j
-                        break
-                    }
-                }
-            }
-            i++
+    /**
+     * Apply misaki E2M post-processing to convert eSpeak IPA output
+     * to Kokoro-compatible phoneme format.
+     */
+    private fun postProcess(phonemes: String): String {
+        var result = phonemes
+
+        // Apply E2M replacements (longest-first ordering)
+        for ((from, to) in E2M_REPLACEMENTS) {
+            result = result.replace(from, to)
         }
-        return builder.toString()
+
+        // Handle syllabic consonants: combining character below (U+0329)
+        // → small schwa (ᵊ) before the consonant
+        result = Regex("(\\S)\u0329").replace(result) { match ->
+            "\u1D4A${match.groupValues[1]}"
+        }
+        // Remove any remaining combining marks
+        result = result.replace("\u0329", "")
+
+        // American English dialect
+        for ((from, to) in AMERICAN_REPLACEMENTS) {
+            result = result.replace(from, to)
+        }
+
+        // Strip ALL remaining length marks (American English doesn't use them)
+        result = result.replace("\u02D0", "")
+
+        // eSpeak compatibility: bare 'e' → A (FACE vowel) — only bare 'e' not part of other sequences
+        // Note: at this point, e^ɪ is already mapped to A, but bare 'e' can still appear
+        result = result.replace("e", "A")
+
+        // Kokoro model-specific mappings (for v1.0, non-2.0 models)
+        result = result.replace("\u027E", "T")    // ɾ (flap) → T
+        result = result.replace("\u0294", "t")     // ʔ (glottal stop) → t
+
+        // Remove remaining tie characters
+        result = result.replace("^", "")
+
+        // Map bare 'o' → ɔ (eSpeak compatibility for older versions)
+        result = result.replace("o", "\u0254")
+
+        // Strip $ pad token — must not leak into phoneme stream
+        result = result.replace("\$", "")
+
+        // Filter to only valid VOCAB characters
+        result = result.filter { ch ->
+            ch in VALID_CHARS || ch.isWhitespace()
+        }
+
+        return result.trim()
     }
 
     fun normalizeText(text: String): String {
@@ -206,7 +176,8 @@ class PhonemeConverter(context: Context) {
             .replace("\uFF1B", "; ")
             .replace("\uFF1F", "? ")
 
-        // Common abbreviations
+        // Common abbreviations (eSpeak handles Dr./Mr. itself, but we keep these
+        // for consistency with text display)
         t = t.replace(Regex("\\bD[Rr]\\.(?= [A-Z])"), "Doctor")
             .replace(Regex("\\b(?:Mr\\.|MR\\.(?= [A-Z]))"), "Mister")
             .replace(Regex("\\b(?:Ms\\.|MS\\.(?= [A-Z]))"), "Miss")
@@ -320,32 +291,5 @@ class PhonemeConverter(context: Context) {
             }
         }
         return parts.joinToString(" ")
-    }
-
-    private fun postProcess(phonemes: String): String {
-        var result = phonemes
-            .replace("r", "\u0279")
-            .replace("x", "k")
-            .replace("\u02B2", "j")
-            .replace("\u026C", "l")
-
-        // Kokoro pronunciation fix
-        result = result.replace("k\u0259k\u02C8o\u02D0\u0279o\u028A", "k\u02C8o\u028Ak\u0259\u0279o\u028A")
-            .replace("k\u0259k\u02C8\u0254\u02D0\u0279\u0259\u028A", "k\u02C8\u0259\u028Ak\u0259\u0279\u0259\u028A")
-
-        // American English adjustments
-        result = result.replace("ti", "di")
-
-        // Strip $ BEFORE the VALID_CHARS filter — $ is the pad token (token ID 0)
-        // in Kokoro's vocabulary. Any stray $ that leaks through text normalization
-        // would be tokenized as pad and corrupt the model input.
-        result = result.replace("\$", "")
-
-        // Filter to only valid VOCAB characters + punctuation
-        result = result.filter { ch ->
-            ch in VALID_CHARS || ch.isWhitespace()
-        }
-
-        return result.trim()
     }
 }
