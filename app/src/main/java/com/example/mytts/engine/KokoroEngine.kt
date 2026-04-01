@@ -14,6 +14,7 @@ class KokoroEngine(private val context: Context) {
     companion object {
         private const val TAG = "KokoroEngine"
         private const val MODEL_FILE = "model_quantized.onnx"
+        private const val CROSSFADE_SAMPLES = 100  // ~4ms at 24kHz
         const val SAMPLE_RATE = 24000
     }
 
@@ -82,36 +83,79 @@ class KokoroEngine(private val context: Context) {
 
     /**
      * Synthesize speech from phoneme string.
+     * If the phoneme string exceeds the model's token limit, it is split at
+     * a word boundary (IPA space) and each part is synthesized separately,
+     * then the audio segments are concatenated with a short crossfade.
      *
-     * @param phonemes IPA phoneme string (max ~400 chars)
+     * @param phonemes IPA phoneme string
      * @param voiceName name of the voice style to use
      * @param speed playback speed multiplier (1.0 = normal, >1 = faster)
      * @return PCM float samples at [SAMPLE_RATE] Hz
      */
     fun synthesize(phonemes: String, voiceName: String, speed: Float = 1.0f): FloatArray {
+        val tokens = Tokenizer.tokenizeWithPadding(phonemes)
+        val maxTokens = Tokenizer.MAX_PHONEME_LENGTH + 2
+
+        if (tokens.size <= maxTokens) {
+            return synthesizeTokens(tokens, voiceName, speed)
+        }
+
+        // Phonemes exceed model limit — split at word boundary and concatenate
+        Log.i(TAG, "Phonemes exceed limit (${tokens.size} tokens, max $maxTokens), splitting")
+        val maxChars = Tokenizer.MAX_PHONEME_LENGTH
+        val splitPos = phonemes.lastIndexOf(' ', maxChars - 1)
+        if (splitPos <= 0) {
+            // No word boundary — truncate as last resort
+            Log.w(TAG, "No word boundary found for splitting, truncating")
+            return synthesizeTokens(tokens.take(maxTokens).toLongArray(), voiceName, speed)
+        }
+
+        val firstPart = phonemes.substring(0, splitPos).trim()
+        val secondPart = phonemes.substring(splitPos + 1).trim()
+        if (firstPart.isEmpty()) return synthesize(secondPart, voiceName, speed)
+        if (secondPart.isEmpty()) return synthesize(firstPart, voiceName, speed)
+
+        val audio1 = synthesize(firstPart, voiceName, speed)
+        val audio2 = synthesize(secondPart, voiceName, speed)
+
+        return crossfadeConcat(audio1, audio2)
+    }
+
+    /**
+     * Concatenate two audio segments with a short crossfade to avoid clicks.
+     */
+    private fun crossfadeConcat(a: FloatArray, b: FloatArray): FloatArray {
+        // ~4ms crossfade at 24kHz — inaudible but prevents splice clicks
+        val fadeLen = minOf(CROSSFADE_SAMPLES, a.size, b.size)
+        val result = FloatArray(a.size + b.size - fadeLen)
+        // Copy non-overlapping part of a
+        a.copyInto(result, 0, 0, a.size - fadeLen)
+        // Crossfade overlap region
+        for (i in 0 until fadeLen) {
+            val t = i.toFloat() / fadeLen
+            result[a.size - fadeLen + i] = a[a.size - fadeLen + i] * (1f - t) + b[i] * t
+        }
+        // Copy non-overlapping part of b
+        b.copyInto(result, a.size, fadeLen, b.size)
+        return result
+    }
+
+    /**
+     * Low-level synthesis: run ONNX inference on pre-tokenized input.
+     */
+    private fun synthesizeTokens(tokens: LongArray, voiceName: String, speed: Float): FloatArray {
         val sess = session ?: throw IllegalStateException("Engine not initialized")
         val loader = voiceStyleLoader ?: throw IllegalStateException("Engine not initialized")
-
-        // Tokenize with padding
-        val tokens = Tokenizer.tokenizeWithPadding(phonemes)
-        if (tokens.size > Tokenizer.MAX_PHONEME_LENGTH + 2) {
-            Log.w(TAG, "Phonemes too long (${tokens.size} tokens), truncating")
-        }
-        val truncatedTokens = if (tokens.size > Tokenizer.MAX_PHONEME_LENGTH + 2) {
-            tokens.take(Tokenizer.MAX_PHONEME_LENGTH + 2).toLongArray()
-        } else {
-            tokens
-        }
 
         // Load voice style matrix [510][256] and select row by token count.
         // The style matrix is indexed by sequence length: row N = style for N tokens.
         val styleMatrix = loader.loadVoice(voiceName)
-        val styleIndex = minOf(truncatedTokens.size, styleMatrix.size - 1)
+        val styleIndex = minOf(tokens.size, styleMatrix.size - 1)
         val styleRow = arrayOf(styleMatrix[styleIndex]) // shape [1][256]
 
         // Create ONNX tensors
         val env = environment!!
-        val tokenTensor = OnnxTensor.createTensor(env, arrayOf(truncatedTokens))
+        val tokenTensor = OnnxTensor.createTensor(env, arrayOf(tokens))
         val styleTensor = OnnxTensor.createTensor(env, styleRow)
         val speedTensor = OnnxTensor.createTensor(env, floatArrayOf(speed))
 

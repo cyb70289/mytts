@@ -87,6 +87,7 @@ class AudioPlayer(
     private fun playLoop() {
         val track = audioTrack ?: return
         var naturalEnd = false
+        var totalFramesWritten = 0L
 
         try {
             track.play()
@@ -154,14 +155,36 @@ class AudioPlayer(
                         break
                     }
                     offset += written
+                    totalFramesWritten += written
                 }
             }
 
-            // Only stop/flush track if we weren't explicitly stopped
+            // Only stop/drain track if we weren't explicitly stopped
             // (explicit stop() handles track cleanup itself)
             if (!stoppedExplicitly.get()) {
-                try { track.stop() } catch (_: Exception) {}
-                try { track.flush() } catch (_: Exception) {}
+                try {
+                    track.stop()
+                } catch (_: Exception) {}
+
+                // Wait for AudioTrack to finish playing all buffered audio.
+                // After stop(), playbackHeadPosition continues advancing until
+                // all written frames have been rendered to hardware.
+                // Do NOT call flush() here — it discards unplayed audio!
+                if (naturalEnd && totalFramesWritten > 0) {
+                    val timeoutMs = 5000L
+                    val startTime = System.currentTimeMillis()
+                    while (System.currentTimeMillis() - startTime < timeoutMs) {
+                        val headPos = track.playbackHeadPosition.toLong() and 0xFFFFFFFFL
+                        if (headPos >= totalFramesWritten) {
+                            Log.d(TAG, "AudioTrack fully drained: head=$headPos, written=$totalFramesWritten")
+                            break
+                        }
+                        try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+                    }
+                    if (System.currentTimeMillis() - startTime >= timeoutMs) {
+                        Log.w(TAG, "AudioTrack drain timeout after ${timeoutMs}ms")
+                    }
+                }
             }
         } catch (e: Exception) {
             Log.w(TAG, "playLoop exiting due to exception", e)
