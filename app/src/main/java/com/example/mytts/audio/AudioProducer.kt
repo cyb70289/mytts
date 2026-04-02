@@ -55,8 +55,8 @@ class AudioProducer(
 
         running.set(true)
         producerThread = Thread({
-            // Run at background priority but on performance cores
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
+            // Run at default priority so Android doesn't throttle when screen is off
+            Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)
             produceLoop()
         }, "AudioProducer").also { it.start() }
     }
