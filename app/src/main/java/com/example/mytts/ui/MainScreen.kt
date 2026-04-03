@@ -100,13 +100,30 @@ fun MainScreen(
         }
     }
 
+    // Helper: compute scroll target that centers the given char offset in the viewport.
+    // Uses TextLayoutResult for pixel-accurate positioning instead of linear ratio.
+    fun scrollTargetForOffset(charOffset: Int): Int? {
+        val layout = textLayoutResult ?: return null
+        if (charOffset < 0 || charOffset > currentText.length) return null
+        val safeOffset = charOffset.coerceIn(0, currentText.length)
+        val line = layout.getLineForOffset(safeOffset)
+        val lineTop = layout.getLineTop(line)
+        val lineBottom = layout.getLineBottom(line)
+        val highlightCenter = (lineTop + lineBottom) / 2f
+        val viewportHeight = scrollState.viewportSize
+        return (highlightCenter - viewportHeight / 2f)
+            .toInt()
+            .coerceIn(0, scrollState.maxValue)
+    }
+
     // Auto-scroll to saved cursor position on app open
     // Wait until scrollState.maxValue > 0 (content has been laid out)
     LaunchedEffect(scrollState.maxValue) {
         if (!initialScrollDone && scrollState.maxValue > 0 && cursorPosition > 0 && currentText.isNotEmpty()) {
-            val ratio = cursorPosition.toFloat() / currentText.length
-            val target = (scrollState.maxValue * ratio).toInt()
-            scrollState.scrollTo(target)
+            val target = scrollTargetForOffset(cursorPosition)
+            if (target != null) {
+                scrollState.scrollTo(target)
+            }
             initialScrollDone = true
         }
     }
@@ -115,10 +132,8 @@ fun MainScreen(
     val chunkRange = controller.getCurrentChunkRange()
     LaunchedEffect(currentChunkIndex) {
         if (chunkRange != null && !isStopped) {
-            val textLen = currentText.length
-            if (textLen > 0) {
-                val ratio = chunkRange.first.toFloat() / textLen
-                val target = (scrollState.maxValue * ratio).toInt()
+            val target = scrollTargetForOffset(chunkRange.first)
+            if (target != null) {
                 scrollState.animateScrollTo(target)
             }
         }
@@ -130,11 +145,8 @@ fun MainScreen(
             val pos = stoppedAtOffset.coerceIn(0, currentText.length)
             cursorPosition = pos
             prefs.saveCursorPosition(pos)
-            // Scroll so stopped position is visible
-            val textLen = currentText.length
-            if (textLen > 0) {
-                val ratio = pos.toFloat() / textLen
-                val target = (scrollState.maxValue * ratio).toInt()
+            val target = scrollTargetForOffset(pos)
+            if (target != null) {
                 scrollState.animateScrollTo(target)
             }
         }
