@@ -8,6 +8,8 @@ import android.util.Log
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.PI
+import kotlin.math.sin
 
 /**
  * Audio playback consumer that reads PCM chunks from a queue and plays via AudioTrack.
@@ -23,6 +25,11 @@ class AudioPlayer(
         private const val TAG = "AudioPlayer"
         // Crossfade samples to avoid pops at chunk boundaries
         private const val CROSSFADE_SAMPLES = 128
+        // Buffering hint tone parameters
+        private const val HINT_FREQUENCY_HZ = 1200.0
+        private const val HINT_DURATION_MS = 150
+        private const val HINT_VOLUME = 0.05f  // 5% volume
+        private const val HINT_INTERVAL_MS = 1000L  // repeat once per second
     }
 
     data class AudioChunk(
@@ -35,6 +42,7 @@ class AudioPlayer(
     private val paused = AtomicBoolean(false)
     private val producerDone = AtomicBoolean(false)
     private var audioTrack: AudioTrack? = null
+    private var hintTrack: AudioTrack? = null  // Separate static track for hint tones
     private var playerThread: Thread? = null
     private val stoppedExplicitly = AtomicBoolean(false)
     private var slowMode = false
@@ -73,6 +81,28 @@ class AudioPlayer(
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
 
+        // Create a separate static AudioTrack for hint tones.
+        // MODE_STATIC plays immediately with minimal latency, avoiding the
+        // buffer-accumulation problem of writing tiny tones to the streaming track.
+        val audioAttrs = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        val audioFmt = AudioFormat.Builder()
+            .setSampleRate(effectiveRate)
+            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+            .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+            .build()
+        val hintTone = generateHintTone(effectiveRate)
+        hintTrack = AudioTrack.Builder()
+            .setAudioAttributes(audioAttrs)
+            .setAudioFormat(audioFmt)
+            .setBufferSizeInBytes(hintTone.size * 4)
+            .setTransferMode(AudioTrack.MODE_STATIC)
+            .build().also {
+                it.write(hintTone, 0, hintTone.size, AudioTrack.WRITE_BLOCKING)
+            }
+
         running.set(true)
         paused.set(false)
         producerDone.set(false)
@@ -88,6 +118,7 @@ class AudioPlayer(
         val track = audioTrack ?: return
         var naturalEnd = false
         var totalFramesWritten = 0L
+        var lastHintTimeMs = 0L
 
         try {
             track.play()
@@ -113,9 +144,22 @@ class AudioPlayer(
                         naturalEnd = true
                         break
                     }
+                    // Underrun: producer still working but queue starved
+                    if (System.currentTimeMillis() - lastHintTimeMs >= HINT_INTERVAL_MS) {
+                        Log.d(TAG, "Underrun detected — playing hint tone")
+                        hintTrack?.let { ht ->
+                            try { ht.stop() } catch (_: Exception) {}
+                            ht.reloadStaticData()
+                            ht.play()
+                        }
+                        lastHintTimeMs = System.currentTimeMillis()
+                        onUnderrun()
+                    }
                     continue
                 }
 
+                // Real chunk arrived — reset hint cooldown
+                lastHintTimeMs = 0L
                 onChunkStarted(chunk.chunkIndex)
 
                 var pcm = chunk.pcm
@@ -197,6 +241,23 @@ class AudioPlayer(
     }
 
     /**
+     * Generate a short, quiet hint tone to signal buffering/underrun.
+     * 1200Hz sine wave, ~150ms, 5% volume, with Hann window fade-in/fade-out
+     * to avoid click artifacts.
+     */
+    private fun generateHintTone(effectiveRate: Int): FloatArray {
+        val numSamples = effectiveRate * HINT_DURATION_MS / 1000
+        val tone = FloatArray(numSamples)
+        val angularFreq = 2.0 * PI * HINT_FREQUENCY_HZ / effectiveRate
+        for (i in 0 until numSamples) {
+            // Hann window envelope: smooth fade-in and fade-out
+            val envelope = 0.5f * (1.0f - kotlin.math.cos(2.0f * PI.toFloat() * i / numSamples))
+            tone[i] = (HINT_VOLUME * envelope * sin(angularFreq * i)).toFloat()
+        }
+        return tone
+    }
+
+    /**
      * Enqueue a PCM audio chunk for playback.
      * Blocks if the queue is full (backpressure on the producer).
      */
@@ -240,6 +301,12 @@ class AudioPlayer(
         if (track != null) {
             try { track.stop() } catch (_: Exception) {}
             try { track.release() } catch (_: Exception) {}
+        }
+        val ht = hintTrack
+        hintTrack = null
+        if (ht != null) {
+            try { ht.stop() } catch (_: Exception) {}
+            try { ht.release() } catch (_: Exception) {}
         }
     }
 
