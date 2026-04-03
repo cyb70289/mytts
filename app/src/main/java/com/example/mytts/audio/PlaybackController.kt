@@ -54,6 +54,7 @@ class PlaybackController(
     private var producer: AudioProducer? = null
     private var textProcessor: TextProcessor? = null
     private var preparedChunks: List<PreparedChunk> = emptyList()
+    private var processJob: Job? = null
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var initJob: Job? = null
@@ -295,19 +296,25 @@ class PlaybackController(
      */
     fun processText(text: String) {
         val tp = textProcessor ?: return // Engine not initialized yet
+        // Cancel any in-flight processing to prevent stale chunks from
+        // a previous call overwriting our result (race condition).
+        processJob?.cancel()
         if (text.isBlank()) {
             preparedChunks = emptyList()
             return
         }
         _isProcessing.value = true
         _statusMessage.value = "Processing text..."
-        scope.launch(Dispatchers.Default) {
+        processJob = scope.launch(Dispatchers.Default) {
             try {
                 val chunks = tp.processText(text)
                 preparedChunks = chunks
                 Log.d(TAG, "Text processed: ${chunks.size} chunks")
+            } catch (e: CancellationException) {
+                throw e // Don't swallow cancellation
             } catch (e: Exception) {
                 Log.e(TAG, "Text processing failed", e)
+                preparedChunks = emptyList()
             } finally {
                 withContext(Dispatchers.Main) {
                     _isProcessing.value = false
