@@ -109,7 +109,7 @@ class AudioPlayer(
         stoppedExplicitly.set(false)
 
         playerThread = Thread({
-            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
+            Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
             playLoop()
         }, "AudioPlayer").also { it.start() }
     }
