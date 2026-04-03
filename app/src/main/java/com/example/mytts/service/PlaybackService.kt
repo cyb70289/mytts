@@ -13,6 +13,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.example.mytts.BuildConfig
 import com.example.mytts.audio.PlaybackController
 
 /**
@@ -54,7 +55,7 @@ class PlaybackService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Service created")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Service created")
         createNotificationChannel()
         playbackController = PlaybackController(applicationContext)
     }
@@ -76,7 +77,7 @@ class PlaybackService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
-        Log.d(TAG, "Service destroyed")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Service destroyed")
         releaseWakeLock()
         playbackController?.release()
         playbackController = null

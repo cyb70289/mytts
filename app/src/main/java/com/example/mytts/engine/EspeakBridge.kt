@@ -2,6 +2,7 @@ package com.example.mytts.engine
 
 import android.content.Context
 import android.util.Log
+import com.example.mytts.BuildConfig
 import java.io.File
 
 /**
@@ -81,7 +82,7 @@ class EspeakBridge(private val context: Context) {
         val currentVersion = "f6fed6c-en-only"
 
         if (versionFile.exists() && versionFile.readText() == currentVersion) {
-            Log.d(TAG, "eSpeak data already extracted")
+            if (BuildConfig.DEBUG) Log.d(TAG, "eSpeak data already extracted")
             return destDir
         }
 

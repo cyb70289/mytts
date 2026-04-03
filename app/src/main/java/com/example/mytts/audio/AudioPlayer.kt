@@ -5,6 +5,7 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import android.os.Process
 import android.util.Log
+import com.example.mytts.BuildConfig
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -140,13 +141,13 @@ class AudioPlayer(
                 if (chunk == null) {
                     // Queue empty: if producer is done, we've played everything
                     if (producerDone.get()) {
-                        Log.d(TAG, "Queue drained and producer done — finishing playback")
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Queue drained and producer done — finishing playback")
                         naturalEnd = true
                         break
                     }
                     // Underrun: producer still working but queue starved
                     if (System.currentTimeMillis() - lastHintTimeMs >= HINT_INTERVAL_MS) {
-                        Log.d(TAG, "Underrun detected — playing hint tone")
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Underrun detected — playing hint tone")
                         hintTrack?.let { ht ->
                             try { ht.stop() } catch (_: Exception) {}
                             ht.reloadStaticData()
@@ -220,7 +221,7 @@ class AudioPlayer(
                     while (System.currentTimeMillis() - startTime < timeoutMs) {
                         val headPos = track.playbackHeadPosition.toLong() and 0xFFFFFFFFL
                         if (headPos >= totalFramesWritten) {
-                            Log.d(TAG, "AudioTrack fully drained: head=$headPos, written=$totalFramesWritten")
+                            if (BuildConfig.DEBUG) Log.d(TAG, "AudioTrack fully drained: head=$headPos, written=$totalFramesWritten")
                             break
                         }
                         try { Thread.sleep(50) } catch (_: InterruptedException) { break }

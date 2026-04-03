@@ -2,6 +2,7 @@ package com.example.mytts.audio
 
 import android.os.Process
 import android.util.Log
+import com.example.mytts.BuildConfig
 import com.example.mytts.engine.KokoroEngine
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -63,10 +64,12 @@ class AudioProducer(
 
     private fun produceLoop() {
         // Dump all chunks for debugging — verify no stale chunks from previous text
-        Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
-        for (i in chunks.indices) {
-            val c = chunks[i]
-            Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
+            for (i in chunks.indices) {
+                val c = chunks[i]
+                Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
+            }
         }
 
         try {
@@ -84,14 +87,14 @@ class AudioProducer(
                 if (!running.get()) break
 
                 try {
-                    Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
                     val startTime = System.currentTimeMillis()
 
                     val pcm = engine.speakNormalized(text, voiceName, speed)
 
                     val elapsed = System.currentTimeMillis() - startTime
                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
-                    Log.d(TAG, "Chunk $i: ${elapsed}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsed.toFloat() / audioDuration))
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsed}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsed.toFloat() / audioDuration))
 
                     if (pcm.isNotEmpty() && running.get()) {
                         // Trim trailing silence and add a controlled gap
@@ -107,13 +110,13 @@ class AudioProducer(
                 }
             }
         } catch (_: InterruptedException) {
-            Log.d(TAG, "Producer interrupted")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Producer interrupted")
             return
         }
 
         // Signal end: let player drain its queue naturally then stop
         if (running.get()) {
-            Log.d(TAG, "Producer finished all chunks")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Producer finished all chunks")
             player.markProducerDone()
         }
     }

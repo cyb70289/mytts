@@ -2,6 +2,7 @@ package com.example.mytts.audio
 
 import android.content.Context
 import android.util.Log
+import com.example.mytts.BuildConfig
 import com.example.mytts.engine.KokoroEngine
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -309,7 +310,7 @@ class PlaybackController(
             try {
                 val chunks = tp.processText(text)
                 preparedChunks = chunks
-                Log.d(TAG, "Text processed: ${chunks.size} chunks")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Text processed: ${chunks.size} chunks")
             } catch (e: CancellationException) {
                 throw e // Don't swallow cancellation
             } catch (e: Exception) {
