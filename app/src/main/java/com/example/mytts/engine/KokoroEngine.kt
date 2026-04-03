@@ -42,14 +42,19 @@ class KokoroEngine(private val context: Context) {
         environment = OrtEnvironment.getEnvironment()
         val options = OrtSession.SessionOptions().apply {
             // CPU EP is best for int8 quantized model
-            // Use 1 intra-op thread for power efficiency
+            // Use 1 thread for both intra-op (within an operator) and inter-op
+            // (parallel graph execution) to minimize power consumption.
+            // Without setInterOpNumThreads(1), ORT defaults to CPU core count,
+            // spawning unnecessary threads on big.LITTLE SoCs.
             setIntraOpNumThreads(1)
+            setInterOpNumThreads(1)
             // Graph optimization
             setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
         }
 
         val modelBytes = context.assets.open(MODEL_FILE).use { it.readBytes() }
         session = environment!!.createSession(modelBytes, options)
+        options.close() // SessionOptions implements AutoCloseable
 
         _phonemeConverter = PhonemeConverter(context)
         voiceStyleLoader = VoiceStyleLoader(context)
