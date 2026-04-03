@@ -62,6 +62,13 @@ class AudioProducer(
     }
 
     private fun produceLoop() {
+        // Dump all chunks for debugging — verify no stale chunks from previous text
+        Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
+        for (i in chunks.indices) {
+            val c = chunks[i]
+            Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
+        }
+
         try {
             for (i in startIndex until chunks.size) {
                 if (!running.get()) break
