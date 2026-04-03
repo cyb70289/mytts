@@ -292,20 +292,34 @@ class AudioPlayer(
         stoppedExplicitly.set(true)
         running.set(false)
         paused.set(false)
-        queue.clear()
-        playerThread?.interrupt()
-        playerThread?.join(2000)
-        playerThread = null
+
+        // Immediately silence audio BEFORE waiting for thread join.
+        // pause() + flush() is instant — stops hardware playback and discards
+        // any buffered audio, so the user hears silence right away.
         val track = audioTrack
         audioTrack = null
         if (track != null) {
-            try { track.stop() } catch (_: Exception) {}
-            try { track.release() } catch (_: Exception) {}
+            try { track.pause() } catch (_: Exception) {}
+            try { track.flush() } catch (_: Exception) {}
         }
         val ht = hintTrack
         hintTrack = null
         if (ht != null) {
             try { ht.stop() } catch (_: Exception) {}
+        }
+
+        // Now clean up the player thread (may block briefly)
+        queue.clear()
+        playerThread?.interrupt()
+        playerThread?.join(500)
+        playerThread = null
+
+        // Final resource release
+        if (track != null) {
+            try { track.stop() } catch (_: Exception) {}
+            try { track.release() } catch (_: Exception) {}
+        }
+        if (ht != null) {
             try { ht.release() } catch (_: Exception) {}
         }
     }

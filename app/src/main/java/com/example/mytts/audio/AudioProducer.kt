@@ -114,7 +114,9 @@ class AudioProducer(
     fun stop() {
         running.set(false)
         producerThread?.interrupt()
-        producerThread?.join(3000)
+        // Short timeout: ONNX inference can't be interrupted mid-call, but
+        // the next start() calls stop() anyway so orphaned threads self-exit.
+        producerThread?.join(500)
         producerThread = null
     }
 

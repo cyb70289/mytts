@@ -196,10 +196,12 @@ class PlaybackController(
 
         scope.launch(Dispatchers.Default) {
             try {
-                producer?.stop()
-                producer = null
+                // Stop player FIRST for instant silence (pause+flush is immediate),
+                // then stop producer (may block briefly waiting for ONNX inference).
                 player?.stop()
                 player = null
+                producer?.stop()
+                producer = null
             } catch (e: Exception) {
                 Log.e(TAG, "Error during stop cleanup", e)
             }
