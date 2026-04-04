@@ -151,9 +151,13 @@ class PlaybackController(
                 )
                 producer = audioProducer
 
-                // Start player first, then producer
-                audioPlayer.start(slow = slowMode)
-                audioProducer.start(preparedChunks, voiceName, speed = 1.0f, fromIndex = startIndex)
+                // Start player first, then producer.
+                // Slow mode uses the model's speed parameter (0.75) to generate
+                // naturally slower speech with correct pitch, instead of reducing
+                // the AudioTrack sample rate which would lower the pitch.
+                val modelSpeed = if (slowMode) 0.75f else 1.0f
+                audioPlayer.start()
+                audioProducer.start(preparedChunks, voiceName, speed = modelSpeed, fromIndex = startIndex)
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start playback", e)

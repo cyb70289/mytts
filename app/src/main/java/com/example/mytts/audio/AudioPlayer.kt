@@ -46,23 +46,18 @@ class AudioPlayer(
     private var hintTrack: AudioTrack? = null  // Separate static track for hint tones
     private var playerThread: Thread? = null
     private val stoppedExplicitly = AtomicBoolean(false)
-    private var slowMode = false
 
     /**
      * Start the audio player thread.
-     * @param slow if true, play at 0.75x speed
      */
-    fun start(slow: Boolean = false) {
+    fun start() {
         if (running.get()) return
-        slowMode = slow
-
-        val effectiveRate = if (slow) (sampleRate * 0.75).toInt() else sampleRate
 
         val bufSize = AudioTrack.getMinBufferSize(
-            effectiveRate,
+            sampleRate,
             AudioFormat.CHANNEL_OUT_MONO,
             AudioFormat.ENCODING_PCM_FLOAT
-        ).coerceAtLeast(effectiveRate) // At least 1 second buffer
+        ).coerceAtLeast(sampleRate) // At least 1 second buffer
 
         audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
@@ -73,7 +68,7 @@ class AudioPlayer(
             )
             .setAudioFormat(
                 AudioFormat.Builder()
-                    .setSampleRate(effectiveRate)
+                    .setSampleRate(sampleRate)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                     .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
                     .build()
@@ -90,11 +85,11 @@ class AudioPlayer(
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         val audioFmt = AudioFormat.Builder()
-            .setSampleRate(effectiveRate)
+            .setSampleRate(sampleRate)
             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
             .build()
-        val hintTone = generateHintTone(effectiveRate)
+        val hintTone = generateHintTone(sampleRate)
         hintTrack = AudioTrack.Builder()
             .setAudioAttributes(audioAttrs)
             .setAudioFormat(audioFmt)
