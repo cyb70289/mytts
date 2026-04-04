@@ -169,8 +169,8 @@ fun MainScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Paste button
-            OutlinedButton(
+            // Paste button — filled (highlighted) like Play, wider
+            Button(
                 onClick = {
                     val clip = clipboardManager.getText()?.text
                     if (!clip.isNullOrBlank()) {
@@ -186,7 +186,7 @@ fun MainScreen(
                 },
                 enabled = isStopped && !isProcessing,
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                modifier = Modifier.height(36.dp)
+                modifier = Modifier.weight(2f).height(36.dp)
             ) {
                 Text("Paste", style = MaterialTheme.typography.bodyMedium)
             }
@@ -194,12 +194,12 @@ fun MainScreen(
             // "Speaker" label
             Text(
                 text = "Speaker",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             // Compact voice dropdown
-            Box(modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.weight(3f)) {
                 val borderColor = if (isStopped && voices.isNotEmpty())
                     MaterialTheme.colorScheme.outline
                 else
