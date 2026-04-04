@@ -9,14 +9,17 @@ import java.util.Locale
 data class TextChunk(
     val text: String,
     val startOffset: Int,
-    val endOffset: Int
+    val endOffset: Int,
+    val isContinuation: Boolean = false
 )
 
 /**
  * Splits text into chunks suitable for TTS inference.
  * Each chunk should produce phonemes within the model's token limit (~400).
  * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
- * abbreviation/decimal handling), then clause boundaries, then word boundaries.
+ * abbreviation/decimal handling), then word boundaries for oversized sentences.
+ * Sub-chunks of a split sentence are marked as continuations so the audio
+ * layer can omit the inter-sentence silence gap between them.
  */
 object TextChunker {
 
@@ -26,11 +29,14 @@ object TextChunker {
     // Minimum chunk size to avoid tiny fragments
     private const val MIN_WORDS_PER_CHUNK = 3
 
-    private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
-
     /**
      * Split text into chunks with offset tracking.
      * Empty text returns an empty list.
+     *
+     * Sentences within the word limit become one chunk each.
+     * Longer sentences are split at word boundaries every ~50 words;
+     * sub-chunks after the first are marked [isContinuation]=true
+     * so the audio layer can skip the inter-sentence silence gap.
      */
     fun chunk(text: String): List<TextChunk> {
         if (text.isBlank()) return emptyList()
@@ -46,22 +52,12 @@ object TextChunker {
             if (wordCount <= MAX_WORDS_PER_CHUNK) {
                 chunks.add(sentence)
             } else {
-                // Sentence too long - split at clause boundaries
-                val clauses = splitKeepingDelimiters(sentence.text, CLAUSE_SEPARATORS, sentence.startOffset)
-                for (clause in clauses) {
-                    if (clause.text.isBlank()) continue
-                    val clauseWordCount = clause.text.trim().split(Regex("\\s+")).size
-                    if (clauseWordCount <= MAX_WORDS_PER_CHUNK) {
-                        chunks.add(clause)
-                    } else {
-                        // Still too long - split at word boundaries
-                        chunks.addAll(splitByWords(clause.text, clause.startOffset))
-                    }
-                }
+                // Sentence too long - split at word boundaries
+                chunks.addAll(splitByWords(sentence.text, sentence.startOffset))
             }
         }
 
-        // Merge tiny chunks with their neighbors
+        // Merge tiny chunks with their neighbors (only non-continuation chunks)
         return mergeSmallChunks(chunks)
     }
 
@@ -102,46 +98,11 @@ object TextChunker {
     }
 
     /**
-     * Split text while keeping delimiters attached to the preceding segment.
-     * Tracks offsets relative to the original text.
-     */
-    private fun splitKeepingDelimiters(
-        text: String,
-        pattern: Regex,
-        baseOffset: Int = 0
-    ): List<TextChunk> {
-        val result = mutableListOf<TextChunk>()
-        var lastEnd = 0
-
-        val matches = pattern.findAll(text)
-        for (match in matches) {
-            val segEnd = match.range.last + 1
-            if (segEnd > lastEnd) {
-                val segText = text.substring(lastEnd, segEnd)
-                if (segText.isNotBlank()) {
-                    result.add(TextChunk(segText, baseOffset + lastEnd, baseOffset + segEnd))
-                }
-                lastEnd = segEnd
-            }
-        }
-
-        // Remaining text after last delimiter
-        if (lastEnd < text.length) {
-            val remaining = text.substring(lastEnd)
-            if (remaining.isNotBlank()) {
-                result.add(TextChunk(remaining, baseOffset + lastEnd, baseOffset + text.length))
-            }
-        }
-
-        if (result.isEmpty() && text.isNotBlank()) {
-            result.add(TextChunk(text, baseOffset, baseOffset + text.length))
-        }
-
-        return result
-    }
-
-    /**
-     * Split by word boundaries when clause splitting isn't enough.
+     * Split by word boundaries when a sentence exceeds [MAX_WORDS_PER_CHUNK].
+     * The first sub-chunk keeps [isContinuation]=false; subsequent ones are
+     * marked true so the audio layer omits the inter-sentence silence gap.
+     * Tiny tails (< [MIN_WORDS_PER_CHUNK] words) are absorbed into the
+     * previous sub-chunk to avoid sentence-final fragments.
      */
     private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
         val words = text.split(Regex("(?<=\\s)"))
@@ -150,12 +111,25 @@ object TextChunker {
         var chunkStart = 0
         var pos = 0
 
-        for (word in words) {
+        for ((index, word) in words.withIndex()) {
             currentWords.add(word)
             pos += word.length
+
             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
+                // Check if remaining words would form a tiny tail
+                val remaining = words.size - (index + 1)
+                if (remaining in 1 until MIN_WORDS_PER_CHUNK) {
+                    // Don't split yet — absorb the tail into this chunk
+                    continue
+                }
+
                 val chunkText = currentWords.joinToString("")
-                chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
+                chunks.add(TextChunk(
+                    chunkText,
+                    baseOffset + chunkStart,
+                    baseOffset + pos,
+                    isContinuation = chunks.isNotEmpty()
+                ))
                 chunkStart = pos
                 currentWords = mutableListOf()
             }
@@ -163,7 +137,12 @@ object TextChunker {
 
         if (currentWords.isNotEmpty()) {
             val chunkText = currentWords.joinToString("")
-            chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
+            chunks.add(TextChunk(
+                chunkText,
+                baseOffset + chunkStart,
+                baseOffset + pos,
+                isContinuation = chunks.isNotEmpty()
+            ))
         }
 
         return chunks
@@ -171,6 +150,8 @@ object TextChunker {
 
     /**
      * Merge chunks that are too small with their next neighbor.
+     * Continuation chunks (from word-boundary splits) are left as-is since
+     * [splitByWords] already absorbs tiny tails.
      */
     private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {
         if (chunks.size <= 1) return chunks

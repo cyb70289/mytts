@@ -10,7 +10,8 @@ data class PreparedChunk(
     val originalText: String,     // raw text as user sees it
     val normalizedText: String,   // after normalizeText() — ready for phonemization
     val startOffset: Int,         // char position in the original full text
-    val endOffset: Int
+    val endOffset: Int,
+    val isContinuation: Boolean = false  // true = sub-chunk of a split sentence, no gap before it
 )
 
 /**
@@ -30,7 +31,8 @@ class TextProcessor(private val phonemeConverter: PhonemeConverter) {
                 originalText = chunk.text,
                 normalizedText = phonemeConverter.normalizeText(chunk.text),
                 startOffset = chunk.startOffset,
-                endOffset = chunk.endOffset
+                endOffset = chunk.endOffset,
+                isContinuation = chunk.isContinuation
             )
         }
     }

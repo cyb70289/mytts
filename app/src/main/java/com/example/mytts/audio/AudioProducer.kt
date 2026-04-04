@@ -98,7 +98,9 @@ class AudioProducer(
 
                     if (pcm.isNotEmpty() && running.get()) {
                         // Trim trailing silence and add a controlled gap
-                        val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE)
+                        // (skip gap if next chunk continues the same sentence)
+                        val nextIsContinuation = (i + 1 < chunks.size) && chunks[i + 1].isContinuation
+                        val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)
                         player.enqueue(trimmed, i)
                         onChunkReady(i)
                     }
@@ -131,15 +133,17 @@ class AudioProducer(
     }
 
     /**
-     * Trim trailing silence from PCM audio and append a controlled silence gap.
-     * This ensures consistent ~300ms gaps between chunks instead of variable
-     * silence durations from the model output.
+     * Trim trailing silence from PCM audio and optionally append a silence gap.
+     * When [addGap] is true (default), appends ~300ms silence for natural
+     * inter-sentence pauses. When false (continuation chunks of the same
+     * sentence), only trims without adding extra silence.
      *
      * @param pcm raw PCM float samples
      * @param sampleRate audio sample rate (e.g. 24000)
-     * @return trimmed PCM with controlled trailing silence
+     * @param addGap whether to append the inter-chunk silence gap
+     * @return trimmed PCM with optional trailing silence
      */
-    private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int): FloatArray {
+    private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int, addGap: Boolean = true): FloatArray {
         if (pcm.isEmpty()) return pcm
 
         // Find last non-silent sample (scanning backwards)
@@ -152,8 +156,8 @@ class AudioProducer(
         val margin = minOf(64, pcm.size - lastNonSilent - 1)
         val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)
 
-        // Calculate desired gap in samples
-        val gapSamples = sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000
+        // Calculate desired gap in samples (0 for continuation chunks)
+        val gapSamples = if (addGap) sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000 else 0
 
         // Create new array: trimmed audio + silence gap
         val result = FloatArray(trimEnd + gapSamples)
