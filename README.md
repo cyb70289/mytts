@@ -19,4 +19,6 @@ Tested on Snapdragon devices with ONNX Runtime 1.20.0 CPU inference. English onl
 - **Claude Opus 4.6 + OpenCode** -- all the coding and documentation
 
 # Demo
+**Make sure to unmute the video**
+
 https://github.com/user-attachments/assets/dc986f61-66c8-434f-8302-cced1b48c647
