@@ -74,20 +74,68 @@ Java_com_example_mytts_engine_EspeakBridge_nativeTextToPhonemes(
     // Result: 0x02 | 0x80 | (0x5E << 8) = 0x5E82
     int phonememode = 0x02 | 0x80 | ('^' << 8);
 
-    std::string result;
-    const void *textPtr = inputText;
+    std::string input(inputText);
+    env->ReleaseStringUTFChars(text, inputText);
 
-    while (textPtr != nullptr) {
-        const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);
-        if (phonemes && *phonemes) {
-            if (!result.empty()) {
-                result += ' ';  // space between clauses
+    // Phonemize a text fragment via eSpeak's clause-by-clause processing.
+    auto phonemizeFragment = [phonememode](const char *frag) -> std::string {
+        std::string fragResult;
+        const void *ptr = frag;
+        while (ptr != nullptr) {
+            const char *ph = espeak_TextToPhonemes(&ptr, espeakCHARS_UTF8, phonememode);
+            if (ph && *ph) {
+                if (!fragResult.empty()) fragResult += ' ';
+                fragResult += ph;
             }
-            result += phonemes;
+        }
+        return fragResult;
+    };
+
+    // Split at clause-boundary punctuation (, ; :) followed by whitespace.
+    // Phonemize each fragment separately and rejoin with the punctuation,
+    // so the Kokoro model sees commas/semicolons/colons and produces
+    // natural pauses at clause boundaries.
+    //
+    // We cannot rely on eSpeak's internal clause splitting to preserve
+    // these characters — it consumes them as delimiters and they never
+    // appear in the phoneme output.
+    std::string result;
+    size_t start = 0;
+
+    for (size_t i = 0; i < input.size(); i++) {
+        char c = input[i];
+        if ((c == ',' || c == ';' || c == ':') &&
+            i + 1 < input.size() && input[i + 1] == ' ') {
+            // Phonemize the fragment before this delimiter
+            if (i > start) {
+                std::string frag = input.substr(start, i - start);
+                std::string ph = phonemizeFragment(frag.c_str());
+                if (!ph.empty()) {
+                    if (!result.empty()) result += ' ';
+                    result += ph;
+                }
+            }
+            // Insert the clause-boundary punctuation
+            result += c;
+            // Advance past the delimiter and trailing whitespace
+            i++; // skip past the punctuation (now on the space)
+            while (i + 1 < input.size() && input[i + 1] == ' ') {
+                i++;
+            }
+            start = i + 1;
         }
     }
 
-    env->ReleaseStringUTFChars(text, inputText);
+    // Phonemize any remaining text after the last delimiter
+    if (start < input.size()) {
+        std::string frag = input.substr(start);
+        std::string ph = phonemizeFragment(frag.c_str());
+        if (!ph.empty()) {
+            if (!result.empty()) result += ' ';
+            result += ph;
+        }
+    }
+
     return env->NewStringUTF(result.c_str());
 }
 
