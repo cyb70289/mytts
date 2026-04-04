@@ -71,14 +71,6 @@ class KokoroEngine(private val context: Context) {
     }
 
     /**
-     * Convert text to phonemes (for pre-processing/chunking).
-     */
-    fun textToPhonemes(text: String): String {
-        return _phonemeConverter?.phonemize(text)
-            ?: throw IllegalStateException("Engine not initialized")
-    }
-
-    /**
      * Convert pre-normalized text to phonemes (skips normalizeText()).
      */
     fun textToPhonemeNormalized(normalizedText: String): String {
@@ -190,16 +182,8 @@ class KokoroEngine(private val context: Context) {
     }
 
     /**
-     * Full pipeline: text -> phonemes -> synthesize.
-     */
-    fun speak(text: String, voiceName: String, speed: Float = 1.0f): FloatArray {
-        val phonemes = textToPhonemes(text)
-        return synthesize(phonemes, voiceName, speed)
-    }
-
-    /**
-     * Full pipeline for pre-normalized text: normalizedText -> phonemes -> synthesize.
-     * Skips normalizeText() since the caller already did it at paste time.
+     * Full pipeline: normalizedText -> phonemes -> synthesize.
+     * Text must already be normalized (via normalizeText() at paste time).
      */
     fun speakNormalized(normalizedText: String, voiceName: String, speed: Float = 1.0f): FloatArray {
         val phonemes = textToPhonemeNormalized(normalizedText)

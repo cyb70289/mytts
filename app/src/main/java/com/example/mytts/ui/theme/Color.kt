@@ -26,4 +26,3 @@ val OnError = Color.White
 
 // Highlight color for currently playing text chunk
 val HighlightYellow = Color(0xFFFFF9C4)
-val HighlightBorder = Color(0xFFFBC02D)

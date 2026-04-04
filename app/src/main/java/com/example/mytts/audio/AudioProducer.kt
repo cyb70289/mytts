@@ -130,8 +130,6 @@ class AudioProducer(
         producerThread = null
     }
 
-    val isRunning: Boolean get() = running.get()
-
     /**
      * Trim trailing silence from PCM audio and append a controlled silence gap.
      * This ensures consistent ~300ms gaps between chunks instead of variable

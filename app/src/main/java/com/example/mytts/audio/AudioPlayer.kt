@@ -19,8 +19,7 @@ import kotlin.math.sin
 class AudioPlayer(
     private val sampleRate: Int = 24000,
     private val onChunkStarted: (chunkIndex: Int) -> Unit = {},
-    private val onPlaybackFinished: () -> Unit = {},
-    private val onUnderrun: () -> Unit = {}
+    private val onPlaybackFinished: () -> Unit = {}
 ) {
     companion object {
         private const val TAG = "AudioPlayer"
@@ -149,7 +148,6 @@ class AudioPlayer(
                             ht.play()
                         }
                         lastHintTimeMs = System.currentTimeMillis()
-                        onUnderrun()
                     }
                     continue
                 }
@@ -320,7 +318,5 @@ class AudioPlayer(
         }
     }
 
-    val isRunning: Boolean get() = running.get()
-    val isPaused: Boolean get() = paused.get()
     val queueSize: Int get() = queue.size
 }

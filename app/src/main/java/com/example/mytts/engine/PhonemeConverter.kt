@@ -35,16 +35,8 @@ class PhonemeConverter(context: Context) {
     }
 
     /**
-     * Convert text to IPA phoneme string suitable for Kokoro tokenizer.
-     */
-    fun phonemize(text: String): String {
-        val normalized = normalizeText(text)
-        return phonemizeNormalized(normalized)
-    }
-
-    /**
      * Convert pre-normalized text to IPA phonemes.
-     * Skips normalizeText() since the caller already did it.
+     * Text must already be normalized via normalizeText().
      */
     fun phonemizeNormalized(normalizedText: String): String {
         val rawIpa = espeakBridge.textToPhonemes(normalizedText)

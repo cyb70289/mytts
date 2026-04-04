@@ -299,7 +299,7 @@ mytts/
         │   │   └── TextProcessor.kt  # Chunking + normalization bridge
         │   ├── engine/
         │   │   ├── KokoroEngine.kt   # ONNX session, synthesize()
-        │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + misaki mapping
+        │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + IPA normalization
         │   │   ├── EspeakBridge.kt   # JNI wrapper, asset extraction
         │   │   ├── Tokenizer.kt      # IPA chars -> token IDs
         │   │   └── VoiceStyleLoader.kt  # .bin voice parser
@@ -340,9 +340,8 @@ functionality is used -- no audio synthesis from eSpeak.
 
 3. **Phonemization**: `PhonemeConverter` calls `EspeakBridge.textToPhonemes(text)` which
    invokes `espeak_TextToPhonemes()` in IPA mode with `^` tie characters. The raw IPA
-   output is then transformed using the [misaki](https://github.com/hexgrad/misaki) E2M
-   mapping (diphthong merging, affricate joining, American English adjustments) to produce
-   phonemes matching the Kokoro model's training data.
+   output is then minimally normalized (e.g. `r` → `ɹ`, `ɚ` → `əɹ`) to match
+   the Kokoro model's expected phoneme set.
 
 ### Key constraints
 
