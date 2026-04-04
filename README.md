@@ -4,7 +4,7 @@ An Android app that converts text to speech on-device using the [Kokoro-82M](htt
 
 Tested on Snapdragon devices with ONNX Runtime 1.20.0 CPU inference. English only. 26 built-in voices.
 
-## [Releases](https://github.com/cyb70289/mytts/releases/)
+## [Release](https://github.com/cyb70289/mytts/releases/)
 
 ## Build
 
@@ -19,4 +19,4 @@ Tested on Snapdragon devices with ONNX Runtime 1.20.0 CPU inference. English onl
 - **Claude Opus 4.6 + OpenCode** -- all the coding and documentation
 
 # Demo
-https://github.com/user-attachments/assets/eb6358aa-a0ad-4660-8d62-83a4bd1e9eb0
+https://github.com/user-attachments/assets/dc986f61-66c8-434f-8302-cced1b48c647
