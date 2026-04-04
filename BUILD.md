@@ -394,6 +394,54 @@ devices. Check `app/build.gradle.kts` has `onnxruntime-android:1.20.0`.
 
 ---
 
+## Creating a Release
+
+### 1. Update version
+
+Edit `app/build.gradle.kts` and set `versionName` and `versionCode`:
+
+```kotlin
+versionCode = 1
+versionName = "0.1"
+```
+
+### 2. Build the release APK
+
+```bash
+./gradlew assembleRelease
+```
+
+Output: `app/build/outputs/apk/release/app-release.apk`
+
+### 3. Commit, tag, and push
+
+```bash
+git add -A
+git commit -m "Release v0.1"
+git tag v0.1
+git push origin master --tags
+```
+
+### 4. Create GitHub release
+
+Go to <https://github.com/cyb70289/mytts/releases/new>, select the tag `v0.1`,
+write release notes, and attach the APK file:
+
+```
+app/build/outputs/apk/release/app-release.apk
+```
+
+Or use the `gh` CLI if available:
+
+```bash
+gh release create v0.1 \
+  app/build/outputs/apk/release/app-release.apk \
+  --title "v0.1" \
+  --notes "Initial release of MyTTS - offline text-to-speech powered by Kokoro-82M."
+```
+
+---
+
 ## Generating Your Own Signing Key
 
 For production releases, replace the included keystore:
