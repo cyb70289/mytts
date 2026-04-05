@@ -136,8 +136,9 @@ class PhonemeConverter(context: Context) {
         // --- Currency (eSpeak reads symbols in wrong order) ---
 
         // Currency with cents: $3.50 → 3 dollars and 50 cents
-        t = Regex("([\\$\u20AC\u00A3])\\s*(\\d+)\\.(\\d{2})\\b").replace(t) { match ->
-            val dollars = match.groupValues[2].toLongOrNull() ?: return@replace match.value
+        // Handles comma-grouped digits: $50,000.50 → 50000 dollars and 50 cents
+        t = Regex("([\\$\u20AC\u00A3])\\s*(\\d{1,3}(?:,\\d{3})*|\\d+)\\.(\\d{2})\\b").replace(t) { match ->
+            val dollars = match.groupValues[2].replace(",", "").toLongOrNull() ?: return@replace match.value
             val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value
             val currency = when (match.groupValues[1]) {
                 "\$" -> "dollar" to "cent"
@@ -161,9 +162,10 @@ class PhonemeConverter(context: Context) {
         }
 
         // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000
-        t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
+        // Handles comma-grouped digits: $50,000 → 50000 dollars
+        t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d{1,3}(?:,\\d{3})*(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
             .replace(t) { match ->
-                val number = match.groupValues[2]
+                val number = match.groupValues[2].replace(",", "")
                 val mag = match.groupValues[3].uppercase()
                 val currency = when (match.groupValues[1]) {
                     "\$" -> "dollars"; "\u20AC" -> "euros"
