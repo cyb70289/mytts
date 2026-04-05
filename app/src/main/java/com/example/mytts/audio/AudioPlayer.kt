@@ -37,7 +37,7 @@ class AudioPlayer(
         val chunkIndex: Int
     )
 
-    private val queue = LinkedBlockingQueue<AudioChunk>(8)
+    private val queue = LinkedBlockingQueue<AudioChunk>(4)
     private val running = AtomicBoolean(false)
     private val paused = AtomicBoolean(false)
     private val producerDone = AtomicBoolean(false)
@@ -253,12 +253,15 @@ class AudioPlayer(
 
     /**
      * Enqueue a PCM audio chunk for playback.
-     * Blocks if the queue is full (backpressure on the producer).
+     * Blocks if the queue is full — the JDK's LinkedBlockingQueue handles
+     * backpressure internally using lock/condition signaling, so the producer
+     * thread wakes instantly when a slot opens (no sleep-polling delay).
      */
     fun enqueue(pcm: FloatArray, chunkIndex: Int): Boolean {
         if (!running.get()) return false
         return try {
-            queue.offer(AudioChunk(pcm, chunkIndex), 5, TimeUnit.SECONDS)
+            queue.put(AudioChunk(pcm, chunkIndex))
+            true
         } catch (e: InterruptedException) {
             false
         }
@@ -317,6 +320,4 @@ class AudioPlayer(
             try { ht.release() } catch (_: Exception) {}
         }
     }
-
-    val queueSize: Int get() = queue.size
 }

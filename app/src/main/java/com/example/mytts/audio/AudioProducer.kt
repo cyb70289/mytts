@@ -18,8 +18,6 @@ class AudioProducer(
 ) {
     companion object {
         private const val TAG = "AudioProducer"
-        // Max chunks to queue ahead of playback
-        private const val MAX_QUEUE_AHEAD = 4
         // Silence threshold: samples below this absolute value are considered silent
         private const val SILENCE_THRESHOLD = 0.01f
         // Target silence gap between chunks in milliseconds
@@ -80,10 +78,6 @@ class AudioProducer(
                 val text = chunk.normalizedText.trim()
                 if (text.isEmpty()) continue
 
-                // Wait if player queue is full (backpressure)
-                while (running.get() && player.queueSize >= MAX_QUEUE_AHEAD) {
-                    try { Thread.sleep(100) } catch (_: InterruptedException) { return }
-                }
                 if (!running.get()) break
 
                 try {
