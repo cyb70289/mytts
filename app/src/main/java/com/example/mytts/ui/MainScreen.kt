@@ -128,11 +128,17 @@ fun MainScreen(
         }
     }
 
-    // Auto-scroll to highlighted chunk during playback
+    // Auto-scroll to highlighted chunk during playback and save position
+    // so that if the app is killed mid-playback, the next launch resumes
+    // from the last active chunk (SharedPreferences.apply() is async/batched,
+    // so one write per chunk every few seconds is negligible).
     val chunkRange = controller.getCurrentChunkRange()
     LaunchedEffect(currentChunkIndex) {
         if (chunkRange != null && !isStopped) {
-            val target = scrollTargetForOffset(chunkRange.first)
+            val pos = chunkRange.first
+            cursorPosition = pos
+            prefs.saveCursorPosition(pos)
+            val target = scrollTargetForOffset(pos)
             if (target != null) {
                 scrollState.animateScrollTo(target)
             }
