@@ -2,11 +2,11 @@
 
 **Session ID:** ses_2c6dc1e74ffedb8DgpTrbS7wVj
 **Created:** 3/29/2026, 6:29:06 PM
-**Updated:** 4/4/2026, 6:35:44 PM
+**Updated:** 4/5/2026, 9:58:17 PM
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 12.4s)
+## Assistant (Build · Claude Opus 4.6 · 14.2s)
 
 **Tool: todowrite**
 
@@ -15,29 +15,19 @@
 {
   "todos": [
     {
-      "content": "Add 'Creating a Release' section to BUILD.md",
+      "content": "Commit 1: Replace sleep-polling with queue.put() backpressure",
       "priority": "high",
       "status": "completed"
     },
     {
-      "content": "Build release APK (./gradlew assembleRelease)",
+      "content": "Commit 2: Raise producer priority to FOREGROUND + add ONNX denormal config",
       "priority": "high",
-      "status": "completed"
+      "status": "in_progress"
     },
     {
-      "content": "Commit versionName change + BUILD.md update",
+      "content": "Commit 3: Add PerformanceHintManager for inference thread",
       "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Tag as v0.1",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Tell user to push tag and create GitHub release",
-      "priority": "medium",
-      "status": "completed"
+      "status": "pending"
     }
   ]
 }
@@ -47,1331 +37,114 @@
 ```
 [
   {
-    "content": "Add 'Creating a Release' section to BUILD.md",
+    "content": "Commit 1: Replace sleep-polling with queue.put() backpressure",
     "priority": "high",
     "status": "completed"
   },
   {
-    "content": "Build release APK (./gradlew assembleRelease)",
+    "content": "Commit 2: Raise producer priority to FOREGROUND + add ONNX denormal config",
     "priority": "high",
-    "status": "completed"
+    "status": "in_progress"
   },
   {
-    "content": "Commit versionName change + BUILD.md update",
+    "content": "Commit 3: Add PerformanceHintManager for inference thread",
     "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Tag as v0.1",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Tell user to push tag and create GitHub release",
-    "priority": "medium",
-    "status": "completed"
+    "status": "pending"
   }
 ]
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 12.4s)
+## Assistant (Build · Claude Opus 4.6 · 14.1s)
 
-All done. Here's what I completed:
+Now Commit 2 — two small changes:
 
-1. **Added "Creating a Release" section** to `BUILD.md` with steps for versioning, building, tagging, pushing, and creating a GitHub release.
-2. **Built the release APK** — `app/build/outputs/apk/release/app-release.apk` (120 MB).
-3. **Committed** as `c45f161` — "Release v0.1: set versionName and add release steps to BUILD.md"
-4. **Tagged** as `v0.1`
-
-### What you need to do
-
-Your branch is ahead of origin by 2 commits (the UI commit + this release commit). Push everything and create the GitHub release:
-
-```bash
-git push origin master --tags
-```
-
-Then go to https://github.com/cyb70289/mytts/releases/new, select tag `v0.1`, and attach the APK file at `app/build/outputs/apk/release/app-release.apk`.
-
----
-
-## User
-
-this app was using manual text chunking and cmu dict phoneme, then refactor to use new chunking and phoneme (espeak-ng, icu4j), please check carefully if there're legacy code not clean up, and may mess the code logic
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 325.6s)
-
-
-
-Good call. Let me do a thorough audit of the codebase for any remnants of the old CMU dict / manual chunking system.
-
-_Thinking:_
-
-The user wants me to audit the codebase for legacy code from the old manual text chunking and CMU dict phoneme system that wasn't cleaned up during the refactor to eSpeak-ng and ICU4J. I'm in plan mode (read-only), so I should explore the codebase thoroughly to find any remnants.
-
-Let me launch multiple explore agents to search for legacy code artifacts.
-
-**Tool: task**
+**Tool: edit**
 
 **Input:**
 ```json
 {
-  "description": "Find CMU dict legacy code",
-  "prompt": "Search the entire codebase under /Users/cyb/works/mytts for ANY references to the old CMU dictionary / pronunciation dictionary system. This was replaced by eSpeak-ng. Look for:\n\n1. Any files related to CMU dict (cmudict, cmu_dict, pronunciation dictionary files, .dict files, etc.)\n2. Any Kotlin/Java code that references CMU dict, pronunciation dictionaries, or the old G2P (grapheme-to-phoneme) system called \"medavox\" or similar\n3. Any references to ARPAbet phonemes (the old CMU dict format uses ARPAbet, e.g., \"AH0\", \"EH1\", \"IY0\" style phoneme codes)\n4. Any imports or dependencies related to the old phoneme system\n5. Any comments mentioning CMU, pronunciation dictionary, or the old G2P approach\n6. Check build.gradle.kts files for any old dependencies that were part of the CMU/medavox system\n7. Check assets directory references for any old dictionary files\n\nSearch ALL file types: .kt, .java, .xml, .gradle.kts, .properties, .txt, .md, .cpp, .h, .cmake\n\nReturn a detailed list of every file and line where you find legacy references, with the surrounding context.",
-  "subagent_type": "explore"
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
+  "newString": "        producerThread = Thread({\n            // Foreground priority so Android's EAS scheduler favors performance\n            // cores and doesn't deprioritize us when the screen is off.\n            Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND)",
+  "oldString": "        producerThread = Thread({\n            // Run at default priority so Android doesn't throttle when screen is off\n            Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)"
 }
 ```
 
 **Output:**
 ```
-task_id: ses_2a8fee463ffeE2CrNkYTG5O9hU (for resuming to continue this task if needed)
-
-<task_result>
-All searches are complete. Here is my comprehensive report:
-
----
-
-## Search Results: Legacy CMU Dictionary / Medavox G2P References
-
-### Summary
-
-**The codebase is clean.** The old CMU dictionary and medavox G2P system has been fully removed. There are **zero active/functional references** to the legacy system in any source code, build files, assets, or configuration. The only traces are historical mentions in documentation and git logs.
-
----
-
-### Detailed Findings
-
-#### 1. `.dict` files, CMU dictionary data files, ARPAbet data, medavox files
-**None found.** No `.dict` files exist anywhere in the repository. No files matching `*cmu*`, `*medavox*`, or `*arpa*` exist. The `assets/` directory contains only:
-- `espeak-ng-data/` (the current eSpeak-ng data)
-- `model_quantized.onnx` (the ONNX TTS model)
-- `voices/*.bin` (Kokoro voice style vectors)
-
-#### 2. Kotlin/Java code referencing CMU, medavox, ARPAbet, or old G2P
-**None found.** All source files under `app/src/main/java/com/example/mytts/engine/` use eSpeak-ng exclusively:
-- `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt` -- uses `EspeakBridge` for G2P; no CMU/ARPAbet references
-- `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/EspeakBridge.kt` -- JNI bridge to eSpeak-ng
-- `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/Tokenizer.kt` -- IPA-based tokenization, no ARPAbet codes
-- `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt` -- uses `PhonemeConverter` (eSpeak-based)
-- C++ layer (`espeak_jni.cpp`, `CMakeLists.txt`) -- purely eSpeak-ng, no CMU references
-
-#### 3. ARPAbet phoneme codes (e.g., "AH0", "EH1", "IY0")
-**None found** in any source files (`.kt`, `.java`, `.cpp`, `.h`, `.txt`). The system exclusively uses IPA phonemes.
-
-#### 4. Old imports or dependencies
-**None found.** All three `*.gradle.kts` files are clean:
-- `/Users/cyb/works/mytts/app/build.gradle.kts` -- only ONNX Runtime, Compose, AndroidX, Coroutines dependencies
-- `/Users/cyb/works/mytts/build.gradle.kts` -- plugin versions only
-- `/Users/cyb/works/mytts/settings.gradle.kts` -- standard repository config
-
-#### 5. Historical / documentary mentions (non-functional, informational only)
-
-These are the **only** references found, all in documentation/logs:
-
-| File | Line | Context |
-|------|------|---------|
-| `/Users/cyb/works/mytts/opencode-session.md` | 2006 | `2. **\`18ae03d\`** — Replace CMU dict + medavox G2P with eSpeak-ng via NDK/JNI` |
-| `/Users/cyb/works/mytts/.git/logs/HEAD` | 30 | `commit: Replace CMU dict + medavox G2P with eSpeak-ng via NDK/JNI` |
-| `/Users/cyb/works/mytts/.git/logs/refs/heads/master` | 25 | `commit: Replace CMU dict + medavox G2P with eSpeak-ng via NDK/JNI` |
-
-All three are purely historical records:
-- `opencode-session.md` is a session log documenting the project's development history, listing the commit that performed the migration.
-- `.git/logs/HEAD` and `.git/logs/refs/heads/master` are git reflogs (commit message history), which are immutable records of past commits.
-
----
-
-### Conclusion
-
-The migration from CMU dict + medavox G2P to eSpeak-ng (commit `18ae03d`) was performed cleanly. **No legacy code, data files, dependencies, imports, ARPAbet phonemes, dictionary files, or TODO/FIXME markers related to the old system remain in the working tree.** The only traces are the commit message text preserved in `opencode-session.md` (a development log) and the git reflog, both of which are historical documentation and not actionable code.
-</task_result>
+Edit applied successfully.
 ```
 
-**Tool: task**
+---
+
+## Assistant (Build · Claude Opus 4.6 · 14.1s)
+
+**Tool: edit**
 
 **Input:**
 ```json
 {
-  "description": "Find old chunking legacy code",
-  "prompt": "Search the entire codebase under /Users/cyb/works/mytts for ANY remnants of the old manual text chunking/sentence splitting system that was replaced by ICU4J BreakIterator. Look for:\n\n1. Any old sentence splitting code that doesn't use ICU4J BreakIterator (e.g., manual regex-based splitting, custom sentence boundary detection)\n2. Dead code paths in TextChunker.kt that are no longer used\n3. Old helper functions for text splitting that may have been left behind\n4. Any references to old chunking constants or parameters that are no longer relevant\n5. Any utility functions in TextProcessor.kt or other files that were part of the old chunking pipeline\n6. Unused imports in any files related to text processing\n7. Check if there are any standalone files that were part of the old chunking system but never deleted\n\nRead the full contents of these files carefully:\n- app/src/main/java/com/example/mytts/audio/TextChunker.kt\n- app/src/main/java/com/example/mytts/audio/TextProcessor.kt\n- app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt\n\nReturn the full contents of each file and flag any suspicious legacy code with explanations.",
-  "subagent_type": "explore"
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt",
+  "newString": "            setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)\n            // Flush denormal floats to zero — prevents rare but catastrophic\n            // slowdowns when near-zero values hit the slow denormal path on ARM.\n            addConfigEntry(\"session.set_denormal_as_zero\", \"1\")",
+  "oldString": "            setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)"
 }
 ```
 
 **Output:**
 ```
-task_id: ses_2a8fecc6bffekSU3YGUEcIxFOj (for resuming to continue this task if needed)
-
-<task_result>
-I now have a complete picture of the codebase. Let me compile my findings.
-
----
-
-## Full Analysis Report: Legacy Text Chunking/Splitting Remnants
-
-### Git History Context
-
-The relevant commit history tells the full story:
-
-1. **`a497f91`** — Initial commit: TextChunker with manual regex-based sentence splitting, hardcoded `ABBREVIATIONS` set, and `isAbbreviationDot()` helper.
-2. **`d87db35`** — Introduced `TextProcessor.kt` for paste-time pre-processing.
-3. **`1c6610a`** — **Replaced custom sentence splitter with ICU4J BreakIterator** — removed ~88 lines (`ABBREVIATIONS`, `isAbbreviationDot()`, manual regex-based `splitIntoSentences()`).
-4. **`db4aedb`** — Attempted to move truncation fix into TextChunker (lowered `MAX_WORDS_PER_CHUNK` to 12, added `SPLIT_BEFORE_WORDS`, `splitSentence()`, `splitAtConjunctions()`, `splitIntoWordSpans()`, `countWords()`).
-5. **`7d72b89`** — **Reverted** `db4aedb`, restoring TextChunker to the post-ICU4J state.
-
-### Verdict: The codebase is CLEAN
-
-After thoroughly reading every file in the project, I found **no remnants of the old manual chunking system**. Here is the item-by-item analysis:
-
----
-
-### 1. Old sentence splitting code that doesn't use ICU4J BreakIterator
-
-**NONE FOUND.** The old system had:
-- A `ABBREVIATIONS` set with ~40 hardcoded abbreviations (`"mr"`, `"mrs"`, `"dr"`, `"prof"`, `"st"`, etc.)
-- A regex-based `splitIntoSentences()` that used `Regex("[.!?]+\\s+")` and manually checked each period
-- An `isAbbreviationDot()` helper that detected abbreviation dots, single uppercase letters (`U.S.A.`), and chained abbreviations
-
-All of this was cleanly removed in commit `1c6610a`. The current `splitIntoSentences()` at lines 73-101 of `TextChunker.kt` uses only `BreakIterator.getSentenceInstance(Locale.US)`.
-
----
-
-### 2. Dead code paths in TextChunker.kt
-
-**NONE FOUND.** Every function in the current TextChunker.kt is actively used:
-
-| Function | Called by |
-|---|---|
-| `chunk()` (line 35) | `TextProcessor.processText()` |
-| `splitIntoSentences()` (line 73) | `chunk()` |
-| `splitKeepingDelimiters()` (line 108) | `chunk()` (for clause splitting) |
-| `splitByWords()` (line 146) | `chunk()` (fallback for oversized clauses) |
-| `mergeSmallChunks()` (line 175) | `chunk()` (final pass) |
-
-The reverted commit (`db4aedb`) had introduced `splitSentence()`, `splitAtConjunctions()`, `splitIntoWordSpans()`, `countWords()`, and `SPLIT_BEFORE_WORDS` — all of these were cleanly removed by the revert in `7d72b89`.
-
----
-
-### 3. Old helper functions for text splitting
-
-**NONE FOUND.** The reverted code had:
-- `countWords()` — replaced by inline `text.trim().split(Regex("\\s+")).size`
-- `splitIntoWordSpans()` — a word-span extraction helper
-- `splitAtConjunctions()` — conjunction-based splitting
-- `splitSentence()` — recursive sentence sub-splitting
-
-None of these exist in the current codebase.
-
----
-
-### 4. References to old chunking constants or parameters
-
-**NONE FOUND.** The reverted code had:
-- `MAX_WORDS_PER_CHUNK = 12` (aggressive splitting for int8 model truncation workaround)
-- `SPLIT_BEFORE_WORDS` — a set of conjunctions/prepositions used as split points
-
-The current file correctly uses:
-- `MAX_WORDS_PER_CHUNK = 50` (line 25) — the original conservative estimate matching the 400-token model limit
-- `MIN_WORDS_PER_CHUNK = 3` (line 27) — actively used in `mergeSmallChunks()`
-- `CLAUSE_SEPARATORS` (line 29) — actively used in `chunk()`
-
-All three constants are actively referenced.
-
----
-
-### 5. Utility functions in TextProcessor.kt or other files from old pipeline
-
-**NONE FOUND.** `TextProcessor.kt` is a lean 37-line file with a single `processText()` method that delegates to `TextChunker.chunk()` and `PhonemeConverter.normalizeText()`. There are no orphaned helper methods.
-
-No standalone files related to text splitting, sentence detection, or text chunking exist outside of `TextChunker.kt` and `TextProcessor.kt`. The complete file list in the `audio/` directory is:
-- `AudioPlayer.kt`
-- `AudioProducer.kt`
-- `PlaybackController.kt`
-- `TextChunker.kt`
-- `TextProcessor.kt`
-
-No `*Splitter*`, `*Normaliz*`, `*Parser*`, or `*sentence*` files exist anywhere.
-
----
-
-### 6. Unused imports in text processing files
-
-**NONE FOUND.**
-
-**TextChunker.kt** imports:
-- `android.icu.text.BreakIterator` — used at line 75
-- `java.util.Locale` — used at line 75 (`Locale.US`)
-
-**TextProcessor.kt** imports:
-- `com.example.mytts.engine.PhonemeConverter` — used in the constructor (line 20)
-
-**PhonemeConverter.kt** imports:
-- `android.content.Context` — used in constructor (line 13)
-- `android.util.Log` — used at lines 58, 77
-
-All imports are actively used across all three files.
-
----
-
-### 7. Standalone files from old chunking system that were never deleted
-
-**NONE FOUND.** Git history (`git log --diff-filter=D`) shows no Kotlin files have ever been deleted from this repository. The old chunking logic was always contained within `TextChunker.kt` itself (modified in-place, not split into separate files), so there are no orphaned files to clean up.
-
----
-
-### Minor Observations (NOT legacy remnants, but worth noting)
-
-1. **`VoiceStyleLoader.kt` lines 36, 57** — Contains the word "legacy" in comments referring to `.npy` file format support (vs newer `.bin` format). This is **unrelated** to text chunking — it's about voice style file formats and is actively used code.
-
-2. **`KokoroEngine.kt` lines 108-127** — Contains a phoneme-level split-at-word-boundary fallback when tokens exceed `MAX_PHONEME_LENGTH`. This is the **current** safety net for oversized phoneme strings, not a remnant of the old system. It was part of the code that the reverted commit (`db4aedb`) tried to move to TextChunker level and then restored via the revert (`7d72b89`).
-
-3. **`PhonemeConverter.kt` `normalizeText()` (lines 124-256)** — Contains regex-based text normalization (abbreviation expansion, currency, time, numbers-to-words). This is **not** sentence splitting code — it's text normalization that runs on already-chunked text. It is actively used by `TextProcessor.processText()`.
-
----
-
-### Summary
-
-The codebase is **clean**. The ICU4J BreakIterator migration (commit `1c6610a`) and the subsequent revert of the aggressive chunking experiment (`7d72b89`) left no dead code, no orphaned files, no unused imports, and no stale constants. Every line of code in `TextChunker.kt`, `TextProcessor.kt`, and `PhonemeConverter.kt` is actively used.
-</task_result>
+Edit applied successfully.
 ```
 
-**Tool: task**
+---
+
+## Assistant (Build · Claude Opus 4.6 · 15.7s)
+
+**Tool: bash**
 
 **Input:**
 ```json
 {
-  "description": "Find dead code and unused refs",
-  "prompt": "Do a thorough audit of the codebase under /Users/cyb/works/mytts for dead code, unused references, and potential logic issues. Specifically:\n\n1. Read ALL Kotlin source files in app/src/main/java/com/example/mytts/ (recursively) and check for:\n   - Unused imports\n   - Unused private functions or variables\n   - Dead code paths (unreachable code)\n   - TODO/FIXME/HACK comments that reference old systems\n   - Any \"misaki\" references that may be stale (misaki was the old E2M phoneme mapping - some parts were removed but check if remnants remain that could cause issues)\n\n2. Check the PhonemeConverter.kt file especially carefully:\n   - The postProcess() function was modified to remove E2M diphthong compression\n   - Are there any leftover E2M mapping tables, constants, or helper functions that are no longer used?\n   - Is there any dead code in the phoneme pipeline?\n\n3. Check KokoroEngine.kt:\n   - Are there old synthesis paths or unused methods?\n   - Any references to old phoneme formats?\n\n4. Check Tokenizer.kt:\n   - Does the VOCAB map contain entries that are no longer needed (e.g., old single-letter diphthong tokens like uppercase A, I, O that were part of E2M)?\n   - Are there unused utility functions?\n\n5. Check app/build.gradle.kts and settings.gradle.kts for any old/unused dependencies\n\n6. Check proguard-rules.pro for rules that reference old classes\n\nRead each file fully and report ALL findings with file paths, line numbers, and the problematic code.",
-  "subagent_type": "explore"
+  "command": "JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew assembleDebug 2>&1 | tail -5",
+  "description": "Build to verify commit 2 changes",
+  "timeout": 180000
 }
 ```
 
 **Output:**
 ```
-task_id: ses_2a8fea2faffeqq3HHLg2KQPS7d (for resuming to continue this task if needed)
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
 
-<task_result>
-Now I have a comprehensive picture. Let me compile the full audit report.
+BUILD SUCCESSFUL in 1s
+39 actionable tasks: 6 executed, 33 up-to-date
 
----
-
-# Codebase Audit Report: /Users/cyb/works/mytts
-
-## 1. DEAD CODE / UNUSED FUNCTIONS
-
-### 1.1 `KokoroEngine.speak()` -- DEAD CODE (never called)
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt`
-**Lines:** 195-198
-
-```kotlin
-fun speak(text: String, voiceName: String, speed: Float = 1.0f): FloatArray {
-    val phonemes = textToPhonemes(text)
-    return synthesize(phonemes, voiceName, speed)
-}
-```
-
-**Analysis:** The entire app uses `speakNormalized()` (called from `AudioProducer.kt` line 93). The `speak()` method is the old "convenience" entry point that also runs normalization internally. No caller exists anywhere in the codebase. This is dead code.
-
-**Cascade:** Because `speak()` is dead, `KokoroEngine.textToPhonemes()` (lines 76-79) is also effectively dead -- it is only called by `speak()` (line 196). And since `textToPhonemes()` calls `PhonemeConverter.phonemize()` (which internally calls `normalizeText()` then `phonemizeNormalized()`), the `phonemize()` method in PhonemeConverter (line 65-68) is also only reachable through dead code.
-
-**Summary of dead call chain:**
-1. `KokoroEngine.speak()` (line 195) -- never called externally
-2. `KokoroEngine.textToPhonemes()` (line 76) -- only called by `speak()` (line 196)
-3. `PhonemeConverter.phonemize()` (line 65) -- only called by `KokoroEngine.textToPhonemes()` (line 77)
-
-The live pipeline is: `AudioProducer` -> `engine.speakNormalized()` -> `textToPhonemeNormalized()` -> `PhonemeConverter.phonemizeNormalized()`.
-
-### 1.2 `AudioPlayer.isRunning` and `AudioPlayer.isPaused` -- UNUSED public properties
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt`
-**Lines:** 323-324
-
-```kotlin
-val isRunning: Boolean get() = running.get()
-val isPaused: Boolean get() = paused.get()
-```
-
-**Analysis:** No code outside `AudioPlayer` reads `isRunning` or `isPaused`. The `PlaybackController` manages its own `State` enum and never queries these. These are unused public accessors.
-
-### 1.3 `AudioProducer.isRunning` -- UNUSED public property
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt`
-**Line:** 133
-
-```kotlin
-val isRunning: Boolean get() = running.get()
-```
-
-**Analysis:** Never read by any external caller. `PlaybackController` manages state independently.
-
-### 1.4 `AudioPlayer.onUnderrun` callback -- UNUSED externally
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt`
-**Lines:** 23, 152
-
-```kotlin
-private val onUnderrun: () -> Unit = {},  // constructor param, line 23
-...
-onUnderrun()  // called internally, line 152
-```
-
-**Analysis:** The `onUnderrun` callback is a constructor parameter with a no-op default. The `PlaybackController` (line 117-129) never provides a value for it when constructing `AudioPlayer`. The callback fires but does nothing.
-
-### 1.5 `HighlightBorder` color -- UNUSED
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/theme/Color.kt`
-**Line:** 29
-
-```kotlin
-val HighlightBorder = Color(0xFFFBC02D)
-```
-
-**Analysis:** Defined but never referenced anywhere in the codebase. Only `HighlightYellow` (line 28) is imported and used by `MainScreen.kt`.
-
----
-
-## 2. PHONEME CONVERTER AUDIT (E2M / misaki remnants)
-
-### 2.1 PhonemeConverter.kt -- CLEAN
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt`
-
-**Analysis:** The `postProcess()` function (lines 96-122) has been properly cleaned. There are:
-- No E2M mapping tables (the old diphthong-to-single-letter maps like `eɪ -> A`, `aɪ -> I`, `oʊ -> O` are fully removed)
-- No E2M constants or helper functions
-- No leftover affricate compression (e.g., `dʒ -> J`, `tʃ -> C`)
-- The only transformations are legitimate IPA normalizations (lines 101-108) for eSpeak quirks
-
-The comments at lines 11, 48-50 correctly document that E2M was removed:
-```
-no E2M compact tokens
-NO diphthong/affricate compression
-```
-
-**Verdict:** PhonemeConverter is clean. No E2M remnants in code.
-
-### 2.2 `VALID_CHARS` contains uppercase A-Z -- NOT a problem
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt`
-**Lines:** 18-25
-
-The `VALID_CHARS` set includes `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz`. These are part of the official Kokoro vocabulary (the model uses them for spelled-out letters and special tokens). They are NOT E2M remnants -- they are required by the tokenizer. The VOCAB in `Tokenizer.kt` has the same set. This is correct.
-
----
-
-## 3. TOKENIZER AUDIT
-
-### 3.1 Tokenizer.kt VOCAB -- CLEAN, matches model vocabulary
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/Tokenizer.kt`
-**Lines:** 8-17
-
-**Analysis:** The VOCAB map is constructed from the exact same character sets that the Kokoro model was trained on. The uppercase letters A-Z are part of the model's vocabulary (used for stress markers, abbreviations, etc. in the IPA representation). They are NOT E2M single-letter diphthong tokens -- the E2M mapping was in PhonemeConverter, not the tokenizer. The tokenizer is a direct 1:1 map of the model vocabulary.
-
-There are no unused utility functions in Tokenizer.kt. Both `tokenize()` and `tokenizeWithPadding()` are used (the latter called from `KokoroEngine.synthesize()` line 101).
-
-**Verdict:** Tokenizer is clean and minimal.
-
----
-
-## 4. KOKORO ENGINE AUDIT
-
-### 4.1 Dead `speak()` method -- see Finding 1.1 above
-
-### 4.2 Dead `textToPhonemes()` method -- see Finding 1.1 above
-
-### 4.3 No old phoneme format references in engine code
-
-The engine correctly delegates to `PhonemeConverter.phonemizeNormalized()` and `Tokenizer.tokenizeWithPadding()`. No stale format handling.
-
----
-
-## 5. STALE DOCUMENTATION (misaki references)
-
-### 5.1 README.md -- Stale but acceptable (credits section)
-
-**File:** `/Users/cyb/works/mytts/README.md`
-**Line:** 18
-
-```markdown
-- [misaki](https://github.com/hexgrad/misaki) -- eSpeak-to-Kokoro phoneme mapping reference
-```
-
-**Analysis:** This is in the Credits section. Misaki was indeed used as a reference during development. The description "eSpeak-to-Kokoro phoneme mapping reference" is still accurate -- it was referenced even though E2M was ultimately removed. **Low severity**, but the description could be misleading since the app no longer uses misaki-style E2M mapping.
-
-### 5.2 BUILD.md -- STALE / INCORRECT description
-
-**File:** `/Users/cyb/works/mytts/BUILD.md`
-**Line:** 302
-
-```markdown
-├── PhonemeConverter.kt  # eSpeak-ng G2P + misaki mapping
-```
-
-**Analysis:** This description is factually incorrect after the E2M removal. PhonemeConverter no longer does "misaki mapping." It does "eSpeak-ng G2P + IPA normalization."
-
-### 5.3 BUILD.md -- STALE / INCORRECT pipeline description
-
-**File:** `/Users/cyb/works/mytts/BUILD.md`
-**Lines:** 343-345
-
-```markdown
-The raw IPA output is then transformed using the misaki E2M
-mapping (diphthong merging, affricate joining, American English adjustments) to produce
-phonemes matching the Kokoro model's training data.
-```
-
-**Analysis:** This is factually wrong. The E2M diphthong merging and affricate joining were removed in commit `1fccfa9`. The raw IPA output now only undergoes minimal normalization (r->ɹ, ɚ->əɹ, etc.), not E2M mapping.
-
----
-
-## 6. SUPPRESSED VARIABLE
-
-### 6.1 `@Suppress("UNUSED_VARIABLE")` for `minor` in VoiceStyleLoader
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/VoiceStyleLoader.kt`
-**Lines:** 136-137
-
-```kotlin
-@Suppress("UNUSED_VARIABLE")
-val minor = buf.get().toInt()
-```
-
-**Analysis:** The `minor` byte is read from the .npy header to advance the buffer position, but its value is never used. The `@Suppress` annotation is intentional -- this is a parsing idiom, not dead code. However, a cleaner approach would be `buf.get()` without assigning to a variable. **Cosmetic issue only.**
-
----
-
-## 7. BUILD CONFIGURATION AUDIT
-
-### 7.1 Potentially unused dependency: `lifecycle-viewmodel-compose`
-
-**File:** `/Users/cyb/works/mytts/app/build.gradle.kts`
-**Line:** 92
-
-```kotlin
-implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-```
-
-**Analysis:** No file in the codebase imports anything from `lifecycle-viewmodel-compose` (no ViewModel, no `viewModel()` composable function). The app uses a service-bound `PlaybackController` pattern rather than ViewModels. This dependency is unused and can be removed.
-
-### 7.2 Potentially unused dependency: `lifecycle-runtime-compose`
-
-**File:** `/Users/cyb/works/mytts/app/build.gradle.kts`
-**Line:** 93
-
-```kotlin
-implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-```
-
-**Analysis:** No file imports from `lifecycle-runtime-compose` (e.g., `collectAsStateWithLifecycle`). The app uses standard `collectAsState()` from Compose runtime. This dependency appears unused and can be removed.
-
-### 7.3 Potentially unused dependency: `androidx.media:media`
-
-**File:** `/Users/cyb/works/mytts/app/build.gradle.kts`
-**Line:** 98
-
-```kotlin
-implementation("androidx.media:media:1.7.0")
-```
-
-**Analysis:** No file imports anything from `androidx.media`. The audio playback uses `android.media.AudioTrack` directly (from the Android SDK, not the library). The notification uses `androidx.core.app.NotificationCompat`, not media session APIs. This dependency appears unused and can be removed.
-
-### 7.4 Signing credentials in build.gradle.kts
-
-**File:** `/Users/cyb/works/mytts/app/build.gradle.kts`
-**Lines:** 35-40
-
-```kotlin
-signingConfigs {
-    create("release") {
-        storeFile = file("${rootProject.projectDir}/release.keystore")
-        storePassword = "mytts123"
-        keyAlias = "mytts"
-        keyPassword = "mytts123"
-    }
-}
-```
-
-**Analysis:** Signing passwords are hardcoded in the build file. While this is a personal project with a self-signed debug-style key, this is a security concern if the repo is public. Consider moving to `local.properties` or environment variables.
-
-### 7.5 settings.gradle.kts -- CLEAN
-
-No issues found. Standard configuration.
-
----
-
-## 8. PROGUARD RULES AUDIT
-
-**File:** `/Users/cyb/works/mytts/app/proguard-rules.pro`
-
-```
--keep class com.example.mytts.engine.** { *; }
-```
-
-**Analysis:** This rule keeps ALL classes in `com.example.mytts.engine`. This is a broad keep rule that will prevent R8 from removing any dead code in the engine package (including the dead `speak()` and `textToPhonemes()` methods). However, this may be intentionally broad to protect JNI-called classes (`EspeakBridge`). No rules reference old/nonexistent classes.
-
-**Verdict:** Proguard rules are clean. No stale class references. The broad `-keep` rule is functional but could be tightened.
-
----
-
-## 9. LOGIC OBSERVATIONS (not bugs, but worth noting)
-
-### 9.1 `PhonemeConverter.VALID_CHARS` duplicates `Tokenizer.VOCAB`
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt` lines 18-25
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/Tokenizer.kt` lines 8-17
-
-Both files independently construct the same character set from identical string literals. If the model vocabulary changes, both must be updated in sync. Consider having `PhonemeConverter.VALID_CHARS` reference `Tokenizer.VOCAB.keys` to avoid drift.
-
-### 9.2 Recursive `synthesize()` for long phonemes
-
-**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt`
-**Lines:** 123-124
-
-```kotlin
-val audio1 = synthesize(firstPart, voiceName, speed)
-val audio2 = synthesize(secondPart, voiceName, speed)
-```
-
-This is recursive -- if the second part is still too long, it will recurse again. This is correct behavior (it will keep splitting), but there is no recursion depth guard. An extremely long phoneme string with no spaces could theoretically cause issues (though the `splitPos <= 0` guard at line 112 prevents infinite recursion).
-
----
-
-## SUMMARY TABLE
-
-| # | Severity | File | Lines | Finding |
-|---|----------|------|-------|---------|
-| 1.1 | **Medium** | KokoroEngine.kt | 195-198 | `speak()` is dead code (never called) |
-| 1.1b | **Medium** | KokoroEngine.kt | 76-79 | `textToPhonemes()` is dead code (only called by dead `speak()`) |
-| 1.1c | **Low** | PhonemeConverter.kt | 65-68 | `phonemize()` only reachable via dead code path |
-| 1.2 | **Low** | AudioPlayer.kt | 323-324 | `isRunning`, `isPaused` -- unused public properties |
-| 1.3 | **Low** | AudioProducer.kt | 133 | `isRunning` -- unused public property |
-| 1.4 | **Low** | AudioPlayer.kt | 23 | `onUnderrun` callback -- never provided by any caller |
-| 1.5 | **Low** | Color.kt | 29 | `HighlightBorder` -- unused color constant |
-| 5.2 | **Medium** | BUILD.md | 302 | Stale description: "misaki mapping" (E2M was removed) |
-| 5.3 | **Medium** | BUILD.md | 343-345 | Stale/incorrect pipeline description (still describes E2M) |
-| 7.1 | **Low** | build.gradle.kts | 92 | `lifecycle-viewmodel-compose` -- unused dependency |
-| 7.2 | **Low** | build.gradle.kts | 93 | `lifecycle-runtime-compose` -- unused dependency |
-| 7.3 | **Low** | build.gradle.kts | 98 | `androidx.media:media` -- unused dependency |
-| 7.4 | **Info** | build.gradle.kts | 36-39 | Hardcoded signing credentials |
-| 9.1 | **Info** | PhonemeConverter.kt + Tokenizer.kt | 18-25, 8-17 | Duplicated VOCAB character sets (drift risk) |
-
-**No TODO/FIXME/HACK comments were found** in any Kotlin source file.
-
-**No misaki references exist in Kotlin source code.** The only misaki references are in documentation files (README.md, BUILD.md, opencode-session.md). Two of these (BUILD.md lines 302 and 343-345) are factually stale after the E2M removal.
-</task_result>
 ```
 
 ---
 
-## Assistant (Plan · claude-opus-4.6 · 23.7s)
+## Assistant (Build · Claude Opus 4.6 · 14.5s)
 
-_Thinking:_
-
-Excellent. The three agents have done a thorough job. Let me compile the findings into a clear summary for the user.
-
-Key findings:
-
-**Dead code (legacy pipeline):**
-1. `KokoroEngine.speak()` - never called, old entry point
-2. `KokoroEngine.textToPhonemes()` - only called by dead `speak()`
-3. `PhonemeConverter.phonemize()` - only reachable via dead code chain
-
-**Stale documentation:**
-4. BUILD.md line 302 - says "misaki mapping" but E2M was removed
-5. BUILD.md lines 343-345 - describes E2M pipeline that no longer exists
-
-
-6. Several unused public properties scattered across AudioPlayer and AudioProducer, plus an unwired callback and an orphaned color constant
-
-**Unused dependencies:**
-7. Three lifecycle and media libraries that aren't actually being used in the codebase
-
-**Minor issues:**
-8. Some duplicated character sets and other small inconsistencies to clean up
-
-, plus hardcoded signing credentials
-
-The CMU dictionary and old chunking logic were removed cleanly, but there's a dead code chain lingering from the previous pipeline that needs to be stripped out.
-
-The audit is complete. Here's a summary of the findings:
-
----
-
-## Legacy Code Findings
-
-### Dead Code Chain (Medium severity — old pipeline remnants)
-
-The old entry point `KokoroEngine.speak()` and its call chain are dead code. The live pipeline uses `speakNormalized()` instead:
-
-| # | File | Lines | Dead Code |
-|---|------|-------|-----------|
-| 1 | `KokoroEngine.kt` | 195-198 | `speak()` — never called by any code |
-| 2 | `KokoroEngine.kt` | 76-79 | `textToPhonemes()` — only called by dead `speak()` |
-| 3 | `PhonemeConverter.kt` | 65-68 | `phonemize()` — only reachable via dead `textToPhonemes()` |
-
-### Stale Documentation (Medium — factually wrong after E2M removal)
-
-| # | File | Lines | Issue |
-|---|------|-------|-------|
-| 4 | `BUILD.md` | 302 | Says `"eSpeak-ng G2P + misaki mapping"` — misaki E2M was removed |
-| 5 | `BUILD.md` | 343-345 | Describes E2M diphthong/affricate pipeline that no longer exists |
-
-### Unused Code (Low severity)
-
-| # | File | Lines | Issue |
-|---|------|-------|-------|
-| 6 | `AudioPlayer.kt` | 323-324 | `isRunning`, `isPaused` — public properties never read externally |
-| 7 | `AudioProducer.kt` | 133 | `isRunning` — public property never read externally |
-| 8 | `AudioPlayer.kt` | 23 | `onUnderrun` callback — constructor param, never provided by caller |
-| 9 | `Color.kt` | 29 | `HighlightBorder` — unused color constant |
-
-### Unused Dependencies (Low severity)
-
-| # | File | Line | Dependency |
-|---|------|------|------------|
-| 10 | `build.gradle.kts` | 92 | `lifecycle-viewmodel-compose` — no ViewModel used |
-| 11 | `build.gradle.kts` | 93 | `lifecycle-runtime-compose` — no lifecycle-aware collection used |
-| 12 | `build.gradle.kts` | 98 | `androidx.media:media` — not imported anywhere |
-
-### Clean Areas (no issues)
-
-- **CMU dict / medavox G2P**: Fully removed, no remnants in code or assets
-- **Old manual sentence splitting**: Fully replaced by ICU4J, no dead regex code
-- **Tokenizer.kt**: Clean, VOCAB matches model vocabulary (uppercase letters are model tokens, not E2M)
-- **TextChunker.kt**: Clean, all functions and constants actively used
-- **Proguard rules**: No stale class references
-
----
-
-Findings #1-3 are the most important — that dead `speak() -> textToPhonemes() -> phonemize()` chain is the old pipeline entry point that was superseded when the processing was split into normalize-then-synthesize. It won't cause runtime bugs, but it clutters the code and could confuse future readers.
-
-Want me to proceed with cleaning all of these up? I'd propose one commit for the code cleanup (dead code + unused properties + unused color) and one for the doc/dependency fixes.
-
----
-
-## User
-
-what about normalizeText, i.e., convert $5B to "five billion dollars", is it still necessary for us to do it manually?   and if misaki is not used, we can remove it from README as well
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 344.4s)
-
-
-
-Good questions. Let me investigate both: whether eSpeak-ng or ICU4J already handles text normalization (numbers, currency, etc.), and what the current `normalizeText` actually does.
-
-**Tool: task**
+**Tool: bash**
 
 **Input:**
 ```json
 {
-  "description": "Audit normalizeText function",
-  "prompt": "Read the full contents of /Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt and analyze the `normalizeText()` function in detail.\n\nFor EACH normalization rule/regex in the function, document:\n1. What it does (e.g., \"$5B\" -> \"five billion dollars\")\n2. Whether eSpeak-ng already handles this transformation natively (i.e., if you pass \"$5B\" directly to eSpeak-ng's textToPhonemes, would it produce correct phonemes?)\n\neSpeak-ng is a full TTS engine that has built-in text normalization for English, including:\n- Number-to-word conversion\n- Currency symbols\n- Abbreviations\n- Ordinals\n- Time formats\n- etc.\n\nThe key question is: which of these manual normalizations in `normalizeText()` are REDUNDANT because eSpeak-ng already handles them natively, and which are NECESSARY because eSpeak-ng gets them wrong or doesn't handle them?\n\nAlso check: is `normalizeText()` called BEFORE or AFTER text is sent to eSpeak-ng? Read the full pipeline to understand the call order.\n\nReturn the complete function source code and your analysis of each rule.",
-  "subagent_type": "explore"
+  "command": "git add -A && git commit -m \"Raise producer thread priority and enable ONNX denormal-as-zero\n\nProducer thread now runs at THREAD_PRIORITY_FOREGROUND (-2) instead of\nTHREAD_PRIORITY_DEFAULT (0). On ARM big.LITTLE SoCs, higher priority\nthreads get more favorable core placement via EAS, especially when the\nscreen is off and the system is in low-power mode.\n\nAlso enable flush-denormal-as-zero in ONNX Runtime to prevent rare\ncatastrophic slowdowns from near-zero float intermediates.\"",
+  "description": "Commit 2: priority + denormal config"
 }
 ```
 
 **Output:**
 ```
-task_id: ses_2a8f3f0aeffeHbZto6t5R1fE5n (for resuming to continue this task if needed)
+[master a20697b] Raise producer thread priority and enable ONNX denormal-as-zero
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
-<task_result>
-Now I have the complete picture. Let me compile the full analysis.
-
----
-
-## Complete `normalizeText()` Source Code
-
-The function is at lines 124-256 of `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt`:
-
-```kotlin
-fun normalizeText(text: String): String {
-    var t = text
-        .lines().joinToString("\n") { it.trim() }
-        .replace(Regex("[\u2018\u2019]"), "'")
-        .replace(Regex("[\u201C\u201D\u00AB\u00BB]"), "\"")
-        // Full-width punctuation
-        .replace("\u3001", ", ")
-        .replace("\u3002", ". ")
-        .replace("\uFF01", "! ")
-        .replace("\uFF0C", ", ")
-        .replace("\uFF1A", ": ")
-        .replace("\uFF1B", "; ")
-        .replace("\uFF1F", "? ")
-
-    // Common abbreviations
-    t = t.replace(Regex("\\bD[Rr]\\.(?= [A-Z])"), "Doctor")
-        .replace(Regex("\\b(?:Mr\\.|MR\\.(?= [A-Z]))"), "Mister")
-        .replace(Regex("\\b(?:Ms\\.|MS\\.(?= [A-Z]))"), "Miss")
-        .replace(Regex("\\b(?:Mrs\\.|MRS\\.(?= [A-Z]))"), "Missus")
-        .replace(Regex("\\betc\\.(?! [A-Z])"), "etcetera")
-
-    // --- Time expressions ---
-    t = Regex("(\\d{1,2}):(\\d{2})\\s*([AaPp][Mm])?").replace(t) { ... }
-
-    // --- Currency with cents: $3.50 → three dollars and fifty cents ---
-    t = Regex("([\\$\u20AC\u00A3])\\s*(\\d+)\\.(\\d{2})\\b").replace(t) { ... }
-
-    // --- Currency with magnitude suffix: $50B, €3.5M, £100K, ¥1000 ---
-    t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b").replace(t) { ... }
-
-    // Percentage: 50% → 50 percent
-    t = t.replace(Regex("(\\d+(?:\\.\\d+)?)\\s*%"), "$1 percent")
-
-    // Hashtag number: #1 → number 1
-    t = t.replace(Regex("#\\s*(\\d+)"), "number $1")
-
-    // Common symbols
-    t = t.replace("&", " and ")
-    t = t.replace("@", " at ")
-
-    // Clean stray currency/symbol characters
-    t = t.replace(Regex("[\\$\u20AC\u00A3\u00A5#]"), " ")
-
-    // --- Ordinals: 1st, 2nd, 3rd, 21st ---
-    t = Regex("(\\d+)(?:st|nd|rd|th)\\b").replace(t) { ... }
-
-    // --- Year-like numbers: 4-digit in year contexts ---
-    t = Regex("(?<=\\b(?:in|of|from|since|by|year|circa|around|before|after|during)\\s)(\\d{4})\\b").replace(t) { ... }
-
-    // Number formatting
-    t = t.replace(Regex("(?<=\\d),(?=\\d)"), "")    // strip digit-grouping commas
-    t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ") // ranges: 5-10 → 5 to 10
-
-    // Convert remaining numbers to words
-    t = t.replace(Regex("\\d+(\\.\\d+)?")) { match -> numberToWords(match.value) }
-
-    // Collapse multiple spaces
-    t = t.replace(Regex("\\s{2,}"), " ")
-
-    return t.trim()
-}
 ```
 
 ---
 
-## Pipeline Call Order
-
-The call order is unambiguous:
-
-1. **`normalizeText()` runs FIRST** -- it converts raw text to normalized English words
-2. **`espeakBridge.textToPhonemes()` runs SECOND** -- it receives the already-normalized text
-3. **`postProcess()` runs THIRD** -- it adjusts eSpeak's IPA output for Kokoro's vocabulary
-
-The path is:
-```
-phonemize(text)
-  → normalizeText(text)      // step 1: text → normalized text
-  → phonemizeNormalized(normalizedText)
-      → espeakBridge.textToPhonemes(normalizedText)  // step 2: text → IPA
-      → postProcess(rawIpa)                           // step 3: IPA cleanup
-```
-
-This means `normalizeText()` is a **pre-processing** step that converts things like `$5B` into `5 billion dollars` *before* eSpeak ever sees the text. eSpeak then receives plain English words and only needs to do grapheme-to-phoneme conversion.
-
-Critically, the JNI layer (in `espeak_jni.cpp`) uses `espeak_TextToPhonemes()` -- **not** `espeak_Synth()`. The `espeak_TextToPhonemes()` function is a lower-level API that processes text clause-by-clause. It does still apply eSpeak's internal text normalization rules, but it is less documented/tested than the full synthesis path.
-
----
-
-## Rule-by-Rule Analysis
-
-### Rule 1: Trim lines and normalize Unicode quotes/punctuation (lines 125-137)
-
-```kotlin
-.lines().joinToString("\n") { it.trim() }
-.replace(Regex("[\u2018\u2019]"), "'")       // smart quotes → ASCII '
-.replace(Regex("[\u201C\u201D\u00AB\u00BB]"), "\"")  // smart double-quotes → "
-.replace("\u3001", ", ")   // 、 → ,
-.replace("\u3002", ". ")   // 。 → .
-.replace("\uFF01", "! ")   // ！ → !
-.replace("\uFF0C", ", ")   // ， → ,
-.replace("\uFF1A", ": ")   // ： → :
-.replace("\uFF1B", "; ")   // ； → ;
-.replace("\uFF1F", "? ")   // ？ → ?
-```
-
-**What it does:** Normalizes Unicode typographic quotes to ASCII, and full-width CJK punctuation to ASCII equivalents.
-
-**Does eSpeak handle this natively?** **PARTIALLY.** eSpeak-ng's en-us voice handles smart quotes (curly quotes) just fine -- they are treated as quotation marks. However, **full-width CJK punctuation** (U+3001, U+3002, U+FF01, etc.) is specifically relevant to CJK languages. eSpeak's English voice does not have rules for these -- they would likely be silently dropped or mispronounced.
-
-**Verdict:**
-- Smart quote normalization: **REDUNDANT** (eSpeak handles these)
-- Full-width CJK punctuation: **NECESSARY** (eSpeak's English voice does not handle these)
-- Line trimming: **NECESSARY** (cosmetic, prevents leading/trailing whitespace issues)
-
----
-
-### Rule 2: Common abbreviations (lines 140-144)
-
-```kotlin
-t = t.replace(Regex("\\bD[Rr]\\.(?= [A-Z])"), "Doctor")
-    .replace(Regex("\\b(?:Mr\\.|MR\\.(?= [A-Z]))"), "Mister")
-    .replace(Regex("\\b(?:Ms\\.|MS\\.(?= [A-Z]))"), "Miss")
-    .replace(Regex("\\b(?:Mrs\\.|MRS\\.(?= [A-Z]))"), "Missus")
-    .replace(Regex("\\betc\\.(?! [A-Z])"), "etcetera")
-```
-
-**What it does:** Expands title abbreviations (`Dr.` -> `Doctor`, `Mr.` -> `Mister`, etc.) and `etc.` -> `etcetera`.
-
-**Does eSpeak handle this natively?** **YES.** The code's own comment says: "eSpeak handles Dr./Mr. itself, but we expand for consistency with what the user sees in the text display." eSpeak-ng has comprehensive abbreviation expansion rules in its English dictionary. `Dr.` -> "Doctor", `Mr.` -> "Mister", `Mrs.` -> "Missus", `etc.` -> "etcetera" are all natively handled.
-
-**Verdict: REDUNDANT.** The code author acknowledges this in the comment. These are duplicated for display consistency, not phonemic necessity.
-
----
-
-### Rule 3: Time expressions (lines 148-165)
-
-```kotlin
-t = Regex("(\\d{1,2}):(\\d{2})\\s*([AaPp][Mm])?").replace(t) { ... }
-// 3:30pm → three thirty p m
-// 12:00 → twelve o'clock
-```
-
-**What it does:** Converts time formats like `3:30pm` to `three thirty p m` and `12:00` to `twelve o'clock`.
-
-**Does eSpeak handle this natively?** **YES, mostly.** eSpeak-ng does have time-reading rules. For example, `3:30` would be read as "three thirty" and `3:30pm` as "three thirty p m". However, eSpeak's handling of `12:00` (as "twelve o'clock" vs "twelve zero zero") can vary. The custom code guarantees the exact phrasing: `:00` always becomes "o'clock", and single-digit minutes get an "oh" prefix (e.g., `3:05` -> "three oh five").
-
-**Verdict: MOSTLY REDUNDANT** but provides **more controlled/natural phrasing** than eSpeak's default. eSpeak would produce intelligible output, but the custom rules guarantee specific phrasing (the "oh" for sub-10 minutes, "o'clock" for :00).
-
----
-
-### Rule 4: Currency with cents (lines 170-194)
-
-```kotlin
-t = Regex("([\\$\u20AC\u00A3])\\s*(\\d+)\\.(\\d{2})\\b").replace(t) { ... }
-// $3.50 → three dollars and fifty cents
-// €1.00 → one euro
-// £2.99 → two pounds and ninety nine pence
-```
-
-**What it does:** Converts currency amounts with decimal cents into full English words, with correct singular/plural and currency-specific sub-unit names (cents, pence).
-
-**Does eSpeak handle this natively?** **YES, substantially.** eSpeak-ng has built-in rules for `$`, `€`, and `£` with decimal amounts. `$3.50` would be read as "three dollars fifty" (or "three dollars and fifty cents" depending on the exact eSpeak version/config). eSpeak also handles pluralization correctly. However, there may be minor phrasing differences (e.g., eSpeak may say "three dollars fifty" while this code produces "three dollars and fifty cents").
-
-**Verdict: LARGELY REDUNDANT.** eSpeak handles currency natively. The custom code ensures a specific phrasing style with explicit "and" and sub-unit names, which may differ from eSpeak's default but is not strictly necessary for correct pronunciation.
-
----
-
-### Rule 5: Currency with magnitude suffixes (lines 197-212)
-
-```kotlin
-t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
-    .replace(t) { ... }
-// $50B → 50 billion dollars
-// €3.5M → 3.5 million euros
-// ¥1000 → 1000 yen
-```
-
-**What it does:** Handles informal magnitude suffixes (K, M, B, T) after currency amounts, common in financial/news text. Also handles the yen symbol (¥).
-
-**Does eSpeak handle this natively?** **NO, not the magnitude suffixes.** eSpeak-ng would NOT interpret `$50B` as "fifty billion dollars." It would likely read it as "fifty dollars B" or something similar, because `B` immediately after a number is not a standard abbreviation eSpeak recognizes in this context. eSpeak does handle `¥` natively (as "yen"), but the `K/M/B/T` magnitude convention is informal shorthand not part of eSpeak's rules.
-
-**Verdict: NECESSARY** for the magnitude suffix handling (`$50B`, `€3.5M`, etc.). The base currency symbol handling (without suffix) is redundant with eSpeak, but the suffixes are not.
-
----
-
-### Rule 6: Percentage (line 215)
-
-```kotlin
-t = t.replace(Regex("(\\d+(?:\\.\\d+)?)\\s*%"), "$1 percent")
-// 50% → 50 percent
-```
-
-**What it does:** Converts `%` to the word "percent."
-
-**Does eSpeak handle this natively?** **YES.** eSpeak-ng reads `%` as "percent" natively.
-
-**Verdict: REDUNDANT.**
-
----
-
-### Rule 7: Hashtag number (line 218)
-
-```kotlin
-t = t.replace(Regex("#\\s*(\\d+)"), "number $1")
-// #1 → number 1
-```
-
-**What it does:** Converts `#N` to "number N."
-
-**Does eSpeak handle this natively?** **YES, usually.** eSpeak-ng reads `#` before a number as "number." However, the behavior can depend on context and eSpeak version. The explicit conversion ensures consistency.
-
-**Verdict: LIKELY REDUNDANT** but a reasonable safety measure.
-
----
-
-### Rule 8: Symbol replacements (lines 221-222)
-
-```kotlin
-t = t.replace("&", " and ")
-t = t.replace("@", " at ")
-```
-
-**What it does:** Converts `&` to "and" and `@` to "at."
-
-**Does eSpeak handle this natively?** **YES.** eSpeak-ng reads `&` as "and" and `@` as "at."
-
-**Verdict: REDUNDANT.**
-
----
-
-### Rule 9: Stray currency/symbol cleanup (line 225)
-
-```kotlin
-t = t.replace(Regex("[\\$\u20AC\u00A3\u00A5#]"), " ")
-```
-
-**What it does:** Removes any remaining currency/hash symbols that were not matched by earlier patterns (e.g., a bare `$` not followed by a number).
-
-**Does eSpeak handle this natively?** **Partially.** eSpeak would attempt to read a bare `$` as "dollar" which could be undesirable if the symbol is stray/orphaned. This cleanup prevents eSpeak from vocalizing symbols that the code author considers noise.
-
-**Verdict: NECESSARY** as a safety net -- prevents unexpected pronunciation of orphaned symbols after the earlier currency rules have already handled the meaningful ones.
-
----
-
-### Rule 10: Ordinals (lines 230-233)
-
-```kotlin
-t = Regex("(\\d+)(?:st|nd|rd|th)\\b").replace(t) { ... }
-// 1st → first, 21st → twenty first, 100th → one hundredth
-```
-
-**What it does:** Converts ordinal number notation (`1st`, `2nd`, `3rd`, `21st`) to ordinal words.
-
-**Does eSpeak handle this natively?** **YES.** eSpeak-ng has comprehensive ordinal handling. `1st` -> "first", `21st` -> "twenty first", etc.
-
-**Verdict: REDUNDANT.** eSpeak handles ordinals natively and correctly.
-
----
-
-### Rule 11: Year-like numbers in context (lines 237-241)
-
-```kotlin
-t = Regex("(?<=\\b(?:in|of|from|since|by|year|circa|around|before|after|during)\\s)(\\d{4})\\b")
-    .replace(t) { ... }
-// "in 2024" → "in twenty twenty four"
-// "since 1999" → "since nineteen ninety nine"
-```
-
-**What it does:** Detects 4-digit numbers preceded by year-context words and converts them using year pronunciation rules (e.g., 2024 -> "twenty twenty four" instead of "two thousand and twenty four").
-
-**Does eSpeak handle this natively?** **YES, mostly.** eSpeak-ng has heuristics for year pronunciation. It generally reads `2024` as "twenty twenty four" and `1999` as "nineteen ninety nine" even without context clues. eSpeak's English rules include year-detection logic for 4-digit numbers in the 1000-2099 range. However, there can be edge cases (e.g., `2000`-`2009`) where eSpeak's choice might differ from this code's.
-
-**Verdict: MOSTLY REDUNDANT.** eSpeak handles year pronunciation well. The custom code adds contextual lookbehind (requiring words like "in", "since", etc.) which is more conservative than eSpeak's own heuristics. This could actually be *worse* than eSpeak in some cases (e.g., "the year was 2024" -- no lookbehind match because "was" is not in the keyword list, but eSpeak would still read it as a year).
-
----
-
-### Rule 12: Strip digit-grouping commas (line 244)
-
-```kotlin
-t = t.replace(Regex("(?<=\\d),(?=\\d)"), "")
-// 1,000,000 → 1000000
-```
-
-**What it does:** Removes commas used as thousands separators.
-
-**Does eSpeak handle this natively?** **YES.** eSpeak-ng correctly reads `1,000,000` as "one million." The commas are recognized as digit grouping.
-
-**Verdict: REDUNDANT.** eSpeak handles digit-grouping commas natively. Stripping them before passing to eSpeak is unnecessary and could even cause issues in edge cases (though unlikely for English).
-
----
-
-### Rule 13: Number ranges (line 245)
-
-```kotlin
-t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ")
-// 5-10 → 5 to 10
-```
-
-**What it does:** Converts hyphens between numbers to "to" (interpreting them as ranges).
-
-**Does eSpeak handle this natively?** **NO, not reliably.** eSpeak-ng would typically read `5-10` as "five minus ten" or "five to ten" depending on context, but its heuristic for distinguishing ranges from subtraction/negative numbers is imperfect. The explicit conversion to "to" is safer for the intended use case (reading text aloud where `5-10` almost always means "five to ten").
-
-**Verdict: NECESSARY.** This prevents eSpeak from reading ranges as "minus" expressions.
-
----
-
-### Rule 14: Convert remaining numbers to words (lines 248-250)
-
-```kotlin
-t = t.replace(Regex("\\d+(\\.\\d+)?")) { match -> numberToWords(match.value) }
-// 42 → forty two
-// 3.14 → three point one four
-```
-
-**What it does:** Converts all remaining bare numbers to English words.
-
-**Does eSpeak handle this natively?** **YES.** eSpeak-ng's primary function includes number-to-word conversion. It reads `42` as "forty two" and `3.14` as "three point one four."
-
-**Verdict: REDUNDANT.** This is the most clearly redundant rule. eSpeak's core competency is converting text (including numbers) to phonemes. Converting numbers to words before passing to eSpeak means eSpeak receives "forty two" and phonemizes the words, rather than receiving "42" and using its own number rules. The end result is phonemically identical.
-
----
-
-### Rule 15: Collapse multiple spaces (line 253)
-
-```kotlin
-t = t.replace(Regex("\\s{2,}"), " ")
-```
-
-**What it does:** Collapses runs of multiple whitespace into a single space.
-
-**Does eSpeak handle this natively?** **YES.** eSpeak ignores extra whitespace.
-
-**Verdict: REDUNDANT** for phonemization, but **harmless** and good hygiene (especially since the normalized text is also displayed to the user in `PreparedChunk`).
-
----
-
-## Summary Table
-
-| # | Rule | eSpeak Handles Natively? | Verdict |
-|---|------|--------------------------|---------|
-| 1a | Smart quotes → ASCII | Yes | REDUNDANT |
-| 1b | Full-width CJK punctuation | No | **NECESSARY** |
-| 1c | Line trimming | N/A | **NECESSARY** (hygiene) |
-| 2 | Abbreviations (Dr., Mr., etc.) | Yes | REDUNDANT (code acknowledges this) |
-| 3 | Time expressions (3:30pm) | Mostly yes | MOSTLY REDUNDANT (controls exact phrasing) |
-| 4 | Currency with cents ($3.50) | Yes | LARGELY REDUNDANT (phrasing control) |
-| 5 | Currency + magnitude ($50B) | **No** (K/M/B/T suffixes) | **NECESSARY** |
-| 6 | Percentage (%) | Yes | REDUNDANT |
-| 7 | Hashtag number (#1) | Yes | REDUNDANT |
-| 8 | Symbols (& and @) | Yes | REDUNDANT |
-| 9 | Stray symbol cleanup | Partially | **NECESSARY** (safety net) |
-| 10 | Ordinals (1st, 2nd) | Yes | REDUNDANT |
-| 11 | Year pronunciation | Mostly yes | MOSTLY REDUNDANT |
-| 12 | Strip digit-grouping commas | Yes | REDUNDANT |
-| 13 | Number ranges (5-10 → "to") | **No, unreliable** | **NECESSARY** |
-| 14 | Numbers → words | Yes | REDUNDANT |
-| 15 | Collapse spaces | Yes (ignored) | REDUNDANT (but harmless) |
-
-## Bottom Line
-
-Out of 15 rules/groups, only **4 are clearly necessary**:
-- Full-width CJK punctuation normalization (Rule 1b)
-- Currency magnitude suffixes like `$50B` (Rule 5)
-- Stray symbol cleanup (Rule 9)
-- Number-range hyphen → "to" (Rule 13)
-
-The remaining **11 rules are redundant** with eSpeak-ng's built-in English text normalization. The biggest redundancy is Rule 14 (general number-to-words conversion), which duplicates eSpeak's core functionality. Rules 3, 4, and 11 are borderline -- eSpeak handles them but the custom code provides slightly more controlled phrasing.
-
-The author appears to have adopted a "belt and suspenders" approach: normalize everything into plain English words before eSpeak, so that eSpeak only needs to do grapheme-to-phoneme conversion and is never asked to do text normalization. This is a defensible strategy (it makes the pipeline's behavior deterministic and independent of eSpeak version quirks), but it comes at the cost of significant code complexity for rules that eSpeak already handles correctly.
-</task_result>
-```
-
-**Tool: task**
-
-**Input:**
-```json
-{
-  "description": "Check eSpeak-ng number handling",
-  "prompt": "Research whether eSpeak-ng handles the following text normalization cases natively (i.e., without external preprocessing). Look at the eSpeak-ng source code and documentation to understand its built-in text processing capabilities.\n\nSpecific cases to check:\n1. Currency: \"$5B\", \"$3.2M\", \"$500\", \"€100\", \"$0.99\", \"99¢\", \"99 cents\"\n2. Large numbers with suffixes: \"5B\" (billion), \"3.2M\" (million), \"1.5T\" (trillion)\n3. Ordinals: \"1st\", \"2nd\", \"3rd\", \"21st\", \"100th\"\n4. Time: \"3:45\", \"12:00\", \"3:45 PM\"\n5. Years: \"2024\", \"1990s\", \"1800s\"\n6. Percentages: \"50%\", \"3.5%\"\n7. Abbreviations: \"Mr.\", \"Dr.\", \"vs.\", \"etc.\"\n8. Decimal numbers: \"3.14\", \"0.5\"\n9. Plain integers: \"42\", \"1000\", \"1,000,000\"\n10. Dates: \"Jan 5\", \"March 2024\"\n\nFor reference, the eSpeak-ng fork used is: https://github.com/csukuangfj/espeak-ng (commit f6fed6c58b5e0998b8e68c6610125e2d07d595a7)\n\nAlso check the eSpeak-ng documentation at https://github.com/espeak-ng/espeak-ng/blob/master/docs/index.md for text processing features.\n\nReturn a detailed analysis of what eSpeak-ng handles natively vs what would need external preprocessing.",
-  "subagent_type": "explore"
-}
-```
-
-**Output:**
-```
-task_id: ses_2a8f3cc7affdy24s8oPnFG9m9M (for resuming to continue this task if needed)
-
-<task_result>
-
-
-Based on my notes, all the research has been gathered and the only remaining step is to synthesize the findings into a clear, detailed report. Let me do that now.
-
----
-
-# eSpeak-ng Text Normalization Analysis
-
-## Summary
-
-This analysis covers what the eSpeak-ng engine (csukuangfj fork, commit f6fed6c) handles natively when used via `espeak_TextToPhonemes()`, and what requires external preprocessing in the `mytts` Android TTS app.
-
-## Results by Category
-
-### 1. Plain Integers — HANDLED NATIVELY
-eSpeak-ng has a full `TranslateNumber()` system in `numbers.c`. It supports integers up to 14 digits by default (`langopts.max_digits`). Thousands separators (commas) are recognized via `langopts.thousands_sep`. Examples: "500" → "five hundred", "1,000,000" → "one million". No preprocessing needed.
-
-### 2. Decimal Numbers — HANDLED NATIVELY
-The decimal separator (`.`) is configured via `langopts.decimal_sep`. The word "point" is defined as `_dpt` in `en_list`. After the decimal point, digits are spoken individually (e.g., "3.14" → "three point one four"). No preprocessing needed.
-
-### 3. Ordinals — HANDLED NATIVELY
-`TranslateNumber_1()` in `numbers.c` explicitly looks for ordinal suffixes after digit sequences. The suffixes `_#st`, `_#nd`, `_#rd`, `_#th` are all defined in `en_list`. So "1st" → "first", "2nd" → "second", "3rd" → "third", "21st" → "twenty first", "100th" → "one hundredth". No preprocessing needed.
-
-### 4. Percentages — HANDLED NATIVELY
-The `%` symbol has a character name defined in `en_list` (`_%` → "percent", with `$max3` flag). When eSpeak-ng encounters "50%", it reads the number then the symbol name: "fifty percent". No preprocessing needed.
-
-### 5. Abbreviations — PARTIALLY HANDLED
-Common abbreviations are in the `en_list` dictionary:
-- `mr` → "mister" (with `$dot` flag to handle trailing period)
-- `mrs` → "missiz" (with `$dot`)
-- `dr` → "doctor" (with `$dot`)
-- `etc` → "etcetera"
-
-However, many abbreviations are NOT in the dictionary (e.g., "vs" is missing). Unrecognized abbreviations will either be spoken letter-by-letter or processed through pronunciation rules, which may produce incorrect results. **Preprocessing recommended for abbreviations not in `en_list`.**
-
-### 6. Years — PARTIALLY HANDLED
-- Numbers in the 1900s range benefit from the `NUM_1900` flag, which makes "1984" → "nineteen eighty four" instead of "one thousand nine hundred and eighty four".
-- Plain 4-digit numbers like "2024" are spoken as regular cardinal numbers: "two thousand and twenty four". Whether this is acceptable depends on context (it is a common way to say recent years, though "twenty twenty four" might be preferred).
-- Year ranges or decades like "1990s" may not work correctly — the trailing "s" handling is uncertain.
-
-**Preprocessing recommended if you want consistent year pronunciation (e.g., "twenty twenty four" style) or decade handling ("the nineteen nineties").**
-
-### 7. Currency — NOT HANDLED (Preprocessing Required)
-This is a significant gap. While `$` has a character name (`_$` → "dollar") and `€` has a mapping via `_₠` → "euro" (though this maps U+20A0, not U+20AC), eSpeak-ng has **no currency-aware logic**. It does not combine a currency symbol with a number.
-
-- "$500" is spoken as "dollar five hundred" (symbol name first, then number) — the wrong order and missing pluralization.
-- "€10.50" would not produce "ten euros and fifty cents".
-- No cent handling exists.
-
-**External preprocessing is required** to convert currency expressions like "$500" into "five hundred dollars" or "$10.50" into "ten dollars and fifty cents".
-
-### 8. Large Numbers with Suffixes (5B, 3.2M, 1.5T) — NOT HANDLED (Preprocessing Required)
-eSpeak-ng only processes pure digit sequences as numbers. "5B" would be spoken as "five" followed by the letter "B". There is no logic to interpret B=billion, M=million, K=thousand, T=trillion.
-
-**External preprocessing is required** to expand these into full numbers or phrases (e.g., "5B" → "five billion", "3.2M" → "three point two million").
-
-### 9. Time (3:45, 12:00) — NOT HANDLED (Preprocessing Required)
-The colon (`:`) acts as a clause separator (`CLAUSE_COLON`) in eSpeak-ng. "3:45" would likely be split into separate clauses or spoken as two separate numbers ("three" ... "forty five") with an unnatural pause. There is a narrow special case in `numbers.c` for leading-zero two-digit numbers before a colon (like "02:30"), but no general time-speaking logic exists (no "o'clock", no AM/PM handling, no "three forty-five" assembly).
-
-**External preprocessing is required** to convert time expressions into speakable text (e.g., "3:45" → "three forty five", "12:00" → "twelve o'clock").
-
-### 10. Dates — NOT HANDLED (Preprocessing Required)
-eSpeak-ng has no date-specific logic. It processes text word by word. "Jan 5, 2024" would be handled as: "Jan" (dictionary lookup — likely works if present), "5" (as a cardinal number, not "fifth"), "2024" (as a regular number). There is no awareness of date formats, no ordinal conversion for day numbers, and no special treatment for month-day-year patterns.
-
-**External preprocessing is required** for proper date reading (e.g., "Jan 5" → "January fifth", "03/15/2024" → "March fifteenth, twenty twenty four").
-
----
-
-## Summary Table
-
-| Category | Natively Handled? | Preprocessing Needed? |
-|---|---|---|
-| Plain integers | YES | No |
-| Decimal numbers | YES | No |
-| Ordinals (1st, 2nd, 3rd) | YES | No |
-| Percentages (50%) | YES | No |
-| Common abbreviations (Mr., Dr.) | YES (partial) | For uncommon ones |
-| Years (1984, 2024) | Partially | For preferred style |
-| Currency ($500, €10) | NO | **Yes** |
-| Large number suffixes (5B, 3.2M) | NO | **Yes** |
-| Time (3:45, 12:00) | NO | **Yes** |
-| Dates (Jan 5, 03/15) | NO | **Yes** |
-
-## Recommendation
-
-The `mytts` app needs an external text normalization layer to preprocess at minimum: **currency**, **large number suffixes**, **time expressions**, and **dates** before passing text to `espeak_TextToPhonemes()`. The remaining categories (plain integers, decimals, ordinals, percentages, common abbreviations) can be safely left to eSpeak-ng's built-in handling.
-</task_result>
-```
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 43.9s)
-
-_Thinking:_
-
-Great, now I have a comprehensive picture. Let me summarize the findings for the user.
-
-Key findings about `normalizeText()`:
-
-**NECESSARY rules (eSpeak-ng doesn't handle these):**
-1. Full-width CJK punctuation → ASCII (eSpeak's English voice doesn't know these)
-2. Currency with magnitude suffixes: `$50B`, `€3.5M` (eSpeak doesn't interpret K/M/B/T)
-3. Number-range hyphens: `5-10` → "five to ten" (eSpeak might say "five minus ten")
-4. Time expressions: `3:45pm` → "three forty five p m" (colon is clause separator in eSpeak)
-
-
-5. General currency handling since eSpeak mispronounces word order, plus stray symbol cleanup as a safety net
-
-**REDUNDANT rules (eSpeak handles these natively):**
-Smart quotes, abbreviations, percentages, hashtags, symbols like & and @, ordinals, year pronunciation, digit-grouping commas, number-to-words conversion, and space collapsing all work fine without preprocessing.
-
-The function isn't entirely removable since several rules are genuinely necessary, but roughly half could be stripped out. That said, the redundancy serves a purpose—it keeps output consistent across different eSpeak versions. I should lay out both the simplification opportunity and the trade-offs for the user, then address removing the misaki credit from the README since it's no longer relevant.
-
-Great questions. Here's what I found:
-
----
-
-## `normalizeText()` — Can We Remove It?
-
-**No, we can't remove it entirely.** eSpeak-ng has good built-in text normalization, but there are real gaps. Here's the breakdown:
-
-### Rules that are NECESSARY (eSpeak gets these wrong)
-
-| Rule | Example | Why eSpeak fails |
-|------|---------|-----------------|
-| Currency (all) | `$500` | eSpeak says *"dollar five hundred"* — wrong word order, no pluralization |
-| Currency + magnitude | `$50B`, `€3.5M` | eSpeak reads `B` as a letter, doesn't know K/M/B/T convention |
-| Time expressions | `3:45pm` | Colon is a clause separator in eSpeak; no "o'clock" or AM/PM logic |
-| Number ranges | `5-10` | eSpeak may say *"five minus ten"* instead of *"five to ten"* |
-| Full-width CJK punctuation | `。` `，` `！` | eSpeak's English voice ignores these |
-| Stray symbol cleanup | Orphaned `$` after currency rules | Safety net to prevent eSpeak vocalizing leftover symbols |
-
-### Rules that are REDUNDANT (eSpeak handles these natively)
-
-| Rule | Example | eSpeak behavior |
-|------|---------|----------------|
-| Abbreviations (Dr., Mr., etc.) | `Dr. Smith` | eSpeak has these in its dictionary |
-| Ordinals | `1st`, `21st` | eSpeak says "first", "twenty first" correctly |
-| Percentages | `50%` | eSpeak says "fifty percent" |
-| `#N` → "number N" | `#1` | eSpeak handles this |
-| `&` → "and", `@` → "at" | `&`, `@` | eSpeak handles these symbols |
-| Digit-grouping commas | `1,000,000` | eSpeak says "one million" |
-| Number → words | `42` | eSpeak's core competency |
-| Smart quotes → ASCII | `"` → `"` | eSpeak handles curly quotes |
-| Collapse spaces | multiple spaces | eSpeak ignores extra whitespace |
-
-### Borderline (eSpeak handles but custom code gives slightly better phrasing)
-
-- **Years**: eSpeak says "two thousand and twenty four" for 2024; custom code says "twenty twenty four" — both valid
-- **Currency with cents**: eSpeak may say "three dollars fifty" vs custom "three dollars and fifty cents"
-
-### Verdict
-
-About **half the function is redundant**, but the other half is genuinely needed. We could simplify `normalizeText()` to only keep the necessary rules, which would cut the function roughly in half. But the redundant rules are harmless — they just mean eSpeak receives pre-normalized text like "forty two" instead of "42", producing identical phonemes either way.
-
----
-
-## README misaki credit
-
-You're right — since the E2M mapping was removed in commit `1fccfa9`, the misaki reference in README credits is misleading. Same issue in BUILD.md where it still describes "misaki mapping" in the file tree and pipeline description.
-
----
-
-## Proposed Plan
-
-Do you want me to:
-
-1. **Simplify `normalizeText()`** — strip the redundant rules, keep only the 6 necessary ones? This cuts ~80 lines of code. Risk: if eSpeak-ng's behavior ever changes across versions, we lose the safety net.
-2. **Keep `normalizeText()` as-is** — the "belt and suspenders" approach. Redundant but harmless and defensive.
-3. **Remove misaki from README.md credits** and fix the two stale descriptions in BUILD.md.
-4. **Clean up the dead code** from the earlier audit (dead `speak()`/`textToPhonemes()`/`phonemize()` chain, unused properties, unused deps).
-
-Which approach do you prefer for `normalizeText()`? I'd lean toward option 1 (simplify) since it removes genuine complexity, and eSpeak-ng's English text normalization is well-tested and stable.
-
----
-
-## User
-
-simplify normalizeText, cleanup dead code (also remove misaki from docs), make two separated commit
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-
-
-_Thinking:_
-
-The user wants two separate commits:
-1. Simplify `normalizeText()` — remove redundant rules, keep only necessary ones
-2. Clean up dead code + remove misaki from docs
-
-Let me plan this out and start working.
+## Assistant (Build · Claude Opus 4.6 · 14.5s)
 
 **Tool: todowrite**
 
@@ -1380,14 +153,19 @@ Let me plan this out and start working.
 {
   "todos": [
     {
-      "content": "Simplify normalizeText() — remove redundant rules, keep only necessary ones",
-      "status": "in_progress",
-      "priority": "high"
+      "content": "Commit 1: Replace sleep-polling with queue.put() backpressure",
+      "priority": "high",
+      "status": "completed"
     },
     {
-      "content": "Clean up dead code: speak(), textToPhonemes(), phonemize(), unused properties, unused deps, misaki from docs",
-      "status": "pending",
-      "priority": "high"
+      "content": "Commit 2: Raise producer priority to FOREGROUND + add ONNX denormal config",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Commit 3: Add PerformanceHintManager for inference thread",
+      "priority": "high",
+      "status": "in_progress"
     }
   ]
 }
@@ -1397,655 +175,1898 @@ Let me plan this out and start working.
 ```
 [
   {
-    "content": "Simplify normalizeText() — remove redundant rules, keep only necessary ones",
-    "status": "in_progress",
-    "priority": "high"
+    "content": "Commit 1: Replace sleep-polling with queue.put() backpressure",
+    "priority": "high",
+    "status": "completed"
   },
   {
-    "content": "Clean up dead code: speak(), textToPhonemes(), phonemize(), unused properties, unused deps, misaki from docs",
-    "status": "pending",
-    "priority": "high"
+    "content": "Commit 2: Raise producer priority to FOREGROUND + add ONNX denormal config",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Commit 3: Add PerformanceHintManager for inference thread",
+    "priority": "high",
+    "status": "in_progress"
   }
 ]
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 14.0s)
+## Assistant (Build · Claude Opus 4.6 · 14.9s)
 
-Let me read the files I need to edit:
+Now Commit 3 — the PerformanceHintManager integration. This is the most complex one. I need to:
+
+1. Add a `Context` parameter to `AudioProducer` 
+2. Create the hint session inside the producer thread (so we have the correct TID)
+3. Report actual work durations after each inference
+4. Close the session on stop
+5. Gate behind API 31+
 
 **Tool: read**
 
 **Input:**
 ```json
 {
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt"
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt"
 }
 ```
 
 **Output:**
 ```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt</path>
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt</path>
 <type>file</type>
-<content>1: package com.example.mytts.engine
+<content>1: package com.example.mytts.audio
 2: 
-3: import android.content.Context
+3: import android.os.Process
 4: import android.util.Log
-5: 
-6: /**
-7:  * Converts English text to IPA phonemes for Kokoro TTS.
-8:  *
-9:  * Uses eSpeak-ng (via NDK/JNI) for grapheme-to-phoneme conversion, with
-10:  * minimal IPA normalization to produce phonemes compatible with the Kokoro
-11:  * model (raw IPA diphthongs, no E2M compact tokens).
-12:  */
-13: class PhonemeConverter(context: Context) {
-14:     companion object {
-15:         private const val TAG = "PhonemeConverter"
-16: 
-17:         // Characters that exist in the Kokoro VOCAB
-18:         val VALID_CHARS: Set<Char> = run {
-19:             val pad = '$'
-20:             val punctuation = ";:,.!?\u00A1\u00BF\u2014\u2026\"\u00AB\u00BB\u201C\u201D "
-21:             val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-22:             val lettersIpa =
-23:                 "\u0251\u0250\u0252\u00E6\u0253\u0299\u03B2\u0254\u0255\u00E7\u0257\u0256\u00F0\u02A4\u0259\u0258\u025A\u025B\u025C\u025D\u025E\u025F\u0284\u0261\u0260\u0262\u029B\u0266\u0267\u0127\u0265\u029C\u0268\u026A\u029D\u026D\u026C\u026B\u026E\u029F\u0271\u026F\u0270\u014B\u0273\u0272\u0274\u00F8\u0275\u0278\u03B8\u0153\u0276\u0298\u0279\u027A\u027E\u027B\u0280\u0281\u027D\u0282\u0283\u0288\u02A7\u0289\u028A\u028B\u2C71\u028C\u0263\u0264\u028D\u03C7\u028E\u028F\u0291\u0290\u0292\u0294\u02A1\u0295\u02A2\u01C0\u01C1\u01C2\u01C3\u02C8\u02CC\u02D0\u02D1\u02BC\u02B4\u02B0\u02B1\u02B2\u02B7\u02E0\u02E4\u02DE\u2193\u2191\u2192\u2197\u2198\u2019\u0329\u2018\u1D7B"
-24:             (listOf(pad) + punctuation.toList() + letters.toList() + lettersIpa.toList()).toSet()
-25:         }
-26: 
-27:         // Number words for text-to-speech
-28:         private val ONES = arrayOf(
-29:             "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-30:             "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
-31:             "seventeen", "eighteen", "nineteen"
-32:         )
-33:         private val TENS = arrayOf(
-34:             "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"
-35:         )
-36:         private val ORDINAL_ONES = arrayOf(
-37:             "", "first", "second", "third", "fourth", "fifth", "sixth", "seventh",
-38:             "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
-39:             "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"
-40:         )
-41:         private val ORDINAL_TENS = arrayOf(
-42:             "", "", "twentieth", "thirtieth", "fortieth", "fiftieth",
-43:             "sixtieth", "seventieth", "eightieth", "ninetieth"
-44:         )
-45: 
-46:         // IPA normalizations for eSpeak-ng output.
-47:         // These only normalize eSpeak-specific symbols to standard IPA that
-48:         // the Kokoro model was trained on. NO diphthong/affricate compression
-49:         // (the model expects raw IPA like eɪ, aɪ, oʊ — not E2M compact tokens
-50:         // like A, I, O which are uppercase letters with different meaning).
-51:     }
-52: 
-53:     private val espeakBridge = EspeakBridge(context)
-54: 
-55:     init {
-56:         val success = espeakBridge.initialize()
-57:         if (!success) {
-58:             Log.e(TAG, "Failed to initialize eSpeak-ng!")
-59:         }
-60:     }
-61: 
-62:     /**
-63:      * Convert text to IPA phoneme string suitable for Kokoro tokenizer.
-64:      */
-65:     fun phonemize(text: String): String {
-66:         val normalized = normalizeText(text)
-67:         return phonemizeNormalized(normalized)
-68:     }
-69: 
-70:     /**
-71:      * Convert pre-normalized text to IPA phonemes.
-72:      * Skips normalizeText() since the caller already did it.
-73:      */
-74:     fun phonemizeNormalized(normalizedText: String): String {
-75:         val rawIpa = espeakBridge.textToPhonemes(normalizedText)
-76:         if (rawIpa.isEmpty()) {
-77:             Log.w(TAG, "eSpeak returned empty phonemes for: $normalizedText")
-78:             return ""
-79:         }
-80:         return postProcess(rawIpa)
-81:     }
-82: 
-83:     /**
-84:      * Release eSpeak-ng resources.
-85:      */
-86:     fun release() {
-87:         espeakBridge.terminate()
-88:     }
-89: 
-90:     /**
-91:      * Apply post-processing to convert eSpeak IPA output to Kokoro-compatible
-92:      * phoneme format. Only normalizes eSpeak-specific symbols; keeps raw IPA
-93:      * diphthongs (eɪ, aɪ, oʊ, etc.) intact — the model expects them as
-94:      * individual IPA characters, not compressed single-letter tokens.
-95:      */
-96:     private fun postProcess(phonemes: String): String {
-97:         // Strip tie characters (eSpeak may or may not produce them)
-98:         var result = phonemes.replace("^", "")
-99: 
-100:         // Basic IPA normalizations
-101:         result = result.replace("r", "\u0279")           // r → ɹ
-102:         result = result.replace("x", "k")                // x → k
-103:         result = result.replace("\u00E7", "k")            // ç → k
-104:         result = result.replace("\u026C", "l")            // ɬ → l
-105:         result = result.replace("\u02B2", "j")            // ʲ → j
-106:         result = result.replace("\u025A", "\u0259\u0279") // ɚ → əɹ
-107:         result = result.replace("\u0250", "\u0259")       // ɐ → ə
-108:         result = result.replace("\u0303", "")             // strip combining tilde
-109: 
-110:         // Strip syllabic consonant marks (combining char below)
-111:         result = result.replace("\u0329", "")
-112: 
-113:         // Strip $ pad token — must not leak into phoneme stream
-114:         result = result.replace("\$", "")
-115: 
-116:         // Filter to only valid VOCAB characters
-117:         result = result.filter { ch ->
-118:             ch in VALID_CHARS || ch.isWhitespace()
-119:         }
-120: 
-121:         return result.trim()
-122:     }
-123: 
-124:     fun normalizeText(text: String): String {
-125:         var t = text
-126:             .lines().joinToString("\n") { it.trim() }
-127:             .replace(Regex("[\u2018\u2019]"), "'")
-128:             .replace(Regex("[\u201C\u201D\u00AB\u00BB]"), "\"")
-129:             // Full-width punctuation
-130:             .replace("\u3001", ", ")
-131:             .replace("\u3002", ". ")
-132:             .replace("\uFF01", "! ")
-133:             .replace("\uFF0C", ", ")
-134:             .replace("\uFF1A", ": ")
-135:             .replace("\uFF1B", "; ")
-136:             .replace("\uFF1F", "? ")
-137: 
-138:         // Common abbreviations (eSpeak handles Dr./Mr. itself, but we expand
-139:         // for consistency with what the user sees in the text display)
-140:         t = t.replace(Regex("\\bD[Rr]\\.(?= [A-Z])"), "Doctor")
-141:             .replace(Regex("\\b(?:Mr\\.|MR\\.(?= [A-Z]))"), "Mister")
-142:             .replace(Regex("\\b(?:Ms\\.|MS\\.(?= [A-Z]))"), "Miss")
-143:             .replace(Regex("\\b(?:Mrs\\.|MRS\\.(?= [A-Z]))"), "Missus")
-144:             .replace(Regex("\\betc\\.(?! [A-Z])"), "etcetera")
-145: 
-146:         // --- Time expressions (BEFORE number-to-words) ---
-147:         // 3:30pm → three thirty p m, 12:00 → twelve o'clock
-148:         t = Regex("(\\d{1,2}):(\\d{2})\\s*([AaPp][Mm])?").replace(t) { match ->
-149:             val hour = match.groupValues[1].toIntOrNull() ?: return@replace match.value
-150:             val min = match.groupValues[2].toIntOrNull() ?: return@replace match.value
-151:             val ampm = match.groupValues[3]
-152:             if (hour > 24 || min > 59) return@replace match.value
-153:             val hourWord = integerToWords(hour.toLong())
-154:             val minWord = when {
-155:                 min == 0 -> "o'clock"
-156:                 min < 10 -> "oh ${integerToWords(min.toLong())}"
-157:                 else -> integerToWords(min.toLong())
-158:             }
-159:             val suffix = when (ampm.lowercase()) {
-160:                 "am" -> " a m"
-161:                 "pm" -> " p m"
-162:                 else -> ""
-163:             }
-164:             "$hourWord $minWord$suffix"
-165:         }
-166: 
-167:         // --- Currency, units, symbols (BEFORE number-to-words) ---
-168: 
-169:         // Currency with cents: $3.50 → three dollars and fifty cents
-170:         t = Regex("([\\$\u20AC\u00A3])\\s*(\\d+)\\.(\\d{2})\\b").replace(t) { match ->
-171:             val dollars = match.groupValues[2].toLongOrNull() ?: return@replace match.value
-172:             val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value
-173:             val currency = when (match.groupValues[1]) {
-174:                 "\$" -> "dollar" to "cent"
-175:                 "\u20AC" -> "euro" to "cent"
-176:                 "\u00A3" -> "pound" to "penny"
-177:                 else -> "dollar" to "cent"
-178:             }
-179:             val dollarWord = integerToWords(dollars)
-180:             val dollarUnit = if (dollars == 1L) currency.first else "${currency.first}s"
-181:             if (cents == 0) {
-182:                 "$dollarWord $dollarUnit"
-183:             } else {
-184:                 val centWord = integerToWords(cents.toLong())
-185:                 val centUnit = if (cents == 1) {
-186:                     currency.second
-187:                 } else if (currency.second == "penny") {
-188:                     "pence"
-189:                 } else {
-190:                     "${currency.second}s"
-191:                 }
-192:                 "$dollarWord $dollarUnit and $centWord $centUnit"
-193:             }
-194:         }
-195: 
-196:         // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000
-197:         t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
-198:             .replace(t) { match ->
-199:                 val number = match.groupValues[2]
-200:                 val mag = match.groupValues[3].uppercase()
-201:                 val currency = when (match.groupValues[1]) {
-202:                     "\$" -> "dollars"; "\u20AC" -> "euros"
-203:                     "\u00A3" -> "pounds"; "\u00A5" -> "yen"
-204:                     else -> "dollars"
-205:                 }
-206:                 val magnitude = when (mag) {
-207:                     "T" -> " trillion"; "B" -> " billion"
-208:                     "M" -> " million"; "K" -> " thousand"
-209:                     else -> ""
-210:                 }
-211:                 "$number$magnitude $currency"
-212:             }
-213: 
-214:         // Percentage: 50% → 50 percent
-215:         t = t.replace(Regex("(\\d+(?:\\.\\d+)?)\\s*%"), "$1 percent")
-216: 
-217:         // Hashtag number: #1 → number 1
-218:         t = t.replace(Regex("#\\s*(\\d+)"), "number $1")
-219: 
-220:         // Common symbols
-221:         t = t.replace("&", " and ")
-222:         t = t.replace("@", " at ")
-223: 
-224:         // Clean up any stray currency/symbol characters that weren't part of a pattern
-225:         t = t.replace(Regex("[\\$\u20AC\u00A3\u00A5#]"), " ")
-226: 
-227:         // --- End currency/units/symbols ---
-228: 
-229:         // --- Ordinals: 1st, 2nd, 3rd, 21st, etc. (BEFORE general number conversion) ---
-230:         t = Regex("(\\d+)(?:st|nd|rd|th)\\b").replace(t) { match ->
-231:             val n = match.groupValues[1].toLongOrNull() ?: return@replace match.value
-232:             ordinalToWords(n)
-233:         }
-234: 
-235:         // --- Year-like numbers: 4-digit numbers 1000-2099 in likely year contexts ---
-236:         // Standalone years or years preceded by "in", "of", "from", "since", "by", etc.
-237:         t = Regex("(?<=\\b(?:in|of|from|since|by|year|circa|around|before|after|during)\\s)(\\d{4})\\b")
-238:             .replace(t) { match ->
-239:                 val n = match.groupValues[1].toLongOrNull() ?: return@replace match.value
-240:                 yearToWords(n)
-241:             }
-242: 
-243:         // Number formatting
-244:         t = t.replace(Regex("(?<=\\d),(?=\\d)"), "")
-245:         t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ")
-246: 
-247:         // Convert remaining numbers to words
-248:         t = t.replace(Regex("\\d+(\\.\\d+)?")) { match ->
-249:             numberToWords(match.value)
-250:         }
-251: 
-252:         // Collapse multiple spaces
-253:         t = t.replace(Regex("\\s{2,}"), " ")
-254: 
-255:         return t.trim()
-256:     }
-257: 
-258:     /**
-259:      * Convert a number string to English words.
-260:      * Handles integers up to 999 trillion and simple decimals.
-261:      */
-262:     private fun numberToWords(numStr: String): String {
-263:         // Handle decimals
-264:         if ('.' in numStr) {
-265:             val parts = numStr.split(".", limit = 2)
-266:             val intPart = integerToWords(parts[0].toLongOrNull() ?: 0)
-267:             val decPart = parts[1]
-268:             val decWords = decPart.map { digitToWord(it) }.joinToString(" ")
-269:             return "$intPart point $decWords"
-270:         }
-271:         val n = numStr.toLongOrNull() ?: return numStr
-272:         return integerToWords(n)
-273:     }
-274: 
-275:     private fun digitToWord(ch: Char): String = when (ch) {
-276:         '0' -> "zero"; '1' -> "one"; '2' -> "two"; '3' -> "three"; '4' -> "four"
-277:         '5' -> "five"; '6' -> "six"; '7' -> "seven"; '8' -> "eight"; '9' -> "nine"
-278:         else -> ch.toString()
-279:     }
-280: 
-281:     /**
-282:      * Convert a year number to natural speech.
-283:      * 2024 → "twenty twenty four", 1999 → "nineteen ninety nine",
-284:      * 2000 → "two thousand", 2001 → "two thousand one".
-285:      */
-286:     private fun yearToWords(n: Long): String {
-287:         if (n < 1000 || n > 2099) return integerToWords(n)
-288: 
-289:         // 2000-2009: "two thousand [N]"
-290:         if (n in 2000..2009) {
-291:             return if (n == 2000L) "two thousand"
-292:             else "two thousand ${ONES[n.toInt() - 2000]}"
-293:         }
-294: 
-295:         // Split into century + remainder: 2024 → "twenty" + "twenty four"
-296:         val century = (n / 100).toInt()
-297:         val remainder = (n % 100).toInt()
-298:         val centuryWord = integerToWords(century.toLong())
-299:         return if (remainder == 0) {
-300:             "${centuryWord} hundred"
-301:         } else if (remainder < 10) {
-302:             "$centuryWord oh ${ONES[remainder]}"
-303:         } else {
-304:             "$centuryWord ${integerToWords(remainder.toLong())}"
-305:         }
-306:     }
-307: 
-308:     /**
-309:      * Convert a number to its ordinal form.
-310:      * 1 → "first", 21 → "twenty first", 100 → "one hundredth".
-311:      */
-312:     private fun ordinalToWords(n: Long): String {
-313:         if (n <= 0) return integerToWords(n)
-314: 
-315:         // Simple cases: 1-19
-316:         if (n < 20) return ORDINAL_ONES[n.toInt()]
-317: 
-318:         // 20, 30, ..., 90
-319:         if (n < 100 && n % 10 == 0L) return ORDINAL_TENS[(n / 10).toInt()]
-320: 
-321:         // 21-99: "twenty first", "thirty second", etc.
-322:         if (n < 100) {
-323:             val tens = TENS[(n / 10).toInt()]
-324:             val ones = ORDINAL_ONES[(n % 10).toInt()]
-325:             return "$tens $ones"
-326:         }
-327: 
-328:         // For larger numbers, use cardinal for the leading part + ordinal suffix
-329:         // 100th → "one hundredth", 101st → "one hundred and first"
-330:         val remainder = n % 100
-331:         if (remainder == 0L) {
-332:             return "${integerToWords(n / 100)} hundredth"
-333:         }
-334:         val leading = integerToWords(n - remainder)
-335:         return "$leading and ${ordinalToWords(remainder)}"
-336:     }
-337: 
-338:     private fun integerToWords(n: Long): String {
-339:         if (n == 0L) return "zero"
-340:         if (n < 0) return "negative ${integerToWords(-n)}"
-341: 
-342:         val parts = mutableListOf<String>()
-343:         var remaining = n
-344: 
-345:         if (remaining >= 1_000_000_000_000) {
-346:             parts.add("${integerToWords(remaining / 1_000_000_000_000)} trillion")
-347:             remaining %= 1_000_000_000_000
-348:         }
-349:         if (remaining >= 1_000_000_000) {
-350:             parts.add("${integerToWords(remaining / 1_000_000_000)} billion")
-351:             remaining %= 1_000_000_000
-352:         }
-353:         if (remaining >= 1_000_000) {
-354:             parts.add("${integerToWords(remaining / 1_000_000)} million")
-355:             remaining %= 1_000_000
-356:         }
-357:         if (remaining >= 1000) {
-358:             parts.add("${integerToWords(remaining / 1000)} thousand")
-359:             remaining %= 1000
-360:         }
-361:         if (remaining >= 100) {
-362:             parts.add("${ONES[remaining.toInt() / 100]} hundred")
-363:             remaining %= 100
-364:         }
-365:         if (remaining > 0) {
-366:             if (parts.isNotEmpty()) parts.add("and")
-367:             if (remaining < 20) {
-368:                 parts.add(ONES[remaining.toInt()])
-369:             } else {
-370:                 val t = TENS[remaining.toInt() / 10]
-371:                 val o = ONES[remaining.toInt() % 10]
-372:                 parts.add(if (o.isEmpty()) t else "$t $o")
-373:             }
-374:         }
-375:         return parts.joinToString(" ")
-376:     }
-377: }
-
-(End of file - total 377 lines)
-</content>
-```
-
-**Tool: read**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt"
-}
-```
-
-**Output:**
-```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt</path>
-<type>file</type>
-<content>1: package com.example.mytts.engine
-2: 
-3: import ai.onnxruntime.OnnxTensor
-4: import ai.onnxruntime.OrtEnvironment
-5: import ai.onnxruntime.OrtSession
-6: import android.content.Context
-7: import android.util.Log
+5: import com.example.mytts.BuildConfig
+6: import com.example.mytts.engine.KokoroEngine
+7: import java.util.concurrent.atomic.AtomicBoolean
 8: 
 9: /**
-10:  * Wraps the Kokoro ONNX model for TTS inference.
-11:  * Thread-safe: session.run() is synchronized internally by ORT.
+10:  * Producer thread that converts text chunks to audio using the Kokoro engine.
+11:  * Runs inference on a background thread and feeds PCM to the AudioPlayer.
 12:  */
-13: class KokoroEngine(private val context: Context) {
-14:     companion object {
-15:         private const val TAG = "KokoroEngine"
-16:         private const val MODEL_FILE = "model_quantized.onnx"
-17:         private const val CROSSFADE_SAMPLES = 100  // ~4ms at 24kHz
-18:         const val SAMPLE_RATE = 24000
-19:     }
-20: 
-21:     private var environment: OrtEnvironment? = null
-22:     private var session: OrtSession? = null
-23:     private var _phonemeConverter: PhonemeConverter? = null
-24:     private var voiceStyleLoader: VoiceStyleLoader? = null
-25: 
-26:     /** Expose PhonemeConverter so TextProcessor can use normalizeText(). */
-27:     val phonemeConverter: PhonemeConverter?
-28:         get() = _phonemeConverter
+13: class AudioProducer(
+14:     private val engine: KokoroEngine,
+15:     private val player: AudioPlayer,
+16:     private val onChunkReady: (chunkIndex: Int) -> Unit = {},
+17:     private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }
+18: ) {
+19:     companion object {
+20:         private const val TAG = "AudioProducer"
+21:         // Silence threshold: samples below this absolute value are considered silent
+22:         private const val SILENCE_THRESHOLD = 0.01f
+23:         // Target silence gap between chunks in milliseconds
+24:         private const val GAP_BETWEEN_CHUNKS_MS = 300
+25:     }
+26: 
+27:     private val running = AtomicBoolean(false)
+28:     private var producerThread: Thread? = null
 29: 
-30:     val isLoaded: Boolean get() = session != null
-31: 
-32:     /**
-33:      * Initialize the ONNX runtime and load the model.
-34:      * Call from a background thread - this is slow (~2-5 seconds).
-35:      */
-36:     fun initialize() {
-37:         if (session != null) return
-38: 
-39:         Log.i(TAG, "Initializing ONNX Runtime...")
-40:         val startTime = System.currentTimeMillis()
-41: 
-42:         environment = OrtEnvironment.getEnvironment()
-43:         val options = OrtSession.SessionOptions().apply {
-44:             // CPU EP is best for int8 quantized model
-45:             // Use 1 thread for both intra-op (within an operator) and inter-op
-46:             // (parallel graph execution) to minimize power consumption.
-47:             // Without setInterOpNumThreads(1), ORT defaults to CPU core count,
-48:             // spawning unnecessary threads on big.LITTLE SoCs.
-49:             setIntraOpNumThreads(1)
-50:             setInterOpNumThreads(1)
-51:             // Graph optimization
-52:             setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
-53:         }
+30:     private var chunks: List<PreparedChunk> = emptyList()
+31:     private var voiceName: String = ""
+32:     private var speed: Float = 1.0f
+33:     private var startIndex: Int = 0
+34: 
+35:     /**
+36:      * Start producing audio from the given prepared chunks.
+37:      *
+38:      * @param chunks list of pre-processed chunks (already normalized at paste time)
+39:      * @param voice voice name to use
+40:      * @param speed speed multiplier (model-level, not playback rate)
+41:      * @param fromIndex start from this chunk index
+42:      */
+43:     fun start(
+44:         chunks: List<PreparedChunk>,
+45:         voice: String,
+46:         speed: Float = 1.0f,
+47:         fromIndex: Int = 0
+48:     ) {
+49:         stop()
+50:         this.chunks = chunks
+51:         this.voiceName = voice
+52:         this.speed = speed
+53:         this.startIndex = fromIndex
 54: 
-55:         val modelBytes = context.assets.open(MODEL_FILE).use { it.readBytes() }
-56:         session = environment!!.createSession(modelBytes, options)
-57:         options.close() // SessionOptions implements AutoCloseable
-58: 
-59:         _phonemeConverter = PhonemeConverter(context)
-60:         voiceStyleLoader = VoiceStyleLoader(context)
-61: 
-62:         val elapsed = System.currentTimeMillis() - startTime
-63:         Log.i(TAG, "Engine initialized in ${elapsed}ms")
-64:     }
-65: 
-66:     /**
-67:      * Get available voice names.
-68:      */
-69:     fun getAvailableVoices(): List<String> {
-70:         return voiceStyleLoader?.getAvailableVoices() ?: emptyList()
-71:     }
-72: 
-73:     /**
-74:      * Convert text to phonemes (for pre-processing/chunking).
-75:      */
-76:     fun textToPhonemes(text: String): String {
-77:         return _phonemeConverter?.phonemize(text)
-78:             ?: throw IllegalStateException("Engine not initialized")
-79:     }
-80: 
-81:     /**
-82:      * Convert pre-normalized text to phonemes (skips normalizeText()).
-83:      */
-84:     fun textToPhonemeNormalized(normalizedText: String): String {
-85:         return _phonemeConverter?.phonemizeNormalized(normalizedText)
-86:             ?: throw IllegalStateException("Engine not initialized")
-87:     }
-88: 
-89:     /**
-90:      * Synthesize speech from phoneme string.
-91:      * If the phoneme string exceeds the model's token limit, it is split at
-92:      * a word boundary (IPA space) and each part is synthesized separately,
-93:      * then the audio segments are concatenated with a short crossfade.
-94:      *
-95:      * @param phonemes IPA phoneme string
-96:      * @param voiceName name of the voice style to use
-97:      * @param speed playback speed multiplier (1.0 = normal, >1 = faster)
-98:      * @return PCM float samples at [SAMPLE_RATE] Hz
-99:      */
-100:     fun synthesize(phonemes: String, voiceName: String, speed: Float = 1.0f): FloatArray {
-101:         val tokens = Tokenizer.tokenizeWithPadding(phonemes)
-102:         val maxTokens = Tokenizer.MAX_PHONEME_LENGTH + 2
-103: 
-104:         if (tokens.size <= maxTokens) {
-105:             return synthesizeTokens(tokens, voiceName, speed)
-106:         }
-107: 
-108:         // Phonemes exceed model limit — split at word boundary and concatenate
-109:         Log.i(TAG, "Phonemes exceed limit (${tokens.size} tokens, max $maxTokens), splitting")
-110:         val maxChars = Tokenizer.MAX_PHONEME_LENGTH
-111:         val splitPos = phonemes.lastIndexOf(' ', maxChars - 1)
-112:         if (splitPos <= 0) {
-113:             // No word boundary — truncate as last resort
-114:             Log.w(TAG, "No word boundary found for splitting, truncating")
-115:             return synthesizeTokens(tokens.take(maxTokens).toLongArray(), voiceName, speed)
-116:         }
-117: 
-118:         val firstPart = phonemes.substring(0, splitPos).trim()
-119:         val secondPart = phonemes.substring(splitPos + 1).trim()
-120:         if (firstPart.isEmpty()) return synthesize(secondPart, voiceName, speed)
-121:         if (secondPart.isEmpty()) return synthesize(firstPart, voiceName, speed)
-122: 
-123:         val audio1 = synthesize(firstPart, voiceName, speed)
-124:         val audio2 = synthesize(secondPart, voiceName, speed)
-125: 
-126:         return crossfadeConcat(audio1, audio2)
-127:     }
-128: 
-129:     /**
-130:      * Concatenate two audio segments with a short crossfade to avoid clicks.
-131:      */
-132:     private fun crossfadeConcat(a: FloatArray, b: FloatArray): FloatArray {
-133:         // ~4ms crossfade at 24kHz — inaudible but prevents splice clicks
-134:         val fadeLen = minOf(CROSSFADE_SAMPLES, a.size, b.size)
-135:         val result = FloatArray(a.size + b.size - fadeLen)
-136:         // Copy non-overlapping part of a
-137:         a.copyInto(result, 0, 0, a.size - fadeLen)
-138:         // Crossfade overlap region
-139:         for (i in 0 until fadeLen) {
-140:             val t = i.toFloat() / fadeLen
-141:             result[a.size - fadeLen + i] = a[a.size - fadeLen + i] * (1f - t) + b[i] * t
-142:         }
-143:         // Copy non-overlapping part of b
-144:         b.copyInto(result, a.size, fadeLen, b.size)
-145:         return result
-146:     }
-147: 
-148:     /**
-149:      * Low-level synthesis: run ONNX inference on pre-tokenized input.
-150:      */
-151:     private fun synthesizeTokens(tokens: LongArray, voiceName: String, speed: Float): FloatArray {
-152:         val sess = session ?: throw IllegalStateException("Engine not initialized")
-153:         val loader = voiceStyleLoader ?: throw IllegalStateException("Engine not initialized")
-154: 
-155:         // Load voice style matrix [510][256] and select row by token count.
-156:         // The style matrix is indexed by sequence length: row N = style for N tokens.
-157:         val styleMatrix = loader.loadVoice(voiceName)
-158:         val styleIndex = minOf(tokens.size, styleMatrix.size - 1)
-159:         val styleRow = arrayOf(styleMatrix[styleIndex]) // shape [1][256]
-160: 
-161:         // Create ONNX tensors
-162:         val env = environment!!
-163:         val tokenTensor = OnnxTensor.createTensor(env, arrayOf(tokens))
-164:         val styleTensor = OnnxTensor.createTensor(env, styleRow)
-165:         val speedTensor = OnnxTensor.createTensor(env, floatArrayOf(speed))
-166: 
-167:         val inputs = mapOf(
-168:             "input_ids" to tokenTensor,
-169:             "style" to styleTensor,
-170:             "speed" to speedTensor
-171:         )
-172: 
-173:         return try {
-174:             val results = sess.run(inputs)
-175:             // Model output is 2D [1][samples] — extract the inner array
-176:             val output = results[0].value
-177:             val audio = if (output is FloatArray) {
-178:                 output
-179:             } else {
-180:                 @Suppress("UNCHECKED_CAST")
-181:                 (output as Array<FloatArray>)[0]
-182:             }
-183:             results.close()
-184:             audio
-185:         } finally {
-186:             tokenTensor.close()
-187:             styleTensor.close()
-188:             speedTensor.close()
-189:         }
-190:     }
-191: 
-192:     /**
-193:      * Full pipeline: text -> phonemes -> synthesize.
-194:      */
-195:     fun speak(text: String, voiceName: String, speed: Float = 1.0f): FloatArray {
-196:         val phonemes = textToPhonemes(text)
-197:         return synthesize(phonemes, voiceName, speed)
-198:     }
-199: 
-200:     /**
-201:      * Full pipeline for pre-normalized text: normalizedText -> phonemes -> synthesize.
-202:      * Skips normalizeText() since the caller already did it at paste time.
-203:      */
-204:     fun speakNormalized(normalizedText: String, voiceName: String, speed: Float = 1.0f): FloatArray {
-205:         val phonemes = textToPhonemeNormalized(normalizedText)
-206:         return synthesize(phonemes, voiceName, speed)
-207:     }
-208: 
-209:     fun release() {
-210:         _phonemeConverter?.release()
-211:         session?.close()
-212:         session = null
-213:         environment?.close()
-214:         environment = null
-215:         _phonemeConverter = null
-216:         voiceStyleLoader = null
-217:         Log.i(TAG, "Engine released")
-218:     }
-219: }
+55:         running.set(true)
+56:         producerThread = Thread({
+57:             // Foreground priority so Android's EAS scheduler favors performance
+58:             // cores and doesn't deprioritize us when the screen is off.
+59:             Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND)
+60:             produceLoop()
+61:         }, "AudioProducer").also { it.start() }
+62:     }
+63: 
+64:     private fun produceLoop() {
+65:         // Dump all chunks for debugging — verify no stale chunks from previous text
+66:         if (BuildConfig.DEBUG) {
+67:             Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
+68:             for (i in chunks.indices) {
+69:                 val c = chunks[i]
+70:                 Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
+71:             }
+72:         }
+73: 
+74:         try {
+75:             for (i in startIndex until chunks.size) {
+76:                 if (!running.get()) break
+77: 
+78:                 val chunk = chunks[i]
+79:                 val text = chunk.normalizedText.trim()
+80:                 if (text.isEmpty()) continue
+81: 
+82:                 if (!running.get()) break
+83: 
+84:                 try {
+85:                     if (BuildConfig.DEBUG) Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
+86:                     val startTime = System.currentTimeMillis()
+87: 
+88:                     val pcm = engine.speakNormalized(text, voiceName, speed)
+89: 
+90:                     val elapsed = System.currentTimeMillis() - startTime
+91:                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
+92:                     if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsed}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsed.toFloat() / audioDuration))
+93: 
+94:                     if (pcm.isNotEmpty() && running.get()) {
+95:                         // Trim trailing silence and add a controlled gap
+96:                         // (skip gap if next chunk continues the same sentence)
+97:                         val nextIsContinuation = (i + 1 < chunks.size) && chunks[i + 1].isContinuation
+98:                         val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)
+99:                         player.enqueue(trimmed, i)
+100:                         onChunkReady(i)
+101:                     }
+102:                 } catch (e: Exception) {
+103:                     if (running.get()) {
+104:                         Log.e(TAG, "Failed to synthesize chunk $i", e)
+105:                         onError(i, e)
+106:                     }
+107:                 }
+108:             }
+109:         } catch (_: InterruptedException) {
+110:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer interrupted")
+111:             return
+112:         }
+113: 
+114:         // Signal end: let player drain its queue naturally then stop
+115:         if (running.get()) {
+116:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer finished all chunks")
+117:             player.markProducerDone()
+118:         }
+119:     }
+120: 
+121:     fun stop() {
+122:         running.set(false)
+123:         producerThread?.interrupt()
+124:         // Short timeout: ONNX inference can't be interrupted mid-call, but
+125:         // the next start() calls stop() anyway so orphaned threads self-exit.
+126:         producerThread?.join(500)
+127:         producerThread = null
+128:     }
+129: 
+130:     /**
+131:      * Trim trailing silence from PCM audio and optionally append a silence gap.
+132:      * When [addGap] is true (default), appends ~300ms silence for natural
+133:      * inter-sentence pauses. When false (continuation chunks of the same
+134:      * sentence), only trims without adding extra silence.
+135:      *
+136:      * @param pcm raw PCM float samples
+137:      * @param sampleRate audio sample rate (e.g. 24000)
+138:      * @param addGap whether to append the inter-chunk silence gap
+139:      * @return trimmed PCM with optional trailing silence
+140:      */
+141:     private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int, addGap: Boolean = true): FloatArray {
+142:         if (pcm.isEmpty()) return pcm
+143: 
+144:         // Find last non-silent sample (scanning backwards)
+145:         var lastNonSilent = pcm.size - 1
+146:         while (lastNonSilent >= 0 && kotlin.math.abs(pcm[lastNonSilent]) < SILENCE_THRESHOLD) {
+147:             lastNonSilent--
+148:         }
+149: 
+150:         // Keep audio up to last non-silent sample (with small margin to avoid cutting off decay)
+151:         val margin = minOf(64, pcm.size - lastNonSilent - 1)
+152:         val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)
+153: 
+154:         // Calculate desired gap in samples (0 for continuation chunks)
+155:         val gapSamples = if (addGap) sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000 else 0
+156: 
+157:         // Create new array: trimmed audio + silence gap
+158:         val result = FloatArray(trimEnd + gapSamples)
+159:         System.arraycopy(pcm, 0, result, 0, trimEnd)
+160:         // Remaining samples are already 0.0f (silence gap)
+161: 
+162:         return result
+163:     }
+164: }
 
-(End of file - total 219 lines)
+(End of file - total 164 lines)
 </content>
 ```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 33.0s)
+
+Now let me implement the PerformanceHintManager integration. The key design decisions:
+- The hint session must be created **on the producer thread** (needs its TID)
+- We need `Context` to get the system service
+- The session creation and reporting must be inside `produceLoop()`, not `start()`
+
+**Tool: write**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
+  "content": "package com.example.mytts.audio\n\nimport android.content.Context\nimport android.os.Build\nimport android.os.PerformanceHintManager\nimport android.os.Process\nimport android.util.Log\nimport com.example.mytts.BuildConfig\nimport com.example.mytts.engine.KokoroEngine\nimport java.util.concurrent.atomic.AtomicBoolean\n\n/**\n * Producer thread that converts text chunks to audio using the Kokoro engine.\n * Runs inference on a background thread and feeds PCM to the AudioPlayer.\n *\n * On API 31+, uses PerformanceHintManager to tell the system about the\n * workload pattern so it can make better CPU frequency/core decisions,\n * especially important when the screen is off.\n */\nclass AudioProducer(\n    private val context: Context,\n    private val engine: KokoroEngine,\n    private val player: AudioPlayer,\n    private val onChunkReady: (chunkIndex: Int) -> Unit = {},\n    private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }\n) {\n    companion object {\n        private const val TAG = \"AudioProducer\"\n        // Silence threshold: samples below this absolute value are considered silent\n        private const val SILENCE_THRESHOLD = 0.01f\n        // Target silence gap between chunks in milliseconds\n        private const val GAP_BETWEEN_CHUNKS_MS = 300\n        // Target inference duration hint for PerformanceHintManager (2 seconds).\n        // Set slightly below typical inference time to encourage the system to\n        // boost CPU frequency rather than coast on efficiency cores.\n        private const val TARGET_INFERENCE_NANOS = 2_000_000_000L\n    }\n\n    private val running = AtomicBoolean(false)\n    private var producerThread: Thread? = null\n    private var hintSession: Any? = null // PerformanceHintManager.Session (API 31+)\n\n    private var chunks: List<PreparedChunk> = emptyList()\n    private var voiceName: String = \"\"\n    private var speed: Float = 1.0f\n    private var startIndex: Int = 0\n\n    /**\n     * Start producing audio from the given prepared chunks.\n     *\n     * @param chunks list of pre-processed chunks (already normalized at paste time)\n     * @param voice voice name to use\n     * @param speed speed multiplier (model-level, not playback rate)\n     * @param fromIndex start from this chunk index\n     */\n    fun start(\n        chunks: List<PreparedChunk>,\n        voice: String,\n        speed: Float = 1.0f,\n        fromIndex: Int = 0\n    ) {\n        stop()\n        this.chunks = chunks\n        this.voiceName = voice\n        this.speed = speed\n        this.startIndex = fromIndex\n\n        running.set(true)\n        producerThread = Thread({\n            // Foreground priority so Android's EAS scheduler favors performance\n            // cores and doesn't deprioritize us when the screen is off.\n            Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND)\n            produceLoop()\n        }, \"AudioProducer\").also { it.start() }\n    }\n\n    /**\n     * Create a PerformanceHintManager session for the current thread.\n     * Must be called ON the producer thread so we get the correct TID.\n     * Returns the session object, or null if unavailable.\n     */\n    private fun createHintSession(): Any? {\n        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null\n        return try {\n            val phm = context.getSystemService(Context.PERFORMANCE_HINT_SERVICE)\n                    as? PerformanceHintManager ?: return null\n            val tids = intArrayOf(Process.myTid())\n            val session = phm.createHintSession(tids, TARGET_INFERENCE_NANOS)\n            if (BuildConfig.DEBUG) Log.d(TAG, \"PerformanceHintManager session created for TID ${tids[0]}\")\n            session\n        } catch (e: Exception) {\n            Log.w(TAG, \"Failed to create PerformanceHintManager session\", e)\n            null\n        }\n    }\n\n    /**\n     * Report actual inference duration to the hint session.\n     */\n    private fun reportWorkDuration(durationNanos: Long) {\n        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return\n        try {\n            (hintSession as? PerformanceHintManager.Session)\n                ?.reportActualWorkDuration(durationNanos)\n        } catch (_: Exception) {\n            // Ignore — hint session may have been closed\n        }\n    }\n\n    /**\n     * Close the hint session.\n     */\n    private fun closeHintSession() {\n        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return\n        try {\n            (hintSession as? PerformanceHintManager.Session)?.close()\n        } catch (_: Exception) {}\n        hintSession = null\n    }\n\n    private fun produceLoop() {\n        // Create performance hint session on the producer thread\n        hintSession = createHintSession()\n\n        // Dump all chunks for debugging — verify no stale chunks from previous text\n        if (BuildConfig.DEBUG) {\n            Log.d(TAG, \"=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===\")\n            for (i in chunks.indices) {\n                val c = chunks[i]\n                Log.d(TAG, \"  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'\")\n            }\n        }\n\n        try {\n            for (i in startIndex until chunks.size) {\n                if (!running.get()) break\n\n                val chunk = chunks[i]\n                val text = chunk.normalizedText.trim()\n                if (text.isEmpty()) continue\n\n                if (!running.get()) break\n\n                try {\n                    if (BuildConfig.DEBUG) Log.d(TAG, \"Synthesizing chunk $i: '${text.take(50)}...'\")\n                    val startTime = System.nanoTime()\n\n                    val pcm = engine.speakNormalized(text, voiceName, speed)\n\n                    val elapsedNanos = System.nanoTime() - startTime\n                    reportWorkDuration(elapsedNanos)\n\n                    val elapsedMs = elapsedNanos / 1_000_000\n                    val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE\n                    if (BuildConfig.DEBUG) Log.d(TAG, \"Chunk $i: ${elapsedMs}ms inference, ${audioDuration}ms audio (RTF: %.2f)\".format(elapsedMs.toFloat() / audioDuration))\n\n                    if (pcm.isNotEmpty() && running.get()) {\n                        // Trim trailing silence and add a controlled gap\n                        // (skip gap if next chunk continues the same sentence)\n                        val nextIsContinuation = (i + 1 < chunks.size) && chunks[i + 1].isContinuation\n                        val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)\n                        player.enqueue(trimmed, i)\n                        onChunkReady(i)\n                    }\n                } catch (e: Exception) {\n                    if (running.get()) {\n                        Log.e(TAG, \"Failed to synthesize chunk $i\", e)\n                        onError(i, e)\n                    }\n                }\n            }\n        } catch (_: InterruptedException) {\n            if (BuildConfig.DEBUG) Log.d(TAG, \"Producer interrupted\")\n            closeHintSession()\n            return\n        }\n\n        closeHintSession()\n\n        // Signal end: let player drain its queue naturally then stop\n        if (running.get()) {\n            if (BuildConfig.DEBUG) Log.d(TAG, \"Producer finished all chunks\")\n            player.markProducerDone()\n        }\n    }\n\n    fun stop() {\n        running.set(false)\n        producerThread?.interrupt()\n        // Short timeout: ONNX inference can't be interrupted mid-call, but\n        // the next start() calls stop() anyway so orphaned threads self-exit.\n        producerThread?.join(500)\n        producerThread = null\n        closeHintSession()\n    }\n\n    /**\n     * Trim trailing silence from PCM audio and optionally append a silence gap.\n     * When [addGap] is true (default), appends ~300ms silence for natural\n     * inter-sentence pauses. When false (continuation chunks of the same\n     * sentence), only trims without adding extra silence.\n     *\n     * @param pcm raw PCM float samples\n     * @param sampleRate audio sample rate (e.g. 24000)\n     * @param addGap whether to append the inter-chunk silence gap\n     * @return trimmed PCM with optional trailing silence\n     */\n    private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int, addGap: Boolean = true): FloatArray {\n        if (pcm.isEmpty()) return pcm\n\n        // Find last non-silent sample (scanning backwards)\n        var lastNonSilent = pcm.size - 1\n        while (lastNonSilent >= 0 && kotlin.math.abs(pcm[lastNonSilent]) < SILENCE_THRESHOLD) {\n            lastNonSilent--\n        }\n\n        // Keep audio up to last non-silent sample (with small margin to avoid cutting off decay)\n        val margin = minOf(64, pcm.size - lastNonSilent - 1)\n        val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)\n\n        // Calculate desired gap in samples (0 for continuation chunks)\n        val gapSamples = if (addGap) sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000 else 0\n\n        // Create new array: trimmed audio + silence gap\n        val result = FloatArray(trimEnd + gapSamples)\n        System.arraycopy(pcm, 0, result, 0, trimEnd)\n        // Remaining samples are already 0.0f (silence gap)\n\n        return result\n    }\n}\n"
+}
+```
+
+**Output:**
+```
+Wrote file successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 14.4s)
+
+Now I need to update `PlaybackController.kt` to pass `context` when constructing `AudioProducer`:
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "newString": "                val audioProducer = AudioProducer(\n                    context = context,\n                    engine = engine!!,",
+  "oldString": "                val audioProducer = AudioProducer(\n                    engine = engine!!,"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 16.1s)
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew assembleDebug 2>&1 | tail -10",
+  "description": "Build to verify commit 3 changes",
+  "timeout": 180000
+}
+```
+
+**Output:**
+```
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 2s
+39 actionable tasks: 6 executed, 33 up-to-date
+
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 14.9s)
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git add -A && git commit -m \"Add PerformanceHintManager to signal sustained inference workload\n\nOn API 31+, creates a PerformanceHintManager session for the producer\nthread and reports actual inference duration after each chunk. This\ntells Android's ADPF (Dynamic Performance Framework) that this thread\nhas a sustained, latency-sensitive workload, encouraging the system to\nmaintain higher CPU frequency and favor performance cores — especially\nimportant when the screen is off and the vendor's power manager would\notherwise aggressively throttle.\"",
+  "description": "Commit 3: PerformanceHintManager"
+}
+```
+
+**Output:**
+```
+[master 7cb680c] Add PerformanceHintManager to signal sustained inference workload
+ 2 files changed, 71 insertions(+), 3 deletions(-)
+
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 14.8s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Commit 1: Replace sleep-polling with queue.put() backpressure",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Commit 2: Raise producer priority to FOREGROUND + add ONNX denormal config",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Commit 3: Add PerformanceHintManager for inference thread",
+      "priority": "high",
+      "status": "completed"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Commit 1: Replace sleep-polling with queue.put() backpressure",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Commit 2: Raise producer priority to FOREGROUND + add ONNX denormal config",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Commit 3: Add PerformanceHintManager for inference thread",
+    "priority": "high",
+    "status": "completed"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 14.9s)
+
+All three commits are done. Here's a summary:
+
+---
+
+## Completed: 3 Power Optimization Commits
+
+**`8efdbb9` — Replace sleep-polling backpressure with blocking queue.put()**
+- Eliminated the `Thread.sleep(100)` polling loop that wasted 50-250ms per cycle
+- Queue capacity reduced from 8 to 4 (the actual desired limit)
+- `enqueue()` now uses `queue.put()` — blocks until a slot opens with zero-latency wake via JDK's internal signaling
+- Removed the now-unused `MAX_QUEUE_AHEAD` constant and `queueSize` property
+
+**`a20697b` — Raise producer thread priority and enable ONNX denormal-as-zero**
+- Producer thread: `THREAD_PRIORITY_DEFAULT` (0) → `THREAD_PRIORITY_FOREGROUND` (-2)
+- Added `session.set_denormal_as_zero=1` to ONNX SessionOptions
+
+**`7cb680c` — Add PerformanceHintManager to signal sustained inference workload**
+- On API 31+, creates a hint session with the producer thread's TID
+- Reports actual inference duration after each chunk via `reportActualWorkDuration()`
+- Session is properly cleaned up on stop and interruption
+- Added `Context` parameter to `AudioProducer` constructor
+
+These changes address both the software-level latency (sleep-polling) and the hardware-level throttling (thread priority + ADPF hints). Test on the device with the screen off to see if inter-sentence gaps improve.
+
+---
+
+## User
+
+IIUC producer puts voices to a queue with size = 4, i.e., at most 4 sentences may be buffered, regardless of the sentence length. I observed CPU usage variance, sometime high sometime low, guess related to variance of sentence length around. I'm wondering if capacity based buffering (not sentence based) may give better experience (lower probability of underrun) and reduce power consumption (bigger batch handled all at once). Please dive deep and report you investigation
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 158.5s)
+
+_Thinking:_
+
+The user is asking about changing from a count-based queue (4 sentences) to a capacity-based queue (based on audio duration/bytes). Let me investigate this thoroughly.
+
+The key insight is:
+- Currently, the queue holds at most 4 chunks (sentences)
+- A short sentence might produce 0.5s of audio, while a long one might produce 8s
+- So the buffer could range from 2s to 32s depending on sentence lengths
+- This variance means sometimes the buffer drains faster than the producer can fill it (underrun), and sometimes the producer is idle waiting for space
+
+A capacity-based approach would buffer based on total audio duration (or sample count), ensuring a consistent buffer depth regardless of sentence length.
+
+
+Now I need to look at the actual implementation to see how the queue is currently structured and what changes would be needed to switch to a duration-based capacity model.
+
+Great question. Let me investigate the current pipeline deeply to understand the variance issue and evaluate capacity-based buffering.
+
+**Tool: task**
+
+**Input:**
+```json
+{
+  "description": "Analyze audio chunk size variance",
+  "prompt": "I'm working in the project at /Users/cyb/works/mytts. This is an Android TTS app with a producer-consumer audio pipeline.\n\nI need to deeply understand the relationship between sentence length, audio output size, and inference time. Read these files thoroughly:\n\n1. app/src/main/java/com/example/mytts/audio/AudioProducer.kt — the producer thread\n2. app/src/main/java/com/example/mytts/audio/AudioPlayer.kt — the consumer thread\n3. app/src/main/java/com/example/mytts/audio/TextChunker.kt — how text is split into chunks\n4. app/src/main/java/com/example/mytts/audio/TextProcessor.kt — text processing pipeline\n5. app/src/main/java/com/example/mytts/engine/KokoroEngine.kt — ONNX inference\n\nFor each file, I need:\n1. The exact data types flowing through the queue (what is AudioChunk? What is PreparedChunk?)\n2. The TextChunker's splitting rules — what's MAX_WORDS_PER_CHUNK? How are sentences split?\n3. How does the producer create PCM data? What determines the size of each FloatArray?\n4. How does the consumer write PCM to AudioTrack? Does it write the entire chunk at once or in pieces?\n5. What is the AudioTrack buffer size? How does it relate to chunk sizes?\n\nAlso read:\n6. app/src/main/java/com/example/mytts/audio/PreparedChunk.kt or wherever PreparedChunk is defined\n\nReturn ALL the details — data structures, sizes, constants, flow. I need to understand every byte that flows through this pipeline.",
+  "subagent_type": "explore"
+}
+```
+
+**Output:**
+```
+task_id: ses_2a3272effffe8C7SxhAjq4onBZ (for resuming to continue this task if needed)
+
+<task_result>
+I now have a complete picture of every file in the pipeline. Here is the full analysis:
+
+---
+
+## Complete Pipeline Analysis: Text to PCM Audio
+
+### 1. Data Types Flowing Through the Pipeline
+
+There are **four key data structures**:
+
+#### `TextChunk` (defined in `TextChunker.kt`, line 9-14)
+```kotlin
+data class TextChunk(
+    val text: String,          // raw sentence/fragment text
+    val startOffset: Int,      // char position in original full text
+    val endOffset: Int,        // char end position in original full text
+    val isContinuation: Boolean = false  // true = sub-chunk of a split sentence
+)
+```
+This is an intermediate type. It exists only between `TextChunker.chunk()` and `TextProcessor.processText()`.
+
+#### `PreparedChunk` (defined in `TextProcessor.kt`, lines 9-15)
+```kotlin
+data class PreparedChunk(
+    val originalText: String,     // raw text as user sees it
+    val normalizedText: String,   // after normalizeText() — ready for phonemization
+    val startOffset: Int,         // char position in the original full text
+    val endOffset: Int,
+    val isContinuation: Boolean = false  // true = sub-chunk of a split sentence, no gap before it
+)
+```
+This is what the `AudioProducer` receives as input. The `normalizedText` field has already been through `PhonemeConverter.normalizeText()` (currency expansion, time expression expansion, CJK punctuation normalization, etc.). Normalization is done eagerly at paste time, not at play time.
+
+#### `AudioChunk` (defined as inner class in `AudioPlayer.kt`, lines 35-38)
+```kotlin
+data class AudioChunk(
+    val pcm: FloatArray,    // raw PCM float samples, [-1.0, 1.0] range
+    val chunkIndex: Int     // index into the PreparedChunk list
+)
+```
+This is what flows through the `LinkedBlockingQueue` between producer and consumer.
+
+#### The Queue Itself
+```kotlin
+private val queue = LinkedBlockingQueue<AudioChunk>(4)   // capacity = 4
+```
+A **bounded blocking queue with capacity 4**. The producer blocks on `queue.put()` when full; the consumer blocks on `queue.poll(200ms)` when empty.
+
+---
+
+### 2. TextChunker Splitting Rules
+
+**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt`
+
+**Constants:**
+- `MAX_WORDS_PER_CHUNK = 50` (line 28) — conservative limit; rationale: 1 word ~ 5-8 phoneme tokens, 400 token model limit / ~8 = 50 words.
+- `MIN_WORDS_PER_CHUNK = 3` (line 30) — minimum to avoid tiny fragments.
+
+**Splitting algorithm (3 phases):**
+
+**Phase 1 — Sentence splitting** (`splitIntoSentences`, line 69):
+- Uses Android's `android.icu.text.BreakIterator.getSentenceInstance(Locale.US)`.
+- This handles abbreviations (Dr., Mr., U.S.A.), decimal numbers (3.14), ellipses (...), and other edge cases correctly — it does NOT split at periods inside abbreviations.
+- Each sentence becomes one `TextChunk` with `isContinuation = false`.
+
+**Phase 2 — Long sentence splitting** (`splitByWords`, line 107):
+- Only triggered if a sentence has more than 50 words.
+- Splits on word boundaries using `text.split(Regex("(?<=\\s)"))` — this splits *after* whitespace using a lookbehind, so whitespace is preserved at the end of each word token.
+- Creates sub-chunks of exactly `MAX_WORDS_PER_CHUNK` (50) words each.
+- The **first** sub-chunk has `isContinuation = false`; all **subsequent** sub-chunks have `isContinuation = true`.
+- **Tail absorption:** If the remaining words after a split would be fewer than `MIN_WORDS_PER_CHUNK` (3), they are absorbed into the current chunk rather than creating a tiny fragment. So a 52-word sentence stays as one chunk (not 50 + 2), but a 53-word sentence splits to 50 + 3.
+
+**Phase 3 — Small chunk merging** (`mergeSmallChunks`, line 156):
+- After all splitting, any chunk with fewer than `MIN_WORDS_PER_CHUNK` (3) words is merged with its **next** neighbor (not previous).
+- Continuation chunks from Phase 2 are already handled by tail absorption, so this mainly catches tiny standalone sentences.
+
+---
+
+### 3. How the Producer Creates PCM Data
+
+**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt`
+
+The flow in `produceLoop()` (line 121) for each chunk:
+
+1. **Extract normalized text:** `chunk.normalizedText.trim()` (already normalized at paste time).
+
+2. **Call `engine.speakNormalized(text, voiceName, speed)`** (line 148), which does:
+   - `PhonemeConverter.phonemizeNormalized(normalizedText)` — calls eSpeak-ng via JNI (`nativeTextToPhonemes`), then post-processes the IPA (strip tie chars, `r`→`ɹ`, `x`→`k`, `ɚ`→`əɹ`, etc., then filters to VOCAB-only chars).
+   - `Tokenizer.tokenizeWithPadding(phonemes)` — character-level tokenization: each IPA character maps to a `Long` token ID via the VOCAB map. Adds a `0L` pad token at start and end. Result is `LongArray`.
+   - **Token limit check:** `Tokenizer.MAX_PHONEME_LENGTH = 400`. Total tokens including padding must be <= 402 (400 + 2 pad tokens).
+   - If tokens fit: single ONNX inference call.
+   - If tokens overflow: **recursive split** at the last IPA space character before position 400, synthesize each half separately, then `crossfadeConcat` with 100-sample (~4ms) crossfade.
+
+3. **ONNX inference** (`synthesizeTokens`, line 146):
+   - **Inputs:**
+     - `input_ids`: `LongArray` wrapped as ONNX tensor shape `[1][N]` where N = number of tokens.
+     - `style`: `FloatArray[1][256]` — one row from the voice style matrix (510 rows x 256 dim). Row index = `min(tokenCount, 509)`.
+     - `speed`: `FloatArray` of 1 element (e.g., `[1.0f]`).
+   - **Output:** 2D `[1][samples]` or 1D `FloatArray`. The model returns PCM float samples directly.
+   - **The output size is entirely determined by the model** — it is NOT a fixed function of token count. The model generates as many samples as needed for the phoneme sequence at the given speed.
+
+4. **Trim and pad** (`trimAndPadSilence`, line 208):
+   - Scans backwards from end to find last sample with `|value| >= SILENCE_THRESHOLD` (0.01f).
+   - Keeps audio up to that point + 64 samples margin (to preserve decay).
+   - If `addGap = true` (i.e., next chunk is NOT a continuation): appends `sampleRate * 300 / 1000 = 24000 * 300 / 1000 = 7200` samples of silence (300ms gap).
+   - If `addGap = false` (next chunk IS a continuation of same sentence): no silence appended.
+   - Result: `FloatArray(trimEnd + gapSamples)`.
+
+5. **Enqueue:** `player.enqueue(trimmed, i)` — calls `queue.put(AudioChunk(pcm, chunkIndex))`. Blocks if queue is full (capacity 4).
+
+**What determines the size of each FloatArray?**
+
+The PCM array size is: `(model output samples trimmed to last non-silent sample + 64 margin) + (0 or 7200 gap samples)`.
+
+Rough estimates for the model output:
+- At `SAMPLE_RATE = 24000` Hz and `speed = 1.0`, typical English speech is ~130-160 words/minute, so ~50 words ~ 18-23 seconds ~ 432,000-552,000 float samples.
+- Each float is 4 bytes, so one max-size chunk is roughly **1.7 - 2.2 MB** of PCM data.
+- A short sentence (5-10 words) might produce 2-5 seconds = 48,000-120,000 samples = 192-480 KB.
+
+---
+
+### 4. How the Consumer Writes PCM to AudioTrack
+
+**File:** `/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt`
+
+The `playLoop()` (line 112) processes one `AudioChunk` at a time:
+
+1. **Dequeue:** `queue.poll(200, TimeUnit.MILLISECONDS)` — blocks up to 200ms waiting for a chunk.
+
+2. **Crossfade** (lines 162-180):
+   - If there's a `previousTail` from the last chunk, the first `CROSSFADE_SAMPLES = 128` samples of the new chunk are **faded in** (multiplied by linear ramp 0.0 to 1.0).
+   - The last 128 samples of the current chunk are **faded out** (multiplied by ramp from 1.0 down to 0.7 — note: it's `1.0 - (i/fadeLen) * 0.3`, so it fades to 70%, not zero).
+   - The tail (last 128 samples) is saved for the next iteration.
+
+3. **Write loop** (lines 184-197) — **writes in pieces, NOT all at once:**
+   ```kotlin
+   var offset = 0
+   while (offset < pcm.size && running.get()) {
+       if (paused.get()) { Thread.sleep(50); continue }
+       val written = track.write(pcm, offset, pcm.size - offset, AudioTrack.WRITE_BLOCKING)
+       if (written < 0) break
+       offset += written
+       totalFramesWritten += written
+   }
+   ```
+   - Uses `AudioTrack.WRITE_BLOCKING` mode.
+   - Attempts to write the entire remaining PCM in one call, BUT `AudioTrack.write()` may return fewer samples than requested if the internal buffer fills up.
+   - So it loops, advancing `offset` by the number of samples actually written each time.
+   - Respects pause: if paused, it spins with 50ms sleeps until resumed, then continues writing from where it left off (no data loss).
+
+4. **Underrun handling** (lines 135-153):
+   - If `queue.poll()` returns null and producer is NOT done: plays a **hint tone** via a separate static `AudioTrack` (1200 Hz, 150ms, 5% volume, Hann-windowed). Repeats at most once per second.
+   - If producer IS done: breaks out of loop (natural end).
+
+5. **Drain on natural end** (lines 201-225):
+   - Calls `track.stop()` (which does NOT discard buffered audio — unlike `flush()`).
+   - Polls `track.playbackHeadPosition` every 50ms, waiting up to 5 seconds for it to reach `totalFramesWritten`.
+   - Only then fires `onPlaybackFinished()`.
+
+---
+
+### 5. AudioTrack Buffer Size
+
+**Lines 55-76 of AudioPlayer.kt:**
+
+```kotlin
+val bufSize = AudioTrack.getMinBufferSize(
+    sampleRate,                          // 24000
+    AudioFormat.CHANNEL_OUT_MONO,
+    AudioFormat.ENCODING_PCM_FLOAT
+).coerceAtLeast(sampleRate)              // at least 24000 (= 1 second of samples)
+
+// ...
+.setBufferSizeInBytes(bufSize * 4)       // float = 4 bytes
+```
+
+**Calculation:**
+- `AudioTrack.getMinBufferSize(24000, MONO, FLOAT)` — platform-dependent, typically returns ~1920-3840 samples on most Android devices for 24kHz mono.
+- `.coerceAtLeast(sampleRate)` forces it to **at least 24,000 samples** (1 second).
+- `.setBufferSizeInBytes(bufSize * 4)` converts sample count to bytes: **at least 96,000 bytes** (24,000 samples x 4 bytes/float).
+
+**Relationship to chunk sizes:**
+- A typical 50-word chunk produces ~400,000-550,000 samples of audio.
+- The AudioTrack buffer holds ~24,000 samples (1 second).
+- So each chunk is **~17-23x larger** than the AudioTrack buffer.
+- This is why the write loop (point 4 above) iterates: each `track.write()` call can only push ~24,000 samples into the buffer before blocking, waiting for the hardware to drain some. A single chunk requires ~17-23 blocking write iterations to fully deliver.
+- The queue capacity of 4 chunks means the system can buffer up to ~4 x 20 seconds = ~80 seconds of audio ahead of playback.
+
+**The hint tone track** is separate:
+- `MODE_STATIC` with buffer = `hintTone.size * 4` bytes.
+- Hint tone size = `24000 * 150 / 1000 = 3600` samples = 14,400 bytes.
+
+---
+
+### End-to-End Data Flow Summary
+
+```
+User pastes text
+       │
+       ▼
+TextChunker.chunk(text) → List<TextChunk>
+  • ICU BreakIterator sentence split
+  • Long sentences (>50 words) split at word boundaries
+  • Tiny chunks (<3 words) merged with neighbors
+       │
+       ▼
+TextProcessor.processText(text) → List<PreparedChunk>
+  • For each TextChunk: normalizeText() (currency, time, CJK, ranges)
+  • Stores both originalText and normalizedText
+       │
+       ▼ (stored, waiting for play)
+       │
+AudioProducer.start(chunks, voice, speed)
+       │ (Thread: "AudioProducer", THREAD_PRIORITY_FOREGROUND)
+       │
+       ▼ for each PreparedChunk:
+KokoroEngine.speakNormalized(normalizedText, voice, speed)
+  ├─ phonemizeNormalized() → String (IPA via eSpeak JNI + post-processing)
+  ├─ tokenizeWithPadding() → LongArray (char-level, padded with 0L)
+  ├─ if tokens > 402: recursive split at IPA space, crossfade concat
+  └─ synthesizeTokens() → FloatArray (ONNX inference)
+       │     Inputs: input_ids[1][N], style[1][256], speed[1]
+       │     Output: [1][samples] → FloatArray
+       │
+       ▼
+trimAndPadSilence(pcm, 24000)
+  • Trim trailing silence (|sample| < 0.01)
+  • Add 7200 zero samples (300ms) if not continuation
+       │
+       ▼
+player.enqueue(trimmed, chunkIndex)
+  → queue.put(AudioChunk(FloatArray, Int))
+  → LinkedBlockingQueue<AudioChunk>(capacity=4)
+       │     Blocks if queue full (backpressure)
+       │
+       ▼
+AudioPlayer.playLoop()  (Thread: "AudioPlayer", THREAD_PRIORITY_AUDIO)
+  ├─ queue.poll(200ms)
+  ├─ Crossfade 128 samples at chunk boundaries
+  └─ track.write(pcm, offset, remaining, WRITE_BLOCKING) in a loop
+       │     AudioTrack: 24kHz, MONO, FLOAT, ≥96KB buffer, MODE_STREAM
+       │
+       ▼
+Hardware audio output
+```
+
+**Key constants summary:**
+
+| Constant | Value | Location |
+|---|---|---|
+| `SAMPLE_RATE` | 24,000 Hz | `KokoroEngine.kt:18` |
+| `MAX_WORDS_PER_CHUNK` | 50 words | `TextChunker.kt:28` |
+| `MIN_WORDS_PER_CHUNK` | 3 words | `TextChunker.kt:30` |
+| `MAX_PHONEME_LENGTH` | 400 tokens | `Tokenizer.kt:36` |
+| Queue capacity | 4 `AudioChunk`s | `AudioPlayer.kt:40` |
+| `SILENCE_THRESHOLD` | 0.01f | `AudioProducer.kt:30` |
+| `GAP_BETWEEN_CHUNKS_MS` | 300ms (7200 samples) | `AudioProducer.kt:32` |
+| `CROSSFADE_SAMPLES` (player) | 128 samples (~5.3ms) | `AudioPlayer.kt:27` |
+| `CROSSFADE_SAMPLES` (engine) | 100 samples (~4.2ms) | `KokoroEngine.kt:17` |
+| AudioTrack min buffer | ≥24,000 samples (≥96KB) | `AudioPlayer.kt:55-59` |
+| `TARGET_INFERENCE_NANOS` | 2 seconds | `AudioProducer.kt:36` |
+| Voice style matrix | 510 x 256 floats | `VoiceStyleLoader.kt:25-26` |
+| `HINT_FREQUENCY_HZ` | 1200 Hz | `AudioPlayer.kt:29` |
+| `HINT_DURATION_MS` | 150ms (3600 samples) | `AudioPlayer.kt:30` |
+| `HINT_VOLUME` | 0.05f (5%) | `AudioPlayer.kt:31` |
+| `HINT_INTERVAL_MS` | 1000ms | `AudioPlayer.kt:32` |
+</task_result>
+```
+
+**Tool: task**
+
+**Input:**
+```json
+{
+  "description": "Research capacity-based audio buffering",
+  "prompt": "Research how professional audio applications handle producer-consumer buffering when the production rate is variable (like TTS inference that varies per sentence). I need to understand:\n\n1. **Ring buffer vs queue approaches**: How do audio players like ExoPlayer, VLC, or AudioTrack streaming mode handle variable-size audio chunks? Do they use:\n   - Fixed-count queues (N chunks max)?\n   - Byte/sample-count based buffering (N seconds of audio max)?\n   - Ring buffers with a total capacity in bytes?\n\n2. **Benefits of capacity-based buffering**: If the producer generates variable-length audio (short sentences = 0.5s, long = 8s), how does buffering by total audio duration compare to buffering by chunk count? Specifically:\n   - Underrun probability\n   - Memory usage predictability\n   - CPU usage smoothing (does capacity-based buffering naturally batch work better?)\n\n3. **Power implications**: On mobile devices with big.LITTLE CPUs, is there a power benefit to \"bursting\" work (doing several inferences back-to-back, then sleeping) vs. spreading work evenly? Consider:\n   - Race-to-idle strategy: do work fast on big cores, then sleep\n   - Sustained low-power: do work slowly on little cores\n   - Which is better for total energy consumption?\n\n4. **Implementation patterns**: For a Java/Kotlin Android app using LinkedBlockingQueue, what's the cleanest way to implement capacity-based buffering where:\n   - The producer adds variable-size FloatArray chunks\n   - The consumer takes one chunk at a time\n   - Total buffered audio should not exceed N seconds\n   - The producer should block when the buffer is \"full\" (by audio duration, not count)\n\nReturn a comprehensive analysis with concrete recommendations.",
+  "subagent_type": "general"
+}
+```
+
+**Output:**
+```
+task_id: ses_2a32708efffe3txkF4q5AmdJC4 (for resuming to continue this task if needed)
+
+<task_result>
+
+
+# Analysis: Producer-Consumer Buffering for Variable-Rate TTS Audio
+
+## 1. Ring Buffer vs Queue Approaches in Professional Audio
+
+### How Real Systems Work
+
+**Android AudioTrack (streaming mode)** uses a **byte-capacity ring buffer** internally. You specify a buffer size in bytes at construction time (`minBufferSize`), and `write()` blocks when the ring buffer is full. It does not count chunks — it counts bytes remaining. This is the canonical example of capacity-based buffering.
+
+**ExoPlayer** uses a **hybrid approach**: a byte-budget allocator (`DefaultAllocator`) manages a pool of fixed-size byte arrays (typically 64KB blocks). Its `DefaultLoadControl` defines buffering thresholds in **time** (e.g., `minBufferMs=50000`, `bufferForPlaybackMs=2500`). So the high-level policy is duration-based, but the low-level memory management is block-based.
+
+**VLC** uses a **linked list of `block_t` structs**, each holding a variable-size chunk. Backpressure is applied via a **clock-based** mechanism — the demuxer pauses when the audio output buffer has enough data measured in PTS (presentation timestamps), which is effectively duration-based buffering.
+
+**PortAudio / JACK** use **fixed-size ring buffers** measured in frames (samples). The buffer size is set at stream open time. These are designed for fixed-rate producers (sound cards), not variable-rate ones like TTS.
+
+### Summary Table
+
+| System | Structure | Capacity Unit | Backpressure |
+|---|---|---|---|
+| AudioTrack | Ring buffer | Bytes | `write()` blocks |
+| ExoPlayer | Block pool + queue | Duration (ms) | LoadControl pauses source |
+| VLC | Linked list | Duration (PTS) | Demuxer pauses |
+| PortAudio/JACK | Ring buffer | Frames (samples) | Callback-driven |
+| **Common pattern** | **Queue/list** | **Duration or bytes** | **Producer blocks/pauses** |
+
+The consensus is clear: **professional audio systems measure buffer fullness in time (duration) or bytes, not in chunk count.**
+
+---
+
+## 2. Capacity-Based vs Count-Based Buffering
+
+Consider a TTS system producing sentences of wildly varying length:
+
+```
+Sentence A: "Hi."           → 0.3s of audio (6,600 samples at 22kHz)
+Sentence B: "Hello world."  → 1.2s of audio
+Sentence C: (long passage)  → 8.0s of audio
+```
+
+### Count-Based (e.g., `LinkedBlockingQueue(capacity=3)`)
+
+With 3-chunk max:
+- **Worst case memory**: 3 × 8.0s = 24 seconds of audio = ~2.1 MB at 22kHz float
+- **Best case buffered duration**: 3 × 0.3s = 0.9 seconds
+- **Problem**: When the buffer holds 3 short sentences, you have <1 second of runway. If the next inference takes 2 seconds, you **underrun**. But when it holds 3 long sentences, you're using 2+ MB unnecessarily.
+
+The count-based approach creates a **bimodal failure mode**: underruns when chunks are small, excessive memory when chunks are large.
+
+### Duration-Based (e.g., "buffer up to 10 seconds of audio")
+
+With 10-second max:
+- **Memory is bounded**: 10s × 22,000 × 4 bytes = **880 KB** always
+- **Buffered duration is consistent**: always ~10 seconds of runway regardless of sentence length
+- **Underrun probability**: much lower because the buffer always represents the same amount of playback time
+
+### Concrete comparison
+
+| Metric | Count-based (N=3) | Duration-based (10s) |
+|---|---|---|
+| Underrun probability | **High variance** — depends on sentence lengths | **Low** — consistent runway |
+| Memory worst-case | Unbounded* (depends on max chunk size × N) | **Fixed** (sample_rate × seconds × 4) |
+| Memory predictability | Poor | Excellent |
+| CPU smoothing | Poor — may force inference too early or too late | Good — naturally adapts to chunk size |
+
+*You could bound chunk size too, but then you're adding a second constraint on top of count.
+
+### CPU Smoothing Effect
+
+Duration-based buffering has a subtle but important benefit for CPU scheduling. When the buffer drains to a threshold (e.g., < 5 seconds remaining), the producer starts working. If the previous chunks were short (many small sentences consumed quickly), the producer is triggered **sooner** and does **more inferences** in a batch to refill the buffer. If the previous chunk was long, the producer has more time before it needs to act. This naturally **batches work proportionally to consumption rate**, which leads directly to the power analysis.
+
+---
+
+## 3. Power Implications on big.LITTLE
+
+### Race-to-Idle vs Sustained Low-Power
+
+This is well-studied in the mobile architecture literature. The short answer: **race-to-idle generally wins for total energy on modern SoCs**, but with important nuances.
+
+### Energy Model
+
+For a simplified model, energy = power × time:
+
+```
+Race-to-idle:  E = P_big × T_short + P_idle × T_sleep
+Sustained:     E = P_little × T_long
+```
+
+On a typical Arm big.LITTLE SoC (e.g., Snapdragon 8 Gen 2):
+- Big core at full speed: ~2W per core, completes TTS inference in T
+- Little core: ~0.3W per core, takes ~3-4× longer (due to lower IPC + clock)
+- Idle (deep sleep): ~0.01-0.05W for the whole cluster
+
+Example for a 500ms inference on big core:
+
+```
+Race-to-idle:  2.0W × 0.5s + 0.02W × 1.5s = 1.03 J
+Sustained:     0.3W × 2.0s              = 0.60 J   ← less energy
+```
+
+But this simple model is misleading. In practice:
+
+1. **DVFS overhead**: The little core at the clock speed needed for real-time TTS often isn't at its most efficient point. The energy/operation curve is non-linear.
+
+2. **Memory subsystem**: TTS inference (neural network) is memory-bandwidth intensive. Little cores share the memory controller, and running longer means the memory subsystem is powered longer. The memory power is often **comparable to the core power**.
+
+3. **Wakeup latency**: Deep sleep states (C-states) take 0.1-2ms to exit. For audio, this is fine — you have seconds of buffer.
+
+4. **Real-world measurements** (from Qualcomm and ARM papers): For **bursty, compute-intensive workloads** (which TTS inference is), race-to-idle on big cores typically uses **10-30% less total energy** than sustained computation on little cores, primarily because:
+   - The memory subsystem is active for less total time
+   - The SoC can enter deeper sleep states between bursts
+   - Voltage/frequency scaling means little cores aren't as efficient as their peak numbers suggest when pushed to meet deadlines
+
+### Recommendation for TTS
+
+**Race-to-idle with duration-based buffering is the optimal combination:**
+
+1. When the audio buffer drops below a low-water mark (e.g., 5 seconds), wake up and do **multiple inferences back-to-back** on a big core until the buffer reaches the high-water mark (e.g., 10 seconds).
+2. Then sleep. The SoC enters a deep idle state.
+3. The consumer (AudioTrack) runs on a little core or DSP with near-zero CPU cost.
+
+This naturally falls out of duration-based buffering — the buffer capacity determines the burst size, which determines the sleep interval.
+
+```
+Buffer: [============================------]
+         ^consumed                  ^produced
+         10s capacity, 7s filled
+
+→ Still above low-water mark (5s), producer sleeps
+→ Consumer plays audio for 2 more seconds
+→ Buffer: [=================---------]  5s remaining
+→ Below low-water mark → wake producer → burst inferences
+→ Producer generates 3 sentences (5s total) quickly
+→ Buffer back to 10s → producer sleeps again
+```
+
+---
+
+## 4. Implementation Pattern
+
+Here's the cleanest implementation for a duration-capacity-bounded blocking queue:
+
+```kotlin
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
+
+/**
+ * A blocking queue for audio chunks where capacity is measured in
+ * total buffered audio duration, not chunk count.
+ *
+ * Producer blocks on put() when total buffered duration >= maxDurationSeconds.
+ * Consumer blocks on take() when the queue is empty.
+ */
+class AudioBufferQueue(
+    private val maxDurationSeconds: Float,
+    private val sampleRate: Int
+) {
+    private val lock = ReentrantLock()
+    private val notFull = lock.newCondition()   // signaled when duration drops below max
+    private val notEmpty = lock.newCondition()   // signaled when a chunk is added
+
+    private val queue = ArrayDeque<FloatArray>()
+    private var totalSamples: Long = 0L
+    private val maxSamples: Long = (maxDurationSeconds * sampleRate).toLong()
+
+    @Volatile
+    var isClosed = false
+        private set
+
+    /** Buffered audio duration in seconds. Thread-safe read. */
+    val bufferedSeconds: Float
+        get() = lock.withLock { totalSamples.toFloat() / sampleRate }
+
+    /**
+     * Add a chunk. Blocks if buffer is full (by duration).
+     * Returns false if the queue has been closed.
+     */
+    fun put(chunk: FloatArray): Boolean {
+        lock.withLock {
+            while (totalSamples + chunk.size > maxSamples && !isClosed) {
+                notFull.await()
+            }
+            if (isClosed) return false
+
+            queue.addLast(chunk)
+            totalSamples += chunk.size
+            notEmpty.signal()
+            return true
+        }
+    }
+
+    /**
+     * Take the next chunk. Blocks if empty.
+     * Returns null if the queue is closed and drained.
+     */
+    fun take(): FloatArray? {
+        lock.withLock {
+            while (queue.isEmpty() && !isClosed) {
+                notEmpty.await()
+            }
+            if (queue.isEmpty()) return null  // closed and drained
+
+            val chunk = queue.removeFirst()
+            totalSamples -= chunk.size
+            notFull.signal()
+            return chunk
+        }
+    }
+
+    /** Non-blocking peek at whether data is available. */
+    fun isEmpty(): Boolean = lock.withLock { queue.isEmpty() }
+
+    /**
+     * Close the queue. Wakes all waiting threads.
+     * Remaining items can still be drained via take().
+     */
+    fun close() {
+        lock.withLock {
+            isClosed = true
+            notFull.signalAll()
+            notEmpty.signalAll()
+        }
+    }
+
+    fun clear() {
+        lock.withLock {
+            queue.clear()
+            totalSamples = 0L
+            notFull.signalAll()
+        }
+    }
+}
+```
+
+### Why this design over alternatives
+
+**Why not `LinkedBlockingQueue` with a wrapper?** `LinkedBlockingQueue` uses count-based capacity internally. You'd have to set its capacity to `Integer.MAX_VALUE` (unbounded) and manage backpressure externally with a `Semaphore` tracking sample counts. This works but splits the synchronization across two primitives, making it harder to reason about correctness:
+
+```kotlin
+// The semaphore approach — functional but fragile
+class SemaphoreApproach(maxSamples: Long, val sampleRate: Int) {
+    private val queue = LinkedBlockingQueue<FloatArray>()  // unbounded
+    private val permits = Semaphore(maxSamples.toInt())    // separate backpressure
+
+    fun put(chunk: FloatArray) {
+        permits.acquire(chunk.size)   // block if no room
+        queue.put(chunk)              // ← what if interrupted between these two lines?
+    }
+
+    fun take(): FloatArray {
+        val chunk = queue.take()
+        permits.release(chunk.size)   // ← must always release, even on exception
+        return chunk
+    }
+}
+// Problem: acquire and put are not atomic. Interruption between them leaks permits.
+```
+
+The `ReentrantLock` approach keeps everything in a single critical section, which is simpler and correct by construction.
+
+**Why `ArrayDeque` inside?** It's a growable array-based deque. No per-node allocation (unlike `LinkedList`), cache-friendly iteration, and amortized O(1) add/remove at both ends. Since the capacity constraint is on total samples (not queue length), the deque itself rarely holds more than a handful of chunks.
+
+### Optional Enhancement: Low/High Water Marks
+
+For the race-to-idle pattern, you may want the producer to sleep until the buffer drops below a low-water mark, then burst until the high-water mark:
+
+```kotlin
+class AudioBufferQueue(
+    private val sampleRate: Int,
+    private val highWaterSeconds: Float,  // stop producing here
+    private val lowWaterSeconds: Float    // start producing here
+) {
+    // ... same fields ...
+    private val highWaterSamples = (highWaterSeconds * sampleRate).toLong()
+    private val lowWaterSamples = (lowWaterSeconds * sampleRate).toLong()
+
+    private var producerShouldWait = false
+
+    fun put(chunk: FloatArray): Boolean {
+        lock.withLock {
+            // Block until we're below high water (or below low water if we were full)
+            while ((totalSamples + chunk.size > highWaterSamples || producerShouldWait) && !isClosed) {
+                producerShouldWait = true
+                notFull.await()
+            }
+            // ... add chunk ...
+        }
+    }
+
+    fun take(): FloatArray? {
+        lock.withLock {
+            // ... remove chunk ...
+            if (totalSamples < lowWaterSamples && producerShouldWait) {
+                producerShouldWait = false
+                notFull.signalAll()  // wake producer to burst-fill
+            }
+            // ...
+        }
+    }
+}
+```
+
+This gives you hysteresis: the producer does a burst of work (3-5 inferences), fills the buffer to the high mark, then goes idle while the consumer drains to the low mark. This is the pattern that enables race-to-idle.
+
+---
+
+## Concrete Recommendations
+
+1. **Use duration-based capacity** (not chunk count). Set the high-water mark to ~10 seconds and low-water mark to ~5 seconds for TTS. This gives you consistent memory usage (~880KB at 22kHz mono float), consistent underrun protection, and natural batching behavior.
+
+2. **Use a single-lock queue with conditions** (the `AudioBufferQueue` pattern above) rather than wrapping `LinkedBlockingQueue`. It's simpler, correct by construction, and the lock is uncontended most of the time (producer and consumer rarely race because one is doing inference and the other is doing I/O).
+
+3. **Implement low/high water marks** if you want power-optimal behavior. The hysteresis naturally batches inference work, enabling race-to-idle on big cores.
+
+4. **Don't use a ring buffer** for this use case. Ring buffers are optimal when chunks are fixed-size and the producer/consumer rates are similar (like audio I/O). For variable-size chunks from TTS inference, a queue of `FloatArray` with duration-based capacity is more natural and avoids the complexity of managing wrap-around with variable-length writes.
+</task_result>
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 12.4s)
+
+Excellent research results. Let me synthesize and drill into the specifics of our pipeline to see how this maps to our code.
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Investigate capacity-based buffering: analyze current chunk size variance",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Design capacity-based AudioBufferQueue with duration limits",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Evaluate low/high water mark hysteresis for race-to-idle",
+      "priority": "medium",
+      "status": "pending"
+    },
+    {
+      "content": "Present findings and plan to user",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Investigate capacity-based buffering: analyze current chunk size variance",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Design capacity-based AudioBufferQueue with duration limits",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Evaluate low/high water mark hysteresis for race-to-idle",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "Present findings and plan to user",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 15.4s)
+
+Let me look at some additional details — the `chunkIndex` tracking (needed for text highlighting) and how the consumer currently uses the queue:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.audio
+2: 
+3: import android.icu.text.BreakIterator
+4: import java.util.Locale
+5: 
+6: /**
+7:  * A chunk of text with its position in the original input.
+8:  */
+9: data class TextChunk(
+10:     val text: String,
+11:     val startOffset: Int,
+12:     val endOffset: Int,
+13:     val isContinuation: Boolean = false
+14: )
+15: 
+16: /**
+17:  * Splits text into chunks suitable for TTS inference.
+18:  * Each chunk should produce phonemes within the model's token limit (~400).
+19:  * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
+20:  * abbreviation/decimal handling), then word boundaries for oversized sentences.
+21:  * Sub-chunks of a split sentence are marked as continuations so the audio
+22:  * layer can omit the inter-sentence silence gap between them.
+23:  */
+24: object TextChunker {
+25: 
+26:     // Approximate: 1 word ≈ 5-8 phoneme tokens. 400 tokens ≈ 50-80 words.
+27:     // Use conservative limit of ~50 words per chunk for safety.
+28:     private const val MAX_WORDS_PER_CHUNK = 50
+29:     // Minimum chunk size to avoid tiny fragments
+30:     private const val MIN_WORDS_PER_CHUNK = 3
+31: 
+32:     /**
+33:      * Split text into chunks with offset tracking.
+34:      * Empty text returns an empty list.
+35:      *
+36:      * Sentences within the word limit become one chunk each.
+37:      * Longer sentences are split at word boundaries every ~50 words;
+38:      * sub-chunks after the first are marked [isContinuation]=true
+39:      * so the audio layer can skip the inter-sentence silence gap.
+40:      */
+41:     fun chunk(text: String): List<TextChunk> {
+42:         if (text.isBlank()) return emptyList()
+43: 
+44:         // First split into sentences using ICU4J BreakIterator
+45:         val sentences = splitIntoSentences(text)
+46:         val chunks = mutableListOf<TextChunk>()
+47: 
+48:         for (sentence in sentences) {
+49:             if (sentence.text.isBlank()) continue
+50: 
+51:             val wordCount = sentence.text.trim().split(Regex("\\s+")).size
+52:             if (wordCount <= MAX_WORDS_PER_CHUNK) {
+53:                 chunks.add(sentence)
+54:             } else {
+55:                 // Sentence too long - split at word boundaries
+56:                 chunks.addAll(splitByWords(sentence.text, sentence.startOffset))
+57:             }
+58:         }
+59: 
+60:         // Merge tiny chunks with their neighbors (only non-continuation chunks)
+61:         return mergeSmallChunks(chunks)
+62:     }
+63: 
+64:     /**
+65:      * Split text into sentences using ICU4J BreakIterator.
+66:      * Handles abbreviations (Dr., Mr., U.S.A.), decimal numbers (3.14),
+67:      * ellipses (...), and other edge cases automatically.
+68:      */
+69:     private fun splitIntoSentences(text: String): List<TextChunk> {
+70:         val result = mutableListOf<TextChunk>()
+71:         val bi = BreakIterator.getSentenceInstance(Locale.US)
+72:         bi.setText(text)
+73: 
+74:         var start = bi.first()
+75:         var end = bi.next()
+76:         while (end != BreakIterator.DONE) {
+77:             val segment = text.substring(start, end)
+78:             if (segment.isNotBlank()) {
+79:                 result.add(TextChunk(segment, start, end))
+80:             }
+81:             start = end
+82:             end = bi.next()
+83:         }
+84: 
+85:         // Handle any remaining text (shouldn't happen with BreakIterator, but be safe)
+86:         if (start < text.length) {
+87:             val remaining = text.substring(start)
+88:             if (remaining.isNotBlank()) {
+89:                 result.add(TextChunk(remaining, start, text.length))
+90:             }
+91:         }
+92: 
+93:         if (result.isEmpty() && text.isNotBlank()) {
+94:             result.add(TextChunk(text, 0, text.length))
+95:         }
+96: 
+97:         return result
+98:     }
+99: 
+100:     /**
+101:      * Split by word boundaries when a sentence exceeds [MAX_WORDS_PER_CHUNK].
+102:      * The first sub-chunk keeps [isContinuation]=false; subsequent ones are
+103:      * marked true so the audio layer omits the inter-sentence silence gap.
+104:      * Tiny tails (< [MIN_WORDS_PER_CHUNK] words) are absorbed into the
+105:      * previous sub-chunk to avoid sentence-final fragments.
+106:      */
+107:     private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
+108:         val words = text.split(Regex("(?<=\\s)"))
+109:         val chunks = mutableListOf<TextChunk>()
+110:         var currentWords = mutableListOf<String>()
+111:         var chunkStart = 0
+112:         var pos = 0
+113: 
+114:         for ((index, word) in words.withIndex()) {
+115:             currentWords.add(word)
+116:             pos += word.length
+117: 
+118:             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
+119:                 // Check if remaining words would form a tiny tail
+120:                 val remaining = words.size - (index + 1)
+121:                 if (remaining in 1 until MIN_WORDS_PER_CHUNK) {
+122:                     // Don't split yet — absorb the tail into this chunk
+123:                     continue
+124:                 }
+125: 
+126:                 val chunkText = currentWords.joinToString("")
+127:                 chunks.add(TextChunk(
+128:                     chunkText,
+129:                     baseOffset + chunkStart,
+130:                     baseOffset + pos,
+131:                     isContinuation = chunks.isNotEmpty()
+132:                 ))
+133:                 chunkStart = pos
+134:                 currentWords = mutableListOf()
+135:             }
+136:         }
+137: 
+138:         if (currentWords.isNotEmpty()) {
+139:             val chunkText = currentWords.joinToString("")
+140:             chunks.add(TextChunk(
+141:                 chunkText,
+142:                 baseOffset + chunkStart,
+143:                 baseOffset + pos,
+144:                 isContinuation = chunks.isNotEmpty()
+145:             ))
+146:         }
+147: 
+148:         return chunks
+149:     }
+150: 
+151:     /**
+152:      * Merge chunks that are too small with their next neighbor.
+153:      * Continuation chunks (from word-boundary splits) are left as-is since
+154:      * [splitByWords] already absorbs tiny tails.
+155:      */
+156:     private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {
+157:         if (chunks.size <= 1) return chunks
+158: 
+159:         val merged = mutableListOf<TextChunk>()
+160:         var i = 0
+161:         while (i < chunks.size) {
+162:             var current = chunks[i]
+163:             val wordCount = current.text.trim().split(Regex("\\s+")).size
+164: 
+165:             // If tiny and there's a next chunk, merge with next
+166:             if (wordCount < MIN_WORDS_PER_CHUNK && i + 1 < chunks.size) {
+167:                 val next = chunks[i + 1]
+168:                 current = TextChunk(
+169:                     current.text + next.text,
+170:                     current.startOffset,
+171:                     next.endOffset
+172:                 )
+173:                 i += 2
+174:             } else {
+175:                 i++
+176:             }
+177:             merged.add(current)
+178:         }
+179:         return merged
+180:     }
+181: }
+
+(End of file - total 181 lines)
+</content>
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 11.9s)
+
+Now let me think through the specifics of how `chunkIndex` is used — this is critical because the current `AudioChunk` carries both `pcm` and `chunkIndex`, and the consumer fires `onChunkStarted(chunkIndex)` for text highlighting:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt",
+  "offset": 112,
+  "limit": 50
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt</path>
+<type>file</type>
+<content>112:     private fun playLoop() {
+113:         val track = audioTrack ?: return
+114:         var naturalEnd = false
+115:         var totalFramesWritten = 0L
+116:         var lastHintTimeMs = 0L
+117: 
+118:         try {
+119:             track.play()
+120:             var previousTail: FloatArray? = null
+121: 
+122:             while (running.get()) {
+123:                 // Wait while paused (between chunks)
+124:                 if (paused.get()) {
+125:                     try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+126:                     continue
+127:                 }
+128: 
+129:                 val chunk = try {
+130:                     queue.poll(200, TimeUnit.MILLISECONDS)
+131:                 } catch (_: InterruptedException) {
+132:                     break
+133:                 }
+134: 
+135:                 if (chunk == null) {
+136:                     // Queue empty: if producer is done, we've played everything
+137:                     if (producerDone.get()) {
+138:                         if (BuildConfig.DEBUG) Log.d(TAG, "Queue drained and producer done — finishing playback")
+139:                         naturalEnd = true
+140:                         break
+141:                     }
+142:                     // Underrun: producer still working but queue starved
+143:                     if (System.currentTimeMillis() - lastHintTimeMs >= HINT_INTERVAL_MS) {
+144:                         if (BuildConfig.DEBUG) Log.d(TAG, "Underrun detected — playing hint tone")
+145:                         hintTrack?.let { ht ->
+146:                             try { ht.stop() } catch (_: Exception) {}
+147:                             ht.reloadStaticData()
+148:                             ht.play()
+149:                         }
+150:                         lastHintTimeMs = System.currentTimeMillis()
+151:                     }
+152:                     continue
+153:                 }
+154: 
+155:                 // Real chunk arrived — reset hint cooldown
+156:                 lastHintTimeMs = 0L
+157:                 onChunkStarted(chunk.chunkIndex)
+158: 
+159:                 var pcm = chunk.pcm
+160:                 if (pcm.isEmpty()) continue
+161: 
+
+(Showing lines 112-161 of 323. Use offset=162 to continue.)
+</content>
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 15.8s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Investigate capacity-based buffering: analyze current chunk size variance",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Design capacity-based AudioBufferQueue with duration limits",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Evaluate low/high water mark hysteresis for race-to-idle",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "content": "Present findings and plan to user",
+      "priority": "high",
+      "status": "in_progress"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Investigate capacity-based buffering: analyze current chunk size variance",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Design capacity-based AudioBufferQueue with duration limits",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Evaluate low/high water mark hysteresis for race-to-idle",
+    "priority": "medium",
+    "status": "completed"
+  },
+  {
+    "content": "Present findings and plan to user",
+    "priority": "high",
+    "status": "in_progress"
+  }
+]
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 819.1s)
+
+Here's my full analysis:
+
+---
+
+## Investigation: Count-Based vs Capacity-Based Audio Buffering
+
+### The Problem
+
+The current queue holds **at most 4 chunks** regardless of their audio duration. This creates high variance:
+
+| Scenario | Buffered Audio | Memory |
+|---|---|---|
+| 4 short sentences (5 words each, ~2s audio) | ~8 seconds | ~768 KB |
+| 4 long sentences (40 words each, ~15s audio) | ~60 seconds | ~5.8 MB |
+| Mix: 2 short + 2 long | ~34 seconds | ~3.3 MB |
+
+When the buffer holds 4 short sentences, there's only ~8 seconds of runway. If the next inference takes 3s (normal) to 6s (screen-off throttled), the buffer is thin. But when it holds 4 long sentences, 60 seconds of audio is buffered uselessly while consuming ~6 MB of heap.
+
+The CPU usage variance you observed makes sense: when short sentences fill the queue quickly (4 fast inferences back-to-back), the producer hits the queue limit and blocks. Then the consumer drains them quickly, the producer wakes, and repeats. Long sentences do the opposite — one inference fills a huge amount of buffer, so the producer idles longer. The **bursty pattern doesn't align with actual consumption need**.
+
+### Capacity-Based Approach
+
+Instead of "4 chunks max", use **"N seconds of audio max"**. The queue accepts chunks until the total buffered audio duration reaches a cap (e.g., 15 seconds). This means:
+
+- Many short sentences can be queued (e.g., 8 short sentences = 16s)
+- Fewer long sentences fit (e.g., 1-2 long sentences = 15-30s)
+- **Buffered runway is consistent** regardless of sentence length
+
+### Benefits
+
+**1. Lower underrun probability**
+With count-based buffering, 4 short sentences = only 8s of runway. One slow inference (screen off, thermal throttle) can cause a gap. With 15s duration cap, the producer can queue many more short sentences, keeping a deeper buffer when it matters most.
+
+**2. Reduced power consumption (race-to-idle)**
+Duration-based buffering naturally batches work. When short sentences arrive, the producer does many inferences in a burst (filling to 15s), then sleeps longer. This aligns with the race-to-idle pattern — do work fast on big cores, then let the SoC enter deep sleep. Research shows this uses **10-30% less total energy** than spreading work evenly for bursty compute workloads on big.LITTLE SoCs.
+
+**3. Predictable memory usage**
+15 seconds at 24kHz mono float = 15 × 24000 × 4 = **1.44 MB**. Always. No variance.
+
+**4. Smoother CPU profile**
+The producer is driven by actual audio consumption rate, not arbitrary chunk count. When the consumer is chewing through short sentences fast, the producer wakes up sooner. When it's playing a long sentence, the producer sleeps longer. The work naturally matches the need.
+
+### Design
+
+A new `AudioBufferQueue` class replaces `LinkedBlockingQueue<AudioChunk>`:
+
+```
+AudioBufferQueue(sampleRate = 24000, maxBufferSeconds = 15f)
+```
+
+**Key design decisions:**
+
+1. **Single lock + two conditions** (`notFull`, `notEmpty`) — same pattern as `LinkedBlockingQueue` internally, but measuring capacity in samples instead of count. The previous reverted power optimization used `ReentrantLock` + `Condition` and caused regressions — but that was **adding locking complexity on top of the existing queue**. Here we're **replacing** the queue entirely with a purpose-built structure, which is clean.
+
+2. **Chunk metadata preserved** — each entry stores `(FloatArray, chunkIndex)` so `onChunkStarted` text highlighting continues working. The consumer still takes one chunk at a time and fires `onChunkStarted(chunkIndex)` on dequeue.
+
+3. **`producerDone` flag** — integrated into the queue (`close()` method) instead of a separate `AtomicBoolean`. When the producer finishes, it calls `queue.close()`, and the consumer's `take()` returns `null` after draining remaining items.
+
+4. **No low/high water mark hysteresis (yet)** — while this would optimize power further, it adds complexity. The simple "block when full, wake when space" approach already gets most of the benefit. Water marks can be added later if needed.
+
+5. **`clear()` for stop** — the existing `stop()` path needs to clear the queue and unblock threads. The new queue's `close()` + `clear()` handles this.
+
+### Changes Required
+
+| File | Change |
+|---|---|
+| **New: `AudioBufferQueue.kt`** | Duration-capacity queue with `ReentrantLock` + `Condition` |
+| `AudioPlayer.kt` | Replace `LinkedBlockingQueue<AudioChunk>` with `AudioBufferQueue`. Replace `queue.poll(200ms)` with `queue.take(200ms)`. Remove `AudioChunk` inner class (moved to queue). Remove `producerDone` AtomicBoolean (integrated into queue). |
+| `AudioProducer.kt` | Remove `player.enqueue()` call, use `queue.put()` directly (or keep the wrapper). Minor wiring changes. |
+| `PlaybackController.kt` | Create `AudioBufferQueue` and pass to both producer and player. |
+
+### Open Questions
+
+Before implementing, I want to confirm a couple of things:
+
+**Tool: question**
+
+**Input:**
+```json
+{
+  "questions": [
+    {
+      "header": "Buffer duration",
+      "question": "What max buffer duration feels right? 15 seconds means ~1.44 MB of memory and enough runway to survive a ~10s inference stall. Lower values (e.g., 10s) save memory but reduce underrun protection. Higher values (e.g., 20s) increase protection but use more memory.",
+      "options": [
+        {
+          "label": "10 seconds",
+          "description": "~960 KB memory, moderate protection against stalls"
+        },
+        {
+          "label": "15 seconds (Recommended)",
+          "description": "~1.44 MB memory, good balance of protection and memory"
+        },
+        {
+          "label": "20 seconds",
+          "description": "~1.92 MB memory, maximum stall protection"
+        }
+      ]
+    },
+    {
+      "header": "Water marks",
+      "question": "Should we add low/high water mark hysteresis (race-to-idle optimization)? This makes the producer sleep until the buffer drops below a low-water mark (e.g., 5s), then burst-fill to the high-water mark (e.g., 15s). It optimizes power by batching work, but adds complexity.",
+      "options": [
+        {
+          "label": "Simple approach first (Recommended)",
+          "description": "Just block when full, wake when space. Add water marks later if needed."
+        },
+        {
+          "label": "Include water marks now",
+          "description": "Full race-to-idle with low/high water marks in the initial implementation."
+        }
+      ]
+    },
+    {
+      "header": "Queue ownership",
+      "question": "Currently the AudioPlayer owns the queue internally. With a shared AudioBufferQueue, it makes sense for PlaybackController to own it and pass it to both producer and player. OK?",
+      "options": [
+        {
+          "label": "Yes, PlaybackController owns it",
+          "description": "Clean separation: controller creates queue, passes to both sides"
+        },
+        {
+          "label": "AudioPlayer still owns it",
+          "description": "Player creates and exposes the queue, producer accesses it via player"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Output:**
+```
+User has answered your questions: "What max buffer duration feels right? 15 seconds means ~1.44 MB of memory and enough runway to survive a ~10s inference stall. Lower values (e.g., 10s) save memory but reduce underrun protection. Higher values (e.g., 20s) increase protection but use more memory."="15 seconds is okay, please define it as a variable that I can adjust in source code and rebuild myself. please make sure your method will not add extra delay in the midle of a sentence, I think it may not align with sentence boundary?", "Should we add low/high water mark hysteresis (race-to-idle optimization)? This makes the producer sleep until the buffer drops below a low-water mark (e.g., 5s), then burst-fill to the high-water mark (e.g., 15s). It optimizes power by batching work, but adds complexity."="I prefer race to idel, low water mark looks necessary to me (to trigger producer), but high watermark maybe not necessary (just run to full capacity), no?", "Currently the AudioPlayer owns the queue internally. With a shared AudioBufferQueue, it makes sense for PlaybackController to own it and pass it to both producer and player. OK?"="Yes, PlaybackController owns it". You can now continue with the user's answers in mind.
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 146.1s)
+
+Good feedback. Let me address each point:
+
+### 1. Configurable 15-second cap
+Easy — define as a constant in `AudioBufferQueue` companion object.
+
+### 2. Mid-sentence delay concern
+You're right to flag this. The current design already handles this: continuation chunks (sub-chunks of the same sentence split by `TextChunker`) have `isContinuation = true`. The producer already checks this and **skips the 300ms gap** between continuation chunks. Since the new queue only changes the **backpressure mechanism** (duration instead of count), and the producer still enqueues chunks one at a time in order, continuation chunks flow through identically. The buffer capacity doesn't affect intra-sentence behavior — it only affects when the producer blocks.
+
+However, there's a subtle point: a long sentence (50 words, ~15s of audio) could **fill the entire buffer by itself**. The producer would block trying to enqueue the second continuation chunk until the consumer drains some. But this is identical to the current behavior with a 4-slot queue — it's just that the threshold is measured differently. No new mid-sentence delay is introduced.
+
+### 3. Low water mark without high water mark
+Smart. So the design becomes:
+
+- **Producer blocks** when `totalBufferedSamples >= maxCapacity` (15s) — this is the natural backpressure, identical to the current `queue.put()` behavior.
+- **Low water mark** (e.g., 5s): When the buffer drops below this, we do something extra. But what? In the current design, the producer is **already always producing** (it doesn't sleep voluntarily). It only blocks when the buffer is full. So the low water mark doesn't need to "trigger" the producer — it's already running.
+
+The low water mark is only meaningful with a high water mark (hysteresis): "produce until high, then stop, then wait until low, then produce again." Without a high water mark, the producer just runs continuously until the buffer is full, which is exactly what `queue.put()` already does.
+
+So actually, the simple approach (block when full, always produce otherwise) **is** the race-to-idle pattern when the buffer is large enough. Here's why:
+
+1. Producer does inference after inference, filling the buffer.
+2. Buffer hits 15s. Producer blocks on `put()`.
+3. Consumer plays audio for ~10 seconds, buffer drops to ~5s.
+4. Space opens, `put()` unblocks. Producer immediately starts the next inference.
+5. Producer completes inference in ~2s. Buffer goes from ~3s → ~8s. Produces another. And another. Until full again.
+
+The "burst" happens naturally between steps 4-5 because the producer was blocked for a long time (step 3) and then does several inferences back-to-back. No water marks needed.
+
+The only case where a low water mark would add value is if we wanted the producer to **sleep voluntarily** even when there's room in the buffer, to batch work more aggressively. But that would **increase** underrun risk. Better to just keep producing whenever there's room.
+
+So the answer is: **the simple "block when full" approach already gives you race-to-idle behavior naturally, and it's what I recommend.**
+
+**Tool: question**
+
+**Input:**
+```json
+{
+  "questions": [
+    {
+      "header": "Approach confirmation",
+      "options": [
+        {
+          "description": "Block when 15s full. Always produce when there's room. No water marks. Simplest, already race-to-idle.",
+          "label": "Simple block-when-full (Recommended)"
+        },
+        {
+          "description": "Add explicit low water mark that triggers some additional behavior (e.g., logging, priority boost).",
+          "label": "Add low water mark for diagnostics"
+        }
+      ],
+      "question": "Given my analysis above — the simple approach (block when full at 15s, always produce otherwise) naturally achieves race-to-idle because the producer bursts work after being blocked during buffer-full periods. A low water mark would only help if we wanted the producer to voluntarily sleep when the buffer is partially full, which would increase underrun risk. Does the simple approach work for you, or do you want the low water mark for some other reason I'm not seeing?"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+User has answered your questions: "Given my analysis above — the simple approach (block when full at 15s, always produce otherwise) naturally achieves race-to-idle because the producer bursts work after being blocked during buffer-full periods. A low water mark would only help if we wanted the producer to voluntarily sleep when the buffer is partially full, which would increase underrun risk. Does the simple approach work for you, or do you want the low water mark for some other reason I'm not seeing?"="Simple block-when-full (Recommended)". You can now continue with the user's answers in mind.
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 22.0s)
+
+Good. Here's the final plan:
+
+---
+
+## Plan: Duration-Based Audio Buffer Queue
+
+### New file: `AudioBufferQueue.kt`
+Location: `app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt`
+
+A thread-safe queue that measures capacity in **audio duration** (total buffered samples) instead of chunk count.
+
+**Structure:**
+- Internal `ArrayDeque` of entries (each: `FloatArray` + `chunkIndex: Int`)
+- `ReentrantLock` + `notFull` / `notEmpty` conditions
+- `totalSamples: Long` tracks buffered duration
+- `maxSamples` computed from configurable `MAX_BUFFER_SECONDS = 15f`
+- `isClosed` flag replaces the separate `producerDone` AtomicBoolean
+
+**API:**
+- `put(pcm, chunkIndex)` — blocks when `totalSamples >= maxSamples`
+- `take(timeoutMs)` — blocks when empty, returns null on timeout or closed+drained
+- `close()` — signals producer is done, wakes all waiters
+- `clear()` — discards all entries, wakes blocked producer
+- `bufferedSeconds` — read-only, for diagnostics/logging
+
+### Changes to `AudioPlayer.kt`
+- Remove `LinkedBlockingQueue<AudioChunk>`, `AudioChunk` data class
+- Accept `AudioBufferQueue` via constructor parameter instead of creating its own queue
+- Remove `producerDone` AtomicBoolean — check `queue.isClosed` + `queue.isEmpty` instead
+- Remove `enqueue()` and `markProducerDone()` methods — caller uses the queue directly
+- Remove `queueSize` (already removed)
+- Replace `queue.poll(200ms)` with `queue.take(200)` from the new API
+- The playloop, crossfade, hint tone, drain logic all stay the same
+
+### Changes to `AudioProducer.kt`
+- Accept `AudioBufferQueue` via constructor parameter instead of `AudioPlayer`
+- Use `queue.put(trimmed, chunkIndex)` instead of `player.enqueue(trimmed, i)`
+- Call `queue.close()` instead of `player.markProducerDone()`
+- No other logic changes
+
+### Changes to `PlaybackController.kt`
+- Create `AudioBufferQueue(sampleRate = KokoroEngine.SAMPLE_RATE)` 
+- Pass it to both `AudioPlayer` and `AudioProducer`
+- Call `queue.clear()` in `stop()`
+- Pass `player` ref for the `onChunkReady` callback wiring
+
+### What stays the same
+- TextChunker, TextProcessor, KokoroEngine — no changes
+- `PreparedChunk` — no changes
+- Crossfade, hint tone, drain, pause/resume logic — no changes
+- `chunkIndex` tracking for text highlighting — preserved in queue entries
+- `isContinuation` gap-skipping logic in AudioProducer — unchanged
+
+### Single commit
+All changes in one commit: "Replace count-based audio queue with duration-based buffer"
+
+Ready to implement when you switch to edit mode.
+
+---
+
+## User
+
+implement, build, and commit it
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 9.6s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Build and verify",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Commit",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Build and verify",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Commit",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 34.7s)
+
+**Tool: write**
+
+**Input:**
+```json
+{
+  "content": "package com.example.mytts.audio\n\nimport java.util.concurrent.TimeUnit\nimport java.util.concurrent.locks.ReentrantLock\nimport kotlin.concurrent.withLock\n\n/**\n * A thread-safe audio buffer queue whose capacity is measured in total\n * buffered audio **duration** (sample count) rather than chunk count.\n *\n * This gives consistent buffering regardless of sentence length:\n * many short sentences or few long ones all occupy the same amount\n * of audio runway. The producer blocks on [put] when full and wakes\n * instantly when space opens — no sleep-polling.\n *\n * @param sampleRate audio sample rate (e.g. 24000)\n */\nclass AudioBufferQueue(private val sampleRate: Int) {\n\n    companion object {\n        /**\n         * Maximum buffered audio in seconds. Adjust this value to trade\n         * memory (~96 KB per second at 24 kHz mono float) against underrun\n         * protection. 15 s ≈ 1.44 MB — enough to survive a ~10 s inference\n         * stall when the screen is off and the CPU is throttled.\n         */\n        const val MAX_BUFFER_SECONDS = 15f\n    }\n\n    /** A single entry: PCM audio + the index of the originating PreparedChunk. */\n    data class Entry(val pcm: FloatArray, val chunkIndex: Int)\n\n    private val lock = ReentrantLock()\n    private val notFull = lock.newCondition()\n    private val notEmpty = lock.newCondition()\n\n    private val deque = ArrayDeque<Entry>()\n    private var totalSamples = 0L\n    private val maxSamples = (MAX_BUFFER_SECONDS * sampleRate).toLong()\n\n    @Volatile\n    var isClosed = false\n        private set\n\n    /** Total buffered audio duration in seconds (thread-safe read). */\n    val bufferedSeconds: Float\n        get() = lock.withLock { totalSamples.toFloat() / sampleRate }\n\n    /** Number of chunks currently in the buffer. */\n    val size: Int\n        get() = lock.withLock { deque.size }\n\n    /**\n     * Add a chunk. Blocks if the buffer is full (by duration).\n     *\n     * @return true if the chunk was added, false if the queue was closed.\n     */\n    fun put(pcm: FloatArray, chunkIndex: Int): Boolean {\n        lock.withLock {\n            while (totalSamples + pcm.size > maxSamples && !isClosed) {\n                notFull.await()\n            }\n            if (isClosed) return false\n\n            deque.addLast(Entry(pcm, chunkIndex))\n            totalSamples += pcm.size\n            notEmpty.signal()\n            return true\n        }\n    }\n\n    /**\n     * Take the next chunk. Blocks up to [timeoutMs] if empty.\n     *\n     * @return the next [Entry], or null on timeout / closed-and-drained.\n     */\n    fun take(timeoutMs: Long): Entry? {\n        lock.withLock {\n            var remaining = TimeUnit.MILLISECONDS.toNanos(timeoutMs)\n            while (deque.isEmpty() && !isClosed && remaining > 0) {\n                remaining = notEmpty.awaitNanos(remaining)\n            }\n            if (deque.isEmpty()) return null  // timeout or closed-and-drained\n\n            val entry = deque.removeFirst()\n            totalSamples -= entry.pcm.size\n            notFull.signal()\n            return entry\n        }\n    }\n\n    /**\n     * Signal that the producer is done. Remaining entries can still be\n     * drained via [take]. Wakes all waiting threads.\n     */\n    fun close() {\n        lock.withLock {\n            isClosed = true\n            notFull.signalAll()\n            notEmpty.signalAll()\n        }\n    }\n\n    /**\n     * Discard all buffered entries and wake blocked threads.\n     * Call from [stop] to unblock the producer immediately.\n     */\n    fun clear() {\n        lock.withLock {\n            deque.clear()\n            totalSamples = 0\n            isClosed = true\n            notFull.signalAll()\n            notEmpty.signalAll()\n        }\n    }\n}\n",
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt"
+}
+```
+
+**Output:**
+```
+Wrote file successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 8.8s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Build and verify",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Commit",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Build and verify",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Commit",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 24.1s)
+
+Now let me read the full current AudioPlayer.kt to plan the edits precisely:
 
 **Tool: read**
 
@@ -2081,315 +2102,419 @@ Let me read the files I need to edit:
 19: class AudioPlayer(
 20:     private val sampleRate: Int = 24000,
 21:     private val onChunkStarted: (chunkIndex: Int) -> Unit = {},
-22:     private val onPlaybackFinished: () -> Unit = {},
-23:     private val onUnderrun: () -> Unit = {}
-24: ) {
-25:     companion object {
-26:         private const val TAG = "AudioPlayer"
-27:         // Crossfade samples to avoid pops at chunk boundaries
-28:         private const val CROSSFADE_SAMPLES = 128
-29:         // Buffering hint tone parameters
-30:         private const val HINT_FREQUENCY_HZ = 1200.0
-31:         private const val HINT_DURATION_MS = 150
-32:         private const val HINT_VOLUME = 0.05f  // 5% volume
-33:         private const val HINT_INTERVAL_MS = 1000L  // repeat once per second
-34:     }
-35: 
-36:     data class AudioChunk(
-37:         val pcm: FloatArray,
-38:         val chunkIndex: Int
-39:     )
-40: 
-41:     private val queue = LinkedBlockingQueue<AudioChunk>(8)
-42:     private val running = AtomicBoolean(false)
-43:     private val paused = AtomicBoolean(false)
-44:     private val producerDone = AtomicBoolean(false)
-45:     private var audioTrack: AudioTrack? = null
-46:     private var hintTrack: AudioTrack? = null  // Separate static track for hint tones
-47:     private var playerThread: Thread? = null
-48:     private val stoppedExplicitly = AtomicBoolean(false)
-49: 
-50:     /**
-51:      * Start the audio player thread.
-52:      */
-53:     fun start() {
-54:         if (running.get()) return
-55: 
-56:         val bufSize = AudioTrack.getMinBufferSize(
-57:             sampleRate,
-58:             AudioFormat.CHANNEL_OUT_MONO,
-59:             AudioFormat.ENCODING_PCM_FLOAT
-60:         ).coerceAtLeast(sampleRate) // At least 1 second buffer
-61: 
-62:         audioTrack = AudioTrack.Builder()
-63:             .setAudioAttributes(
-64:                 AudioAttributes.Builder()
-65:                     .setUsage(AudioAttributes.USAGE_MEDIA)
-66:                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-67:                     .build()
-68:             )
-69:             .setAudioFormat(
-70:                 AudioFormat.Builder()
-71:                     .setSampleRate(sampleRate)
-72:                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-73:                     .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
-74:                     .build()
-75:             )
-76:             .setBufferSizeInBytes(bufSize * 4) // float = 4 bytes
-77:             .setTransferMode(AudioTrack.MODE_STREAM)
-78:             .build()
-79: 
-80:         // Create a separate static AudioTrack for hint tones.
-81:         // MODE_STATIC plays immediately with minimal latency, avoiding the
-82:         // buffer-accumulation problem of writing tiny tones to the streaming track.
-83:         val audioAttrs = AudioAttributes.Builder()
-84:             .setUsage(AudioAttributes.USAGE_MEDIA)
-85:             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-86:             .build()
-87:         val audioFmt = AudioFormat.Builder()
-88:             .setSampleRate(sampleRate)
-89:             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-90:             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
-91:             .build()
-92:         val hintTone = generateHintTone(sampleRate)
-93:         hintTrack = AudioTrack.Builder()
-94:             .setAudioAttributes(audioAttrs)
-95:             .setAudioFormat(audioFmt)
-96:             .setBufferSizeInBytes(hintTone.size * 4)
-97:             .setTransferMode(AudioTrack.MODE_STATIC)
-98:             .build().also {
-99:                 it.write(hintTone, 0, hintTone.size, AudioTrack.WRITE_BLOCKING)
-100:             }
-101: 
-102:         running.set(true)
-103:         paused.set(false)
-104:         producerDone.set(false)
-105:         stoppedExplicitly.set(false)
-106: 
-107:         playerThread = Thread({
-108:             Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
-109:             playLoop()
-110:         }, "AudioPlayer").also { it.start() }
-111:     }
-112: 
-113:     private fun playLoop() {
-114:         val track = audioTrack ?: return
-115:         var naturalEnd = false
-116:         var totalFramesWritten = 0L
-117:         var lastHintTimeMs = 0L
-118: 
-119:         try {
-120:             track.play()
-121:             var previousTail: FloatArray? = null
-122: 
-123:             while (running.get()) {
-124:                 // Wait while paused (between chunks)
-125:                 if (paused.get()) {
-126:                     try { Thread.sleep(50) } catch (_: InterruptedException) { break }
-127:                     continue
-128:                 }
-129: 
-130:                 val chunk = try {
-131:                     queue.poll(200, TimeUnit.MILLISECONDS)
-132:                 } catch (_: InterruptedException) {
-133:                     break
-134:                 }
-135: 
-136:                 if (chunk == null) {
-137:                     // Queue empty: if producer is done, we've played everything
-138:                     if (producerDone.get()) {
-139:                         if (BuildConfig.DEBUG) Log.d(TAG, "Queue drained and producer done — finishing playback")
-140:                         naturalEnd = true
-141:                         break
-142:                     }
-143:                     // Underrun: producer still working but queue starved
-144:                     if (System.currentTimeMillis() - lastHintTimeMs >= HINT_INTERVAL_MS) {
-145:                         if (BuildConfig.DEBUG) Log.d(TAG, "Underrun detected — playing hint tone")
-146:                         hintTrack?.let { ht ->
-147:                             try { ht.stop() } catch (_: Exception) {}
-148:                             ht.reloadStaticData()
-149:                             ht.play()
-150:                         }
-151:                         lastHintTimeMs = System.currentTimeMillis()
-152:                         onUnderrun()
-153:                     }
-154:                     continue
-155:                 }
-156: 
-157:                 // Real chunk arrived — reset hint cooldown
-158:                 lastHintTimeMs = 0L
-159:                 onChunkStarted(chunk.chunkIndex)
-160: 
-161:                 var pcm = chunk.pcm
-162:                 if (pcm.isEmpty()) continue
-163: 
-164:                 // Apply crossfade with previous chunk's tail to avoid pops
-165:                 if (previousTail != null && previousTail.isNotEmpty()) {
-166:                     val fadeLen = minOf(CROSSFADE_SAMPLES, pcm.size, previousTail.size)
-167:                     for (i in 0 until fadeLen) {
-168:                         val fadeIn = i.toFloat() / fadeLen
-169:                         pcm[i] = pcm[i] * fadeIn
-170:                     }
-171:                 }
-172: 
-173:                 // Save tail for next crossfade
-174:                 if (pcm.size >= CROSSFADE_SAMPLES) {
-175:                     previousTail = pcm.sliceArray(pcm.size - CROSSFADE_SAMPLES until pcm.size)
-176:                     val fadeLen = CROSSFADE_SAMPLES
-177:                     val fadeStart = pcm.size - fadeLen
-178:                     for (i in 0 until fadeLen) {
-179:                         val fadeOut = 1.0f - (i.toFloat() / fadeLen) * 0.3f
-180:                         pcm[fadeStart + i] = pcm[fadeStart + i] * fadeOut
-181:                     }
-182:                 }
-183: 
-184:                 // Write PCM to AudioTrack — pause-aware: waits inside the loop
-185:                 // so remaining data is written after resume (not lost)
-186:                 var offset = 0
-187:                 while (offset < pcm.size && running.get()) {
-188:                     if (paused.get()) {
-189:                         try { Thread.sleep(50) } catch (_: InterruptedException) { break }
-190:                         continue
-191:                     }
-192:                     val written = track.write(pcm, offset, pcm.size - offset, AudioTrack.WRITE_BLOCKING)
-193:                     if (written < 0) {
-194:                         Log.e(TAG, "AudioTrack write error: $written")
-195:                         break
-196:                     }
-197:                     offset += written
-198:                     totalFramesWritten += written
-199:                 }
-200:             }
-201: 
-202:             // Only stop/drain track if we weren't explicitly stopped
-203:             // (explicit stop() handles track cleanup itself)
-204:             if (!stoppedExplicitly.get()) {
-205:                 try {
-206:                     track.stop()
-207:                 } catch (_: Exception) {}
-208: 
-209:                 // Wait for AudioTrack to finish playing all buffered audio.
-210:                 // After stop(), playbackHeadPosition continues advancing until
-211:                 // all written frames have been rendered to hardware.
-212:                 // Do NOT call flush() here — it discards unplayed audio!
-213:                 if (naturalEnd && totalFramesWritten > 0) {
-214:                     val timeoutMs = 5000L
-215:                     val startTime = System.currentTimeMillis()
-216:                     while (System.currentTimeMillis() - startTime < timeoutMs) {
-217:                         val headPos = track.playbackHeadPosition.toLong() and 0xFFFFFFFFL
-218:                         if (headPos >= totalFramesWritten) {
-219:                             if (BuildConfig.DEBUG) Log.d(TAG, "AudioTrack fully drained: head=$headPos, written=$totalFramesWritten")
-220:                             break
-221:                         }
-222:                         try { Thread.sleep(50) } catch (_: InterruptedException) { break }
-223:                     }
-224:                     if (System.currentTimeMillis() - startTime >= timeoutMs) {
-225:                         Log.w(TAG, "AudioTrack drain timeout after ${timeoutMs}ms")
-226:                     }
-227:                 }
-228:             }
-229:         } catch (e: Exception) {
-230:             Log.w(TAG, "playLoop exiting due to exception", e)
-231:         }
-232: 
-233:         // Only fire onPlaybackFinished for natural end (not explicit stop)
-234:         if (naturalEnd && !stoppedExplicitly.get()) {
-235:             onPlaybackFinished()
-236:         }
-237:     }
-238: 
-239:     /**
-240:      * Generate a short, quiet hint tone to signal buffering/underrun.
-241:      * 1200Hz sine wave, ~150ms, 5% volume, with Hann window fade-in/fade-out
-242:      * to avoid click artifacts.
-243:      */
-244:     private fun generateHintTone(effectiveRate: Int): FloatArray {
-245:         val numSamples = effectiveRate * HINT_DURATION_MS / 1000
-246:         val tone = FloatArray(numSamples)
-247:         val angularFreq = 2.0 * PI * HINT_FREQUENCY_HZ / effectiveRate
-248:         for (i in 0 until numSamples) {
-249:             // Hann window envelope: smooth fade-in and fade-out
-250:             val envelope = 0.5f * (1.0f - kotlin.math.cos(2.0f * PI.toFloat() * i / numSamples))
-251:             tone[i] = (HINT_VOLUME * envelope * sin(angularFreq * i)).toFloat()
-252:         }
-253:         return tone
-254:     }
-255: 
-256:     /**
-257:      * Enqueue a PCM audio chunk for playback.
-258:      * Blocks if the queue is full (backpressure on the producer).
+22:     private val onPlaybackFinished: () -> Unit = {}
+23: ) {
+24:     companion object {
+25:         private const val TAG = "AudioPlayer"
+26:         // Crossfade samples to avoid pops at chunk boundaries
+27:         private const val CROSSFADE_SAMPLES = 128
+28:         // Buffering hint tone parameters
+29:         private const val HINT_FREQUENCY_HZ = 1200.0
+30:         private const val HINT_DURATION_MS = 150
+31:         private const val HINT_VOLUME = 0.05f  // 5% volume
+32:         private const val HINT_INTERVAL_MS = 1000L  // repeat once per second
+33:     }
+34: 
+35:     data class AudioChunk(
+36:         val pcm: FloatArray,
+37:         val chunkIndex: Int
+38:     )
+39: 
+40:     private val queue = LinkedBlockingQueue<AudioChunk>(4)
+41:     private val running = AtomicBoolean(false)
+42:     private val paused = AtomicBoolean(false)
+43:     private val producerDone = AtomicBoolean(false)
+44:     private var audioTrack: AudioTrack? = null
+45:     private var hintTrack: AudioTrack? = null  // Separate static track for hint tones
+46:     private var playerThread: Thread? = null
+47:     private val stoppedExplicitly = AtomicBoolean(false)
+48: 
+49:     /**
+50:      * Start the audio player thread.
+51:      */
+52:     fun start() {
+53:         if (running.get()) return
+54: 
+55:         val bufSize = AudioTrack.getMinBufferSize(
+56:             sampleRate,
+57:             AudioFormat.CHANNEL_OUT_MONO,
+58:             AudioFormat.ENCODING_PCM_FLOAT
+59:         ).coerceAtLeast(sampleRate) // At least 1 second buffer
+60: 
+61:         audioTrack = AudioTrack.Builder()
+62:             .setAudioAttributes(
+63:                 AudioAttributes.Builder()
+64:                     .setUsage(AudioAttributes.USAGE_MEDIA)
+65:                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+66:                     .build()
+67:             )
+68:             .setAudioFormat(
+69:                 AudioFormat.Builder()
+70:                     .setSampleRate(sampleRate)
+71:                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+72:                     .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+73:                     .build()
+74:             )
+75:             .setBufferSizeInBytes(bufSize * 4) // float = 4 bytes
+76:             .setTransferMode(AudioTrack.MODE_STREAM)
+77:             .build()
+78: 
+79:         // Create a separate static AudioTrack for hint tones.
+80:         // MODE_STATIC plays immediately with minimal latency, avoiding the
+81:         // buffer-accumulation problem of writing tiny tones to the streaming track.
+82:         val audioAttrs = AudioAttributes.Builder()
+83:             .setUsage(AudioAttributes.USAGE_MEDIA)
+84:             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+85:             .build()
+86:         val audioFmt = AudioFormat.Builder()
+87:             .setSampleRate(sampleRate)
+88:             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+89:             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+90:             .build()
+91:         val hintTone = generateHintTone(sampleRate)
+92:         hintTrack = AudioTrack.Builder()
+93:             .setAudioAttributes(audioAttrs)
+94:             .setAudioFormat(audioFmt)
+95:             .setBufferSizeInBytes(hintTone.size * 4)
+96:             .setTransferMode(AudioTrack.MODE_STATIC)
+97:             .build().also {
+98:                 it.write(hintTone, 0, hintTone.size, AudioTrack.WRITE_BLOCKING)
+99:             }
+100: 
+101:         running.set(true)
+102:         paused.set(false)
+103:         producerDone.set(false)
+104:         stoppedExplicitly.set(false)
+105: 
+106:         playerThread = Thread({
+107:             Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
+108:             playLoop()
+109:         }, "AudioPlayer").also { it.start() }
+110:     }
+111: 
+112:     private fun playLoop() {
+113:         val track = audioTrack ?: return
+114:         var naturalEnd = false
+115:         var totalFramesWritten = 0L
+116:         var lastHintTimeMs = 0L
+117: 
+118:         try {
+119:             track.play()
+120:             var previousTail: FloatArray? = null
+121: 
+122:             while (running.get()) {
+123:                 // Wait while paused (between chunks)
+124:                 if (paused.get()) {
+125:                     try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+126:                     continue
+127:                 }
+128: 
+129:                 val chunk = try {
+130:                     queue.poll(200, TimeUnit.MILLISECONDS)
+131:                 } catch (_: InterruptedException) {
+132:                     break
+133:                 }
+134: 
+135:                 if (chunk == null) {
+136:                     // Queue empty: if producer is done, we've played everything
+137:                     if (producerDone.get()) {
+138:                         if (BuildConfig.DEBUG) Log.d(TAG, "Queue drained and producer done — finishing playback")
+139:                         naturalEnd = true
+140:                         break
+141:                     }
+142:                     // Underrun: producer still working but queue starved
+143:                     if (System.currentTimeMillis() - lastHintTimeMs >= HINT_INTERVAL_MS) {
+144:                         if (BuildConfig.DEBUG) Log.d(TAG, "Underrun detected — playing hint tone")
+145:                         hintTrack?.let { ht ->
+146:                             try { ht.stop() } catch (_: Exception) {}
+147:                             ht.reloadStaticData()
+148:                             ht.play()
+149:                         }
+150:                         lastHintTimeMs = System.currentTimeMillis()
+151:                     }
+152:                     continue
+153:                 }
+154: 
+155:                 // Real chunk arrived — reset hint cooldown
+156:                 lastHintTimeMs = 0L
+157:                 onChunkStarted(chunk.chunkIndex)
+158: 
+159:                 var pcm = chunk.pcm
+160:                 if (pcm.isEmpty()) continue
+161: 
+162:                 // Apply crossfade with previous chunk's tail to avoid pops
+163:                 if (previousTail != null && previousTail.isNotEmpty()) {
+164:                     val fadeLen = minOf(CROSSFADE_SAMPLES, pcm.size, previousTail.size)
+165:                     for (i in 0 until fadeLen) {
+166:                         val fadeIn = i.toFloat() / fadeLen
+167:                         pcm[i] = pcm[i] * fadeIn
+168:                     }
+169:                 }
+170: 
+171:                 // Save tail for next crossfade
+172:                 if (pcm.size >= CROSSFADE_SAMPLES) {
+173:                     previousTail = pcm.sliceArray(pcm.size - CROSSFADE_SAMPLES until pcm.size)
+174:                     val fadeLen = CROSSFADE_SAMPLES
+175:                     val fadeStart = pcm.size - fadeLen
+176:                     for (i in 0 until fadeLen) {
+177:                         val fadeOut = 1.0f - (i.toFloat() / fadeLen) * 0.3f
+178:                         pcm[fadeStart + i] = pcm[fadeStart + i] * fadeOut
+179:                     }
+180:                 }
+181: 
+182:                 // Write PCM to AudioTrack — pause-aware: waits inside the loop
+183:                 // so remaining data is written after resume (not lost)
+184:                 var offset = 0
+185:                 while (offset < pcm.size && running.get()) {
+186:                     if (paused.get()) {
+187:                         try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+188:                         continue
+189:                     }
+190:                     val written = track.write(pcm, offset, pcm.size - offset, AudioTrack.WRITE_BLOCKING)
+191:                     if (written < 0) {
+192:                         Log.e(TAG, "AudioTrack write error: $written")
+193:                         break
+194:                     }
+195:                     offset += written
+196:                     totalFramesWritten += written
+197:                 }
+198:             }
+199: 
+200:             // Only stop/drain track if we weren't explicitly stopped
+201:             // (explicit stop() handles track cleanup itself)
+202:             if (!stoppedExplicitly.get()) {
+203:                 try {
+204:                     track.stop()
+205:                 } catch (_: Exception) {}
+206: 
+207:                 // Wait for AudioTrack to finish playing all buffered audio.
+208:                 // After stop(), playbackHeadPosition continues advancing until
+209:                 // all written frames have been rendered to hardware.
+210:                 // Do NOT call flush() here — it discards unplayed audio!
+211:                 if (naturalEnd && totalFramesWritten > 0) {
+212:                     val timeoutMs = 5000L
+213:                     val startTime = System.currentTimeMillis()
+214:                     while (System.currentTimeMillis() - startTime < timeoutMs) {
+215:                         val headPos = track.playbackHeadPosition.toLong() and 0xFFFFFFFFL
+216:                         if (headPos >= totalFramesWritten) {
+217:                             if (BuildConfig.DEBUG) Log.d(TAG, "AudioTrack fully drained: head=$headPos, written=$totalFramesWritten")
+218:                             break
+219:                         }
+220:                         try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+221:                     }
+222:                     if (System.currentTimeMillis() - startTime >= timeoutMs) {
+223:                         Log.w(TAG, "AudioTrack drain timeout after ${timeoutMs}ms")
+224:                     }
+225:                 }
+226:             }
+227:         } catch (e: Exception) {
+228:             Log.w(TAG, "playLoop exiting due to exception", e)
+229:         }
+230: 
+231:         // Only fire onPlaybackFinished for natural end (not explicit stop)
+232:         if (naturalEnd && !stoppedExplicitly.get()) {
+233:             onPlaybackFinished()
+234:         }
+235:     }
+236: 
+237:     /**
+238:      * Generate a short, quiet hint tone to signal buffering/underrun.
+239:      * 1200Hz sine wave, ~150ms, 5% volume, with Hann window fade-in/fade-out
+240:      * to avoid click artifacts.
+241:      */
+242:     private fun generateHintTone(effectiveRate: Int): FloatArray {
+243:         val numSamples = effectiveRate * HINT_DURATION_MS / 1000
+244:         val tone = FloatArray(numSamples)
+245:         val angularFreq = 2.0 * PI * HINT_FREQUENCY_HZ / effectiveRate
+246:         for (i in 0 until numSamples) {
+247:             // Hann window envelope: smooth fade-in and fade-out
+248:             val envelope = 0.5f * (1.0f - kotlin.math.cos(2.0f * PI.toFloat() * i / numSamples))
+249:             tone[i] = (HINT_VOLUME * envelope * sin(angularFreq * i)).toFloat()
+250:         }
+251:         return tone
+252:     }
+253: 
+254:     /**
+255:      * Enqueue a PCM audio chunk for playback.
+256:      * Blocks if the queue is full — the JDK's LinkedBlockingQueue handles
+257:      * backpressure internally using lock/condition signaling, so the producer
+258:      * thread wakes instantly when a slot opens (no sleep-polling delay).
 259:      */
 260:     fun enqueue(pcm: FloatArray, chunkIndex: Int): Boolean {
 261:         if (!running.get()) return false
 262:         return try {
-263:             queue.offer(AudioChunk(pcm, chunkIndex), 5, TimeUnit.SECONDS)
-264:         } catch (e: InterruptedException) {
-265:             false
-266:         }
-267:     }
-268: 
-269:     /**
-270:      * Signal that the producer has finished submitting all chunks.
-271:      * The player will drain remaining queue items and then stop.
-272:      */
-273:     fun markProducerDone() {
-274:         producerDone.set(true)
-275:     }
-276: 
-277:     fun pause() {
-278:         paused.set(true)
-279:         audioTrack?.pause()
-280:     }
-281: 
-282:     fun resume() {
-283:         paused.set(false)
-284:         audioTrack?.play()
-285:     }
-286: 
-287:     fun stop() {
-288:         stoppedExplicitly.set(true)
-289:         running.set(false)
-290:         paused.set(false)
-291: 
-292:         // Immediately silence audio BEFORE waiting for thread join.
-293:         // pause() + flush() is instant — stops hardware playback and discards
-294:         // any buffered audio, so the user hears silence right away.
-295:         val track = audioTrack
-296:         audioTrack = null
-297:         if (track != null) {
-298:             try { track.pause() } catch (_: Exception) {}
-299:             try { track.flush() } catch (_: Exception) {}
-300:         }
-301:         val ht = hintTrack
-302:         hintTrack = null
-303:         if (ht != null) {
-304:             try { ht.stop() } catch (_: Exception) {}
-305:         }
-306: 
-307:         // Now clean up the player thread (may block briefly)
-308:         queue.clear()
-309:         playerThread?.interrupt()
-310:         playerThread?.join(500)
-311:         playerThread = null
-312: 
-313:         // Final resource release
-314:         if (track != null) {
-315:             try { track.stop() } catch (_: Exception) {}
-316:             try { track.release() } catch (_: Exception) {}
-317:         }
-318:         if (ht != null) {
-319:             try { ht.release() } catch (_: Exception) {}
-320:         }
-321:     }
-322: 
-323:     val isRunning: Boolean get() = running.get()
-324:     val isPaused: Boolean get() = paused.get()
-325:     val queueSize: Int get() = queue.size
-326: }
+263:             queue.put(AudioChunk(pcm, chunkIndex))
+264:             true
+265:         } catch (e: InterruptedException) {
+266:             false
+267:         }
+268:     }
+269: 
+270:     /**
+271:      * Signal that the producer has finished submitting all chunks.
+272:      * The player will drain remaining queue items and then stop.
+273:      */
+274:     fun markProducerDone() {
+275:         producerDone.set(true)
+276:     }
+277: 
+278:     fun pause() {
+279:         paused.set(true)
+280:         audioTrack?.pause()
+281:     }
+282: 
+283:     fun resume() {
+284:         paused.set(false)
+285:         audioTrack?.play()
+286:     }
+287: 
+288:     fun stop() {
+289:         stoppedExplicitly.set(true)
+290:         running.set(false)
+291:         paused.set(false)
+292: 
+293:         // Immediately silence audio BEFORE waiting for thread join.
+294:         // pause() + flush() is instant — stops hardware playback and discards
+295:         // any buffered audio, so the user hears silence right away.
+296:         val track = audioTrack
+297:         audioTrack = null
+298:         if (track != null) {
+299:             try { track.pause() } catch (_: Exception) {}
+300:             try { track.flush() } catch (_: Exception) {}
+301:         }
+302:         val ht = hintTrack
+303:         hintTrack = null
+304:         if (ht != null) {
+305:             try { ht.stop() } catch (_: Exception) {}
+306:         }
+307: 
+308:         // Now clean up the player thread (may block briefly)
+309:         queue.clear()
+310:         playerThread?.interrupt()
+311:         playerThread?.join(500)
+312:         playerThread = null
+313: 
+314:         // Final resource release
+315:         if (track != null) {
+316:             try { track.stop() } catch (_: Exception) {}
+317:             try { track.release() } catch (_: Exception) {}
+318:         }
+319:         if (ht != null) {
+320:             try { ht.release() } catch (_: Exception) {}
+321:         }
+322:     }
+323: }
 
-(End of file - total 326 lines)
+(End of file - total 323 lines)
 </content>
 ```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 46.0s)
+
+Now I'll rewrite `AudioPlayer.kt` to use the external `AudioBufferQueue`:
+
+**Tool: write**
+
+**Input:**
+```json
+{
+  "content": "package com.example.mytts.audio\n\nimport android.media.AudioAttributes\nimport android.media.AudioFormat\nimport android.media.AudioTrack\nimport android.os.Process\nimport android.util.Log\nimport com.example.mytts.BuildConfig\nimport java.util.concurrent.atomic.AtomicBoolean\nimport kotlin.math.PI\nimport kotlin.math.sin\n\n/**\n * Audio playback consumer that reads PCM chunks from an [AudioBufferQueue]\n * and plays them via AudioTrack. Runs on its own thread with elevated priority.\n *\n * The queue is owned externally (by PlaybackController) and shared with the\n * AudioProducer. Capacity is measured in audio duration, not chunk count.\n */\nclass AudioPlayer(\n    private val sampleRate: Int = 24000,\n    private val queue: AudioBufferQueue,\n    private val onChunkStarted: (chunkIndex: Int) -> Unit = {},\n    private val onPlaybackFinished: () -> Unit = {}\n) {\n    companion object {\n        private const val TAG = \"AudioPlayer\"\n        // Crossfade samples to avoid pops at chunk boundaries\n        private const val CROSSFADE_SAMPLES = 128\n        // Buffering hint tone parameters\n        private const val HINT_FREQUENCY_HZ = 1200.0\n        private const val HINT_DURATION_MS = 150\n        private const val HINT_VOLUME = 0.05f  // 5% volume\n        private const val HINT_INTERVAL_MS = 1000L  // repeat once per second\n    }\n\n    private val running = AtomicBoolean(false)\n    private val paused = AtomicBoolean(false)\n    private var audioTrack: AudioTrack? = null\n    private var hintTrack: AudioTrack? = null  // Separate static track for hint tones\n    private var playerThread: Thread? = null\n    private val stoppedExplicitly = AtomicBoolean(false)\n\n    /**\n     * Start the audio player thread.\n     */\n    fun start() {\n        if (running.get()) return\n\n        val bufSize = AudioTrack.getMinBufferSize(\n            sampleRate,\n            AudioFormat.CHANNEL_OUT_MONO,\n            AudioFormat.ENCODING_PCM_FLOAT\n        ).coerceAtLeast(sampleRate) // At least 1 second buffer\n\n        audioTrack = AudioTrack.Builder()\n            .setAudioAttributes(\n                AudioAttributes.Builder()\n                    .setUsage(AudioAttributes.USAGE_MEDIA)\n                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)\n                    .build()\n            )\n            .setAudioFormat(\n                AudioFormat.Builder()\n                    .setSampleRate(sampleRate)\n                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)\n                    .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)\n                    .build()\n            )\n            .setBufferSizeInBytes(bufSize * 4) // float = 4 bytes\n            .setTransferMode(AudioTrack.MODE_STREAM)\n            .build()\n\n        // Create a separate static AudioTrack for hint tones.\n        // MODE_STATIC plays immediately with minimal latency, avoiding the\n        // buffer-accumulation problem of writing tiny tones to the streaming track.\n        val audioAttrs = AudioAttributes.Builder()\n            .setUsage(AudioAttributes.USAGE_MEDIA)\n            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)\n            .build()\n        val audioFmt = AudioFormat.Builder()\n            .setSampleRate(sampleRate)\n            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)\n            .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)\n            .build()\n        val hintTone = generateHintTone(sampleRate)\n        hintTrack = AudioTrack.Builder()\n            .setAudioAttributes(audioAttrs)\n            .setAudioFormat(audioFmt)\n            .setBufferSizeInBytes(hintTone.size * 4)\n            .setTransferMode(AudioTrack.MODE_STATIC)\n            .build().also {\n                it.write(hintTone, 0, hintTone.size, AudioTrack.WRITE_BLOCKING)\n            }\n\n        running.set(true)\n        paused.set(false)\n        stoppedExplicitly.set(false)\n\n        playerThread = Thread({\n            Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)\n            playLoop()\n        }, \"AudioPlayer\").also { it.start() }\n    }\n\n    private fun playLoop() {\n        val track = audioTrack ?: return\n        var naturalEnd = false\n        var totalFramesWritten = 0L\n        var lastHintTimeMs = 0L\n\n        try {\n            track.play()\n            var previousTail: FloatArray? = null\n\n            while (running.get()) {\n                // Wait while paused (between chunks)\n                if (paused.get()) {\n                    try { Thread.sleep(50) } catch (_: InterruptedException) { break }\n                    continue\n                }\n\n                val entry = queue.take(200)\n\n                if (entry == null) {\n                    // Queue empty: if producer is done and queue is drained, finish\n                    if (queue.isClosed) {\n                        if (BuildConfig.DEBUG) Log.d(TAG, \"Queue drained and closed — finishing playback\")\n                        naturalEnd = true\n                        break\n                    }\n                    // Underrun: producer still working but queue starved\n                    if (System.currentTimeMillis() - lastHintTimeMs >= HINT_INTERVAL_MS) {\n                        if (BuildConfig.DEBUG) Log.d(TAG, \"Underrun detected — playing hint tone\")\n                        hintTrack?.let { ht ->\n                            try { ht.stop() } catch (_: Exception) {}\n                            ht.reloadStaticData()\n                            ht.play()\n                        }\n                        lastHintTimeMs = System.currentTimeMillis()\n                    }\n                    continue\n                }\n\n                // Real chunk arrived — reset hint cooldown\n                lastHintTimeMs = 0L\n                onChunkStarted(entry.chunkIndex)\n\n                var pcm = entry.pcm\n                if (pcm.isEmpty()) continue\n\n                // Apply crossfade with previous chunk's tail to avoid pops\n                if (previousTail != null && previousTail.isNotEmpty()) {\n                    val fadeLen = minOf(CROSSFADE_SAMPLES, pcm.size, previousTail.size)\n                    for (i in 0 until fadeLen) {\n                        val fadeIn = i.toFloat() / fadeLen\n                        pcm[i] = pcm[i] * fadeIn\n                    }\n                }\n\n                // Save tail for next crossfade\n                if (pcm.size >= CROSSFADE_SAMPLES) {\n                    previousTail = pcm.sliceArray(pcm.size - CROSSFADE_SAMPLES until pcm.size)\n                    val fadeLen = CROSSFADE_SAMPLES\n                    val fadeStart = pcm.size - fadeLen\n                    for (i in 0 until fadeLen) {\n                        val fadeOut = 1.0f - (i.toFloat() / fadeLen) * 0.3f\n                        pcm[fadeStart + i] = pcm[fadeStart + i] * fadeOut\n                    }\n                }\n\n                // Write PCM to AudioTrack — pause-aware: waits inside the loop\n                // so remaining data is written after resume (not lost)\n                var offset = 0\n                while (offset < pcm.size && running.get()) {\n                    if (paused.get()) {\n                        try { Thread.sleep(50) } catch (_: InterruptedException) { break }\n                        continue\n                    }\n                    val written = track.write(pcm, offset, pcm.size - offset, AudioTrack.WRITE_BLOCKING)\n                    if (written < 0) {\n                        Log.e(TAG, \"AudioTrack write error: $written\")\n                        break\n                    }\n                    offset += written\n                    totalFramesWritten += written\n                }\n            }\n\n            // Only stop/drain track if we weren't explicitly stopped\n            // (explicit stop() handles track cleanup itself)\n            if (!stoppedExplicitly.get()) {\n                try {\n                    track.stop()\n                } catch (_: Exception) {}\n\n                // Wait for AudioTrack to finish playing all buffered audio.\n                // After stop(), playbackHeadPosition continues advancing until\n                // all written frames have been rendered to hardware.\n                // Do NOT call flush() here — it discards unplayed audio!\n                if (naturalEnd && totalFramesWritten > 0) {\n                    val timeoutMs = 5000L\n                    val startTime = System.currentTimeMillis()\n                    while (System.currentTimeMillis() - startTime < timeoutMs) {\n                        val headPos = track.playbackHeadPosition.toLong() and 0xFFFFFFFFL\n                        if (headPos >= totalFramesWritten) {\n                            if (BuildConfig.DEBUG) Log.d(TAG, \"AudioTrack fully drained: head=$headPos, written=$totalFramesWritten\")\n                            break\n                        }\n                        try { Thread.sleep(50) } catch (_: InterruptedException) { break }\n                    }\n                    if (System.currentTimeMillis() - startTime >= timeoutMs) {\n                        Log.w(TAG, \"AudioTrack drain timeout after ${timeoutMs}ms\")\n                    }\n                }\n            }\n        } catch (e: Exception) {\n            Log.w(TAG, \"playLoop exiting due to exception\", e)\n        }\n\n        // Only fire onPlaybackFinished for natural end (not explicit stop)\n        if (naturalEnd && !stoppedExplicitly.get()) {\n            onPlaybackFinished()\n        }\n    }\n\n    /**\n     * Generate a short, quiet hint tone to signal buffering/underrun.\n     * 1200Hz sine wave, ~150ms, 5% volume, with Hann window fade-in/fade-out\n     * to avoid click artifacts.\n     */\n    private fun generateHintTone(effectiveRate: Int): FloatArray {\n        val numSamples = effectiveRate * HINT_DURATION_MS / 1000\n        val tone = FloatArray(numSamples)\n        val angularFreq = 2.0 * PI * HINT_FREQUENCY_HZ / effectiveRate\n        for (i in 0 until numSamples) {\n            // Hann window envelope: smooth fade-in and fade-out\n            val envelope = 0.5f * (1.0f - kotlin.math.cos(2.0f * PI.toFloat() * i / numSamples))\n            tone[i] = (HINT_VOLUME * envelope * sin(angularFreq * i)).toFloat()\n        }\n        return tone\n    }\n\n    fun pause() {\n        paused.set(true)\n        audioTrack?.pause()\n    }\n\n    fun resume() {\n        paused.set(false)\n        audioTrack?.play()\n    }\n\n    fun stop() {\n        stoppedExplicitly.set(true)\n        running.set(false)\n        paused.set(false)\n\n        // Immediately silence audio BEFORE waiting for thread join.\n        // pause() + flush() is instant — stops hardware playback and discards\n        // any buffered audio, so the user hears silence right away.\n        val track = audioTrack\n        audioTrack = null\n        if (track != null) {\n            try { track.pause() } catch (_: Exception) {}\n            try { track.flush() } catch (_: Exception) {}\n        }\n        val ht = hintTrack\n        hintTrack = null\n        if (ht != null) {\n            try { ht.stop() } catch (_: Exception) {}\n        }\n\n        // Now clean up the player thread (may block briefly)\n        playerThread?.interrupt()\n        playerThread?.join(500)\n        playerThread = null\n\n        // Final resource release\n        if (track != null) {\n            try { track.stop() } catch (_: Exception) {}\n            try { track.release() } catch (_: Exception) {}\n        }\n        if (ht != null) {\n            try { ht.release() } catch (_: Exception) {}\n        }\n    }\n}\n",
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt"
+}
+```
+
+**Output:**
+```
+Wrote file successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 12.2s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Build and verify",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Commit",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Build and verify",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Commit",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 8.9s)
+
+Now update `AudioProducer.kt` — replace `player: AudioPlayer` with `queue: AudioBufferQueue`:
 
 **Tool: read**
 
@@ -2406,705 +2531,794 @@ Let me read the files I need to edit:
 <type>file</type>
 <content>1: package com.example.mytts.audio
 2: 
-3: import android.os.Process
-4: import android.util.Log
-5: import com.example.mytts.BuildConfig
-6: import com.example.mytts.engine.KokoroEngine
-7: import java.util.concurrent.atomic.AtomicBoolean
-8: 
-9: /**
-10:  * Producer thread that converts text chunks to audio using the Kokoro engine.
-11:  * Runs inference on a background thread and feeds PCM to the AudioPlayer.
-12:  */
-13: class AudioProducer(
-14:     private val engine: KokoroEngine,
-15:     private val player: AudioPlayer,
-16:     private val onChunkReady: (chunkIndex: Int) -> Unit = {},
-17:     private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }
-18: ) {
-19:     companion object {
-20:         private const val TAG = "AudioProducer"
-21:         // Max chunks to queue ahead of playback
-22:         private const val MAX_QUEUE_AHEAD = 4
-23:         // Silence threshold: samples below this absolute value are considered silent
-24:         private const val SILENCE_THRESHOLD = 0.01f
-25:         // Target silence gap between chunks in milliseconds
-26:         private const val GAP_BETWEEN_CHUNKS_MS = 300
-27:     }
-28: 
-29:     private val running = AtomicBoolean(false)
-30:     private var producerThread: Thread? = null
-31: 
-32:     private var chunks: List<PreparedChunk> = emptyList()
-33:     private var voiceName: String = ""
-34:     private var speed: Float = 1.0f
-35:     private var startIndex: Int = 0
-36: 
-37:     /**
-38:      * Start producing audio from the given prepared chunks.
-39:      *
-40:      * @param chunks list of pre-processed chunks (already normalized at paste time)
-41:      * @param voice voice name to use
-42:      * @param speed speed multiplier (model-level, not playback rate)
-43:      * @param fromIndex start from this chunk index
-44:      */
-45:     fun start(
-46:         chunks: List<PreparedChunk>,
-47:         voice: String,
-48:         speed: Float = 1.0f,
-49:         fromIndex: Int = 0
-50:     ) {
-51:         stop()
-52:         this.chunks = chunks
-53:         this.voiceName = voice
-54:         this.speed = speed
-55:         this.startIndex = fromIndex
-56: 
-57:         running.set(true)
-58:         producerThread = Thread({
-59:             // Run at default priority so Android doesn't throttle when screen is off
-60:             Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)
-61:             produceLoop()
-62:         }, "AudioProducer").also { it.start() }
-63:     }
-64: 
-65:     private fun produceLoop() {
-66:         // Dump all chunks for debugging — verify no stale chunks from previous text
-67:         if (BuildConfig.DEBUG) {
-68:             Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
-69:             for (i in chunks.indices) {
-70:                 val c = chunks[i]
-71:                 Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
-72:             }
-73:         }
-74: 
-75:         try {
-76:             for (i in startIndex until chunks.size) {
-77:                 if (!running.get()) break
-78: 
-79:                 val chunk = chunks[i]
-80:                 val text = chunk.normalizedText.trim()
-81:                 if (text.isEmpty()) continue
-82: 
-83:                 // Wait if player queue is full (backpressure)
-84:                 while (running.get() && player.queueSize >= MAX_QUEUE_AHEAD) {
-85:                     try { Thread.sleep(100) } catch (_: InterruptedException) { return }
-86:                 }
-87:                 if (!running.get()) break
-88: 
-89:                 try {
-90:                     if (BuildConfig.DEBUG) Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
-91:                     val startTime = System.currentTimeMillis()
-92: 
-93:                     val pcm = engine.speakNormalized(text, voiceName, speed)
-94: 
-95:                     val elapsed = System.currentTimeMillis() - startTime
-96:                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
-97:                     if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsed}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsed.toFloat() / audioDuration))
-98: 
-99:                     if (pcm.isNotEmpty() && running.get()) {
-100:                         // Trim trailing silence and add a controlled gap
-101:                         val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE)
-102:                         player.enqueue(trimmed, i)
-103:                         onChunkReady(i)
-104:                     }
-105:                 } catch (e: Exception) {
-106:                     if (running.get()) {
-107:                         Log.e(TAG, "Failed to synthesize chunk $i", e)
-108:                         onError(i, e)
-109:                     }
-110:                 }
-111:             }
-112:         } catch (_: InterruptedException) {
-113:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer interrupted")
-114:             return
-115:         }
-116: 
-117:         // Signal end: let player drain its queue naturally then stop
-118:         if (running.get()) {
-119:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer finished all chunks")
-120:             player.markProducerDone()
-121:         }
-122:     }
-123: 
-124:     fun stop() {
-125:         running.set(false)
-126:         producerThread?.interrupt()
-127:         // Short timeout: ONNX inference can't be interrupted mid-call, but
-128:         // the next start() calls stop() anyway so orphaned threads self-exit.
-129:         producerThread?.join(500)
-130:         producerThread = null
-131:     }
-132: 
-133:     val isRunning: Boolean get() = running.get()
-134: 
-135:     /**
-136:      * Trim trailing silence from PCM audio and append a controlled silence gap.
-137:      * This ensures consistent ~300ms gaps between chunks instead of variable
-138:      * silence durations from the model output.
-139:      *
-140:      * @param pcm raw PCM float samples
-141:      * @param sampleRate audio sample rate (e.g. 24000)
-142:      * @return trimmed PCM with controlled trailing silence
-143:      */
-144:     private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int): FloatArray {
-145:         if (pcm.isEmpty()) return pcm
-146: 
-147:         // Find last non-silent sample (scanning backwards)
-148:         var lastNonSilent = pcm.size - 1
-149:         while (lastNonSilent >= 0 && kotlin.math.abs(pcm[lastNonSilent]) < SILENCE_THRESHOLD) {
-150:             lastNonSilent--
-151:         }
-152: 
-153:         // Keep audio up to last non-silent sample (with small margin to avoid cutting off decay)
-154:         val margin = minOf(64, pcm.size - lastNonSilent - 1)
-155:         val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)
-156: 
-157:         // Calculate desired gap in samples
-158:         val gapSamples = sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000
-159: 
-160:         // Create new array: trimmed audio + silence gap
-161:         val result = FloatArray(trimEnd + gapSamples)
-162:         System.arraycopy(pcm, 0, result, 0, trimEnd)
-163:         // Remaining samples are already 0.0f (silence gap)
-164: 
-165:         return result
-166:     }
-167: }
-
-(End of file - total 167 lines)
-</content>
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.7s)
-
-Now let me read the remaining files I need:
-
-**Tool: read**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/theme/Color.kt"
-}
-```
-
-**Output:**
-```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/theme/Color.kt</path>
-<type>file</type>
-<content>1: package com.example.mytts.ui.theme
-2: 
-3: import androidx.compose.ui.graphics.Color
-4: 
-5: // Light theme colors
-6: val Primary = Color(0xFF1976D2)
-7: val OnPrimary = Color.White
-8: val PrimaryContainer = Color(0xFFBBDEFB)
-9: val OnPrimaryContainer = Color(0xFF002171)
-10: 
-11: val Secondary = Color(0xFF455A64)
-12: val OnSecondary = Color.White
-13: val SecondaryContainer = Color(0xFFCFD8DC)
-14: val OnSecondaryContainer = Color(0xFF1C313A)
-15: 
-16: val Surface = Color(0xFFFAFAFA)
-17: val OnSurface = Color(0xFF212121)
-18: val SurfaceVariant = Color(0xFFE0E0E0)
-19: val OnSurfaceVariant = Color(0xFF616161)
-20: 
-21: val Background = Color.White
-22: val OnBackground = Color(0xFF212121)
-23: 
-24: val Error = Color(0xFFD32F2F)
-25: val OnError = Color.White
-26: 
-27: // Highlight color for currently playing text chunk
-28: val HighlightYellow = Color(0xFFFFF9C4)
-29: val HighlightBorder = Color(0xFFFBC02D)
-
-(End of file - total 29 lines)
-</content>
-```
-
-**Tool: read**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/README.md"
-}
-```
-
-**Output:**
-```
-<path>/Users/cyb/works/mytts/README.md</path>
-<type>file</type>
-<content>1: # MyTTS
-2: 
-3: An Android app that converts text to speech on-device using the [Kokoro-82M](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX) TTS model (int8 ONNX). No cloud services, no Android TTS API -- just paste text and hit play.
-4: 
-5: Tested on Snapdragon devices with ONNX Runtime 1.20.0 CPU inference. English only. 26 built-in voices.
-6: 
-7: ## [Releases](https://github.com/cyb70289/mytts/releases/)
-8: 
-9: ## Build
-10: 
-11: - See [BUILD.md](BUILD.md) for setup and build instructions.
-12: - See [opencode-session.md](opencode-session.md) for full opencode session logs.
-13: 
-14: ## Credits
-15: 
-16: - [Kokoro-82M v1.0 ONNX](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX) -- the TTS model
-17: - [eSpeak-ng](https://github.com/espeak-ng/espeak-ng) -- text-to-phoneme engine (via [csukuangfj fork](https://github.com/csukuangfj/espeak-ng))
-18: - [misaki](https://github.com/hexgrad/misaki) -- eSpeak-to-Kokoro phoneme mapping reference
-19: - [Kokoro-82M-Android](https://github.com/puff-dayo/Kokoro-82M-Android) -- reference project for running Kokoro on Android
-20: - **Claude Opus 4.6 + OpenCode** -- all the coding and documentation
-21: 
-22: # Demo
-23: https://github.com/user-attachments/assets/eb6358aa-a0ad-4660-8d62-83a4bd1e9eb0
-
-(End of file - total 23 lines)
-</content>
-```
-
-**Tool: read**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/build.gradle.kts"
-}
-```
-
-**Output:**
-```
-<path>/Users/cyb/works/mytts/app/build.gradle.kts</path>
-<type>file</type>
-<content>1: plugins {
-2:     id("com.android.application")
-3:     id("org.jetbrains.kotlin.android")
-4:     id("org.jetbrains.kotlin.plugin.compose")
-5: }
-6: 
-7: android {
-8:     namespace = "com.example.mytts"
-9:     compileSdk = 35
-10: 
-11:     defaultConfig {
-12:         applicationId = "com.example.mytts"
-13:         minSdk = 26
-14:         targetSdk = 34
-15:         versionCode = 1
-16:         versionName = "0.1"
-17:         ndk {
-18:             abiFilters += "arm64-v8a"
-19:         }
-20:         externalNativeBuild {
-21:             cmake {
-22:                 arguments += "-DANDROID_STL=c++_shared"
-23:             }
-24:         }
-25:     }
-26: 
-27:     externalNativeBuild {
-28:         cmake {
-29:             path = file("src/main/cpp/CMakeLists.txt")
-30:             version = "3.22.1"
-31:         }
-32:     }
-33: 
-34:     signingConfigs {
-35:         create("release") {
-36:             storeFile = file("${rootProject.projectDir}/release.keystore")
-37:             storePassword = "mytts123"
-38:             keyAlias = "mytts"
-39:             keyPassword = "mytts123"
-40:         }
-41:     }
-42: 
-43:     buildTypes {
-44:         release {
-45:             isMinifyEnabled = true
-46:             isShrinkResources = true
-47:             proguardFiles(
-48:                 getDefaultProguardFile("proguard-android-optimize.txt"),
-49:                 "proguard-rules.pro"
-50:             )
-51:             signingConfig = signingConfigs.getByName("release")
-52:         }
-53:     }
-54: 
-55:     compileOptions {
-56:         sourceCompatibility = JavaVersion.VERSION_17
-57:         targetCompatibility = JavaVersion.VERSION_17
-58:     }
-59: 
-60:     kotlinOptions {
-61:         jvmTarget = "17"
-62:     }
-63: 
-64:     buildFeatures {
-65:         compose = true
-66:         buildConfig = true
-67:     }
-68: 
-69:     packaging {
-70:         resources {
-71:             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-72:         }
-73:     }
-74: 
-75:     // Don't compress onnx model files
-76:     androidResources {
-77:         noCompress += "onnx"
-78:     }
-79: }
-80: 
-81: dependencies {
-82:     // ONNX Runtime - pinned to 1.20.0 (newer uses ARM SME unsupported on target device)
-83:     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
-84: 
-85:     // Compose
-86:     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
-87:     implementation("androidx.compose.ui:ui")
-88:     implementation("androidx.compose.ui:ui-graphics")
-89:     implementation("androidx.compose.ui:ui-tooling-preview")
-90:     implementation("androidx.compose.material3:material3")
-91:     implementation("androidx.activity:activity-compose:1.9.3")
-92:     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-93:     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-94: 
-95:     // Core
-96:     implementation("androidx.core:core-ktx:1.15.0")
-97:     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-98:     implementation("androidx.media:media:1.7.0")
-99: 
-100:     // Coroutines
-101:     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-102: 
-103:     debugImplementation("androidx.compose.ui:ui-tooling")
-104: }
-
-(End of file - total 104 lines)
-</content>
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 83.1s)
-
-_Thinking:_
-
-Now I have a clear picture. Let me plan both commits:
-
-**Commit 1: Simplify normalizeText()**
-- Keep: line trimming, full-width CJK punctuation, time expressions, currency (all), number ranges, stray symbol cleanup
-- Remove: smart quotes (eSpeak handles), abbreviations (eSpeak handles), percentages (eSpeak handles), hashtag numbers (eSpeak handles), & and @ symbols (eSpeak handles), ordinals (eSpeak handles), year-like numbers (eSpeak handles), strip digit-grouping commas (eSpeak handles), general number-to-words (eSpeak handles), collapse spaces (eSpeak handles)
-
-
-- I need to remove the helper functions that become unused: `numberToWords`, `digitToWord`, `yearToWords`, `ordinalToWords`, `integerToWords`, and their lookup tables. But wait—currency rules still depend on `integerToWords()` for converting cents, so I can't remove that function entirely. The magnitude case like "$50B" doesn't need word conversion since eSpeak handles the number directly.
-
-Actually, I could simplify this by letting eSpeak handle all the number-to-speech conversion. Instead of converting "$3.50" to "three dollars and fifty cents", I'd just rewrite it as "3 dollars and 50 cents" and let eSpeak do the heavy lifting. Same approach for magnitude: "$50B" becomes "50 billion dollars". But this breaks down for time formats like "3:45pm"—that pattern won't sound right when eSpeak reads it. So for the `:05` case, I'd output "3 oh 5" and eSpeak handles that naturally. My approach is to simplify the preprocessing by keeping time and currency expressions but letting eSpeak convert the numbers directly, removing the custom number-to-words logic entirely along with smart quotes, abbreviations, percentages, ordinals, years, and digit-grouping commas. need special handling for time expressions since the colon character acts as a clause separator in eSpeak. I'm writing a normalization function that handles full-width CJK punctuation conversion and then processes time patterns to format them correctly for speech synthesis. Still writing the time and currency formatter... Writing currency parsing logic...
-
-Now I'm handling the cleanup—removing any stray currency symbols that didn't get caught, then converting number ranges like "5-10" into "5 to 10" so eSpeak reads them correctly instead of as minus signs. I'm wondering if I should collapse extra whitespace, but since eSpeak ignores it anyway, it's probably not necessary.
-
-Let me verify where the normalized text gets used—it's stored in PreparedChunk but not shown to the user, so I don't need to worry about formatting. I should also clarify what's going into commit 1 versus commit 2, since the dead code cleanup is separate. For the first commit, I'm planning to strip out the number-to-words conversion arrays and functions, keeping just the core text normalization logic. Words() helper functions
-   - Simplify normalizeText() to keep only: line trimming, full-width CJK punctuation, time expressions (using numbers not words), currency with cents (using numbers not words), currency with magnitude, stray symbol cleanup, number ranges
-   - Remove: smart quotes, abbreviations, percentages, hashtag, & and @, ordinals, years, digit-grouping commas, general number-to-words, space collapsing
-
-2. Update comments as needed
-
-For commit 2, I need to clean up dead code and remove misaki references: removing unused methods from KokoroEngine, PhonemeConverter, and AudioPlayer, plus the `isRunning` property from AudioProducer and the HighlightBorder constant from Color. I'll also need to strip out misaki mentions from the documentation and remove those stale dependencies from the build configuration.
-
-Good, I have all the context I need. Let me start with commit 1: simplifying `normalizeText()`.
-
-The plan:
-- **Keep**: line trimming, full-width CJK punctuation, time expressions, currency (all), number ranges, stray symbol cleanup
-- **Remove**: smart quotes, abbreviations, %, #, & @, ordinals, years, digit-grouping commas, number-to-words, space collapsing — all handled natively by eSpeak-ng
-- **Remove**: all number helper functions (`numberToWords`, `integerToWords`, `ordinalToWords`, `yearToWords`, `digitToWord`) and lookup tables (`ONES`, `TENS`, `ORDINAL_ONES`, `ORDINAL_TENS`)
-- Currency/time rules simplified to output numbers (e.g. `$3.50` → `"3 dollars and 50 cents"`) and let eSpeak convert them to words
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt",
-  "oldString": "    companion object {\n        private const val TAG = \"PhonemeConverter\"\n\n        // Characters that exist in the Kokoro VOCAB\n        val VALID_CHARS: Set<Char> = run {\n            val pad = '$'\n            val punctuation = \";:,.!?\\u00A1\\u00BF\\u2014\\u2026\\\"\\u00AB\\u00BB\\u201C\\u201D \"\n            val letters = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\"\n            val lettersIpa =\n                \"\\u0251\\u0250\\u0252\\u00E6\\u0253\\u0299\\u03B2\\u0254\\u0255\\u00E7\\u0257\\u0256\\u00F0\\u02A4\\u0259\\u0258\\u025A\\u025B\\u025C\\u025D\\u025E\\u025F\\u0284\\u0261\\u0260\\u0262\\u029B\\u0266\\u0267\\u0127\\u0265\\u029C\\u0268\\u026A\\u029D\\u026D\\u026C\\u026B\\u026E\\u029F\\u0271\\u026F\\u0270\\u014B\\u0273\\u0272\\u0274\\u00F8\\u0275\\u0278\\u03B8\\u0153\\u0276\\u0298\\u0279\\u027A\\u027E\\u027B\\u0280\\u0281\\u027D\\u0282\\u0283\\u0288\\u02A7\\u0289\\u028A\\u028B\\u2C71\\u028C\\u0263\\u0264\\u028D\\u03C7\\u028E\\u028F\\u0291\\u0290\\u0292\\u0294\\u02A1\\u0295\\u02A2\\u01C0\\u01C1\\u01C2\\u01C3\\u02C8\\u02CC\\u02D0\\u02D1\\u02BC\\u02B4\\u02B0\\u02B1\\u02B2\\u02B7\\u02E0\\u02E4\\u02DE\\u2193\\u2191\\u2192\\u2197\\u2198\\u2019\\u0329\\u2018\\u1D7B\"\n            (listOf(pad) + punctuation.toList() + letters.toList() + lettersIpa.toList()).toSet()\n        }\n\n        // Number words for text-to-speech\n        private val ONES = arrayOf(\n            \"\", \"one\", \"two\", \"three\", \"four\", \"five\", \"six\", \"seven\", \"eight\", \"nine\",\n            \"ten\", \"eleven\", \"twelve\", \"thirteen\", \"fourteen\", \"fifteen\", \"sixteen\",\n            \"seventeen\", \"eighteen\", \"nineteen\"\n        )\n        private val TENS = arrayOf(\n            \"\", \"\", \"twenty\", \"thirty\", \"forty\", \"fifty\", \"sixty\", \"seventy\", \"eighty\", \"ninety\"\n        )\n        private val ORDINAL_ONES = arrayOf(\n            \"\", \"first\", \"second\", \"third\", \"fourth\", \"fifth\", \"sixth\", \"seventh\",\n            \"eighth\", \"ninth\", \"tenth\", \"eleventh\", \"twelfth\", \"thirteenth\",\n            \"fourteenth\", \"fifteenth\", \"sixteenth\", \"seventeenth\", \"eighteenth\", \"nineteenth\"\n        )\n        private val ORDINAL_TENS = arrayOf(\n            \"\", \"\", \"twentieth\", \"thirtieth\", \"fortieth\", \"fiftieth\",\n            \"sixtieth\", \"seventieth\", \"eightieth\", \"ninetieth\"\n        )\n\n        // IPA normalizations for eSpeak-ng output.\n        // These only normalize eSpeak-specific symbols to standard IPA that\n        // the Kokoro model was trained on. NO diphthong/affricate compression\n        // (the model expects raw IPA like eɪ, aɪ, oʊ — not E2M compact tokens\n        // like A, I, O which are uppercase letters with different meaning).\n    }",
-  "newString": "    companion object {\n        private const val TAG = \"PhonemeConverter\"\n\n        // Characters that exist in the Kokoro VOCAB\n        val VALID_CHARS: Set<Char> = run {\n            val pad = '$'\n            val punctuation = \";:,.!?\\u00A1\\u00BF\\u2014\\u2026\\\"\\u00AB\\u00BB\\u201C\\u201D \"\n            val letters = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\"\n            val lettersIpa =\n                \"\\u0251\\u0250\\u0252\\u00E6\\u0253\\u0299\\u03B2\\u0254\\u0255\\u00E7\\u0257\\u0256\\u00F0\\u02A4\\u0259\\u0258\\u025A\\u025B\\u025C\\u025D\\u025E\\u025F\\u0284\\u0261\\u0260\\u0262\\u029B\\u0266\\u0267\\u0127\\u0265\\u029C\\u0268\\u026A\\u029D\\u026D\\u026C\\u026B\\u026E\\u029F\\u0271\\u026F\\u0270\\u014B\\u0273\\u0272\\u0274\\u00F8\\u0275\\u0278\\u03B8\\u0153\\u0276\\u0298\\u0279\\u027A\\u027E\\u027B\\u0280\\u0281\\u027D\\u0282\\u0283\\u0288\\u02A7\\u0289\\u028A\\u028B\\u2C71\\u028C\\u0263\\u0264\\u028D\\u03C7\\u028E\\u028F\\u0291\\u0290\\u0292\\u0294\\u02A1\\u0295\\u02A2\\u01C0\\u01C1\\u01C2\\u01C3\\u02C8\\u02CC\\u02D0\\u02D1\\u02BC\\u02B4\\u02B0\\u02B1\\u02B2\\u02B7\\u02E0\\u02E4\\u02DE\\u2193\\u2191\\u2192\\u2197\\u2198\\u2019\\u0329\\u2018\\u1D7B\"\n            (listOf(pad) + punctuation.toList() + letters.toList() + lettersIpa.toList()).toSet()\n        }\n    }"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 62.6s)
-
-Now replace the `normalizeText()` function and remove all the number helper functions:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt",
-  "newString": "    /**\n     * Normalize text before phonemization.\n     *\n     * Only handles cases that eSpeak-ng cannot process correctly:\n     * - Full-width CJK punctuation (eSpeak's English voice ignores these)\n     * - Time expressions (colon is a clause separator in eSpeak)\n     * - Currency symbols (eSpeak reads \"$500\" as \"dollar five hundred\")\n     * - Currency magnitude suffixes like $50B (eSpeak doesn't know K/M/B/T)\n     * - Number ranges with hyphens (eSpeak may read \"5-10\" as \"five minus ten\")\n     *\n     * Everything else (numbers, ordinals, abbreviations, %, #, &, @, etc.)\n     * is handled natively by eSpeak-ng's English text normalization.\n     */\n    fun normalizeText(text: String): String {\n        var t = text\n            .lines().joinToString(\"\\n\") { it.trim() }\n            // Full-width CJK punctuation → ASCII equivalents\n            .replace(\"\\u3001\", \", \")\n            .replace(\"\\u3002\", \". \")\n            .replace(\"\\uFF01\", \"! \")\n            .replace(\"\\uFF0C\", \", \")\n            .replace(\"\\uFF1A\", \": \")\n            .replace(\"\\uFF1B\", \"; \")\n            .replace(\"\\uFF1F\", \"? \")\n\n        // --- Time expressions (colon is clause separator in eSpeak) ---\n        // 3:30pm → 3 30 p m, 12:00 → 12 o'clock, 3:05 → 3 oh 5\n        t = Regex(\"(\\\\d{1,2}):(\\\\d{2})\\\\s*([AaPp][Mm])?\").replace(t) { match ->\n            val hour = match.groupValues[1].toIntOrNull() ?: return@replace match.value\n            val min = match.groupValues[2].toIntOrNull() ?: return@replace match.value\n            val ampm = match.groupValues[3]\n            if (hour > 24 || min > 59) return@replace match.value\n            val minPart = when {\n                min == 0 -> \"o'clock\"\n                min < 10 -> \"oh $min\"\n                else -> \"$min\"\n            }\n            val suffix = when (ampm.lowercase()) {\n                \"am\" -> \" a m\"\n                \"pm\" -> \" p m\"\n                else -> \"\"\n            }\n            \"$hour $minPart$suffix\"\n        }\n\n        // --- Currency (eSpeak reads symbols in wrong order) ---\n\n        // Currency with cents: $3.50 → 3 dollars and 50 cents\n        t = Regex(\"([\\\\$\\u20AC\\u00A3])\\\\s*(\\\\d+)\\\\.(\\\\d{2})\\\\b\").replace(t) { match ->\n            val dollars = match.groupValues[2].toLongOrNull() ?: return@replace match.value\n            val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value\n            val currency = when (match.groupValues[1]) {\n                \"\\$\" -> \"dollar\" to \"cent\"\n                \"\\u20AC\" -> \"euro\" to \"cent\"\n                \"\\u00A3\" -> \"pound\" to \"penny\"\n                else -> \"dollar\" to \"cent\"\n            }\n            val dollarUnit = if (dollars == 1L) currency.first else \"${currency.first}s\"\n            if (cents == 0) {\n                \"$dollars $dollarUnit\"\n            } else {\n                val centUnit = if (cents == 1) {\n                    currency.second\n                } else if (currency.second == \"penny\") {\n                    \"pence\"\n                } else {\n                    \"${currency.second}s\"\n                }\n                \"$dollars $dollarUnit and $cents $centUnit\"\n            }\n        }\n\n        // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000\n        t = Regex(\"([\\\\$\\u20AC\\u00A3\\u00A5])\\\\s*(\\\\d+(?:\\\\.\\\\d+)?)\\\\s*([BMKTbmkt])?\\\\b\")\n            .replace(t) { match ->\n                val number = match.groupValues[2]\n                val mag = match.groupValues[3].uppercase()\n                val currency = when (match.groupValues[1]) {\n                    \"\\$\" -> \"dollars\"; \"\\u20AC\" -> \"euros\"\n                    \"\\u00A3\" -> \"pounds\"; \"\\u00A5\" -> \"yen\"\n                    else -> \"dollars\"\n                }\n                val magnitude = when (mag) {\n                    \"T\" -> \" trillion\"; \"B\" -> \" billion\"\n                    \"M\" -> \" million\"; \"K\" -> \" thousand\"\n                    else -> \"\"\n                }\n                \"$number$magnitude $currency\"\n            }\n\n        // Clean up stray currency symbols not matched by patterns above\n        t = t.replace(Regex(\"[\\\\$\\u20AC\\u00A3\\u00A5]\"), \" \")\n\n        // Number ranges: 5-10 → 5 to 10 (eSpeak may read hyphen as \"minus\")\n        t = t.replace(Regex(\"(?<=\\\\d)-(?=\\\\d)\"), \" to \")\n\n        return t.trim()\n    }\n}",
-  "oldString": "    fun normalizeText(text: String): String {\n        var t = text\n            .lines().joinToString(\"\\n\") { it.trim() }\n            .replace(Regex(\"[\\u2018\\u2019]\"), \"'\")\n            .replace(Regex(\"[\\u201C\\u201D\\u00AB\\u00BB]\"), \"\\\"\")\n            // Full-width punctuation\n            .replace(\"\\u3001\", \", \")\n            .replace(\"\\u3002\", \". \")\n            .replace(\"\\uFF01\", \"! \")\n            .replace(\"\\uFF0C\", \", \")\n            .replace(\"\\uFF1A\", \": \")\n            .replace(\"\\uFF1B\", \"; \")\n            .replace(\"\\uFF1F\", \"? \")\n\n        // Common abbreviations (eSpeak handles Dr./Mr. itself, but we expand\n        // for consistency with what the user sees in the text display)\n        t = t.replace(Regex(\"\\\\bD[Rr]\\\\.(?= [A-Z])\"), \"Doctor\")\n            .replace(Regex(\"\\\\b(?:Mr\\\\.|MR\\\\.(?= [A-Z]))\"), \"Mister\")\n            .replace(Regex(\"\\\\b(?:Ms\\\\.|MS\\\\.(?= [A-Z]))\"), \"Miss\")\n            .replace(Regex(\"\\\\b(?:Mrs\\\\.|MRS\\\\.(?= [A-Z]))\"), \"Missus\")\n            .replace(Regex(\"\\\\betc\\\\.(?! [A-Z])\"), \"etcetera\")\n\n        // --- Time expressions (BEFORE number-to-words) ---\n        // 3:30pm → three thirty p m, 12:00 → twelve o'clock\n        t = Regex(\"(\\\\d{1,2}):(\\\\d{2})\\\\s*([AaPp][Mm])?\").replace(t) { match ->\n            val hour = match.groupValues[1].toIntOrNull() ?: return@replace match.value\n            val min = match.groupValues[2].toIntOrNull() ?: return@replace match.value\n            val ampm = match.groupValues[3]\n            if (hour > 24 || min > 59) return@replace match.value\n            val hourWord = integerToWords(hour.toLong())\n            val minWord = when {\n                min == 0 -> \"o'clock\"\n                min < 10 -> \"oh ${integerToWords(min.toLong())}\"\n                else -> integerToWords(min.toLong())\n            }\n            val suffix = when (ampm.lowercase()) {\n                \"am\" -> \" a m\"\n                \"pm\" -> \" p m\"\n                else -> \"\"\n            }\n            \"$hourWord $minWord$suffix\"\n        }\n\n        // --- Currency, units, symbols (BEFORE number-to-words) ---\n\n        // Currency with cents: $3.50 → three dollars and fifty cents\n        t = Regex(\"([\\\\$\\u20AC\\u00A3])\\\\s*(\\\\d+)\\\\.(\\\\d{2})\\\\b\").replace(t) { match ->\n            val dollars = match.groupValues[2].toLongOrNull() ?: return@replace match.value\n            val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value\n            val currency = when (match.groupValues[1]) {\n                \"\\$\" -> \"dollar\" to \"cent\"\n                \"\\u20AC\" -> \"euro\" to \"cent\"\n                \"\\u00A3\" -> \"pound\" to \"penny\"\n                else -> \"dollar\" to \"cent\"\n            }\n            val dollarWord = integerToWords(dollars)\n            val dollarUnit = if (dollars == 1L) currency.first else \"${currency.first}s\"\n            if (cents == 0) {\n                \"$dollarWord $dollarUnit\"\n            } else {\n                val centWord = integerToWords(cents.toLong())\n                val centUnit = if (cents == 1) {\n                    currency.second\n                } else if (currency.second == \"penny\") {\n                    \"pence\"\n                } else {\n                    \"${currency.second}s\"\n                }\n                \"$dollarWord $dollarUnit and $centWord $centUnit\"\n            }\n        }\n\n        // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000\n        t = Regex(\"([\\\\$\\u20AC\\u00A3\\u00A5])\\\\s*(\\\\d+(?:\\\\.\\\\d+)?)\\\\s*([BMKTbmkt])?\\\\b\")\n            .replace(t) { match ->\n                val number = match.groupValues[2]\n                val mag = match.groupValues[3].uppercase()\n                val currency = when (match.groupValues[1]) {\n                    \"\\$\" -> \"dollars\"; \"\\u20AC\" -> \"euros\"\n                    \"\\u00A3\" -> \"pounds\"; \"\\u00A5\" -> \"yen\"\n                    else -> \"dollars\"\n                }\n                val magnitude = when (mag) {\n                    \"T\" -> \" trillion\"; \"B\" -> \" billion\"\n                    \"M\" -> \" million\"; \"K\" -> \" thousand\"\n                    else -> \"\"\n                }\n                \"$number$magnitude $currency\"\n            }\n\n        // Percentage: 50% → 50 percent\n        t = t.replace(Regex(\"(\\\\d+(?:\\\\.\\\\d+)?)\\\\s*%\"), \"$1 percent\")\n\n        // Hashtag number: #1 → number 1\n        t = t.replace(Regex(\"#\\\\s*(\\\\d+)\"), \"number $1\")\n\n        // Common symbols\n        t = t.replace(\"&\", \" and \")\n        t = t.replace(\"@\", \" at \")\n\n        // Clean up any stray currency/symbol characters that weren't part of a pattern\n        t = t.replace(Regex(\"[\\\\$\\u20AC\\u00A3\\u00A5#]\"), \" \")\n\n        // --- End currency/units/symbols ---\n\n        // --- Ordinals: 1st, 2nd, 3rd, 21st, etc. (BEFORE general number conversion) ---\n        t = Regex(\"(\\\\d+)(?:st|nd|rd|th)\\\\b\").replace(t) { match ->\n            val n = match.groupValues[1].toLongOrNull() ?: return@replace match.value\n            ordinalToWords(n)\n        }\n\n        // --- Year-like numbers: 4-digit numbers 1000-2099 in likely year contexts ---\n        // Standalone years or years preceded by \"in\", \"of\", \"from\", \"since\", \"by\", etc.\n        t = Regex(\"(?<=\\\\b(?:in|of|from|since|by|year|circa|around|before|after|during)\\\\s)(\\\\d{4})\\\\b\")\n            .replace(t) { match ->\n                val n = match.groupValues[1].toLongOrNull() ?: return@replace match.value\n                yearToWords(n)\n            }\n\n        // Number formatting\n        t = t.replace(Regex(\"(?<=\\\\d),(?=\\\\d)\"), \"\")\n        t = t.replace(Regex(\"(?<=\\\\d)-(?=\\\\d)\"), \" to \")\n\n        // Convert remaining numbers to words\n        t = t.replace(Regex(\"\\\\d+(\\\\.\\\\d+)?\")) { match ->\n            numberToWords(match.value)\n        }\n\n        // Collapse multiple spaces\n        t = t.replace(Regex(\"\\\\s{2,}\"), \" \")\n\n        return t.trim()\n    }\n\n    /**\n     * Convert a number string to English words.\n     * Handles integers up to 999 trillion and simple decimals.\n     */\n    private fun numberToWords(numStr: String): String {\n        // Handle decimals\n        if ('.' in numStr) {\n            val parts = numStr.split(\".\", limit = 2)\n            val intPart = integerToWords(parts[0].toLongOrNull() ?: 0)\n            val decPart = parts[1]\n            val decWords = decPart.map { digitToWord(it) }.joinToString(\" \")\n            return \"$intPart point $decWords\"\n        }\n        val n = numStr.toLongOrNull() ?: return numStr\n        return integerToWords(n)\n    }\n\n    private fun digitToWord(ch: Char): String = when (ch) {\n        '0' -> \"zero\"; '1' -> \"one\"; '2' -> \"two\"; '3' -> \"three\"; '4' -> \"four\"\n        '5' -> \"five\"; '6' -> \"six\"; '7' -> \"seven\"; '8' -> \"eight\"; '9' -> \"nine\"\n        else -> ch.toString()\n    }\n\n    /**\n     * Convert a year number to natural speech.\n     * 2024 → \"twenty twenty four\", 1999 → \"nineteen ninety nine\",\n     * 2000 → \"two thousand\", 2001 → \"two thousand one\".\n     */\n    private fun yearToWords(n: Long): String {\n        if (n < 1000 || n > 2099) return integerToWords(n)\n\n        // 2000-2009: \"two thousand [N]\"\n        if (n in 2000..2009) {\n            return if (n == 2000L) \"two thousand\"\n            else \"two thousand ${ONES[n.toInt() - 2000]}\"\n        }\n\n        // Split into century + remainder: 2024 → \"twenty\" + \"twenty four\"\n        val century = (n / 100).toInt()\n        val remainder = (n % 100).toInt()\n        val centuryWord = integerToWords(century.toLong())\n        return if (remainder == 0) {\n            \"${centuryWord} hundred\"\n        } else if (remainder < 10) {\n            \"$centuryWord oh ${ONES[remainder]}\"\n        } else {\n            \"$centuryWord ${integerToWords(remainder.toLong())}\"\n        }\n    }\n\n    /**\n     * Convert a number to its ordinal form.\n     * 1 → \"first\", 21 → \"twenty first\", 100 → \"one hundredth\".\n     */\n    private fun ordinalToWords(n: Long): String {\n        if (n <= 0) return integerToWords(n)\n\n        // Simple cases: 1-19\n        if (n < 20) return ORDINAL_ONES[n.toInt()]\n\n        // 20, 30, ..., 90\n        if (n < 100 && n % 10 == 0L) return ORDINAL_TENS[(n / 10).toInt()]\n\n        // 21-99: \"twenty first\", \"thirty second\", etc.\n        if (n < 100) {\n            val tens = TENS[(n / 10).toInt()]\n            val ones = ORDINAL_ONES[(n % 10).toInt()]\n            return \"$tens $ones\"\n        }\n\n        // For larger numbers, use cardinal for the leading part + ordinal suffix\n        // 100th → \"one hundredth\", 101st → \"one hundred and first\"\n        val remainder = n % 100\n        if (remainder == 0L) {\n            return \"${integerToWords(n / 100)} hundredth\"\n        }\n        val leading = integerToWords(n - remainder)\n        return \"$leading and ${ordinalToWords(remainder)}\"\n    }\n\n    private fun integerToWords(n: Long): String {\n        if (n == 0L) return \"zero\"\n        if (n < 0) return \"negative ${integerToWords(-n)}\"\n\n        val parts = mutableListOf<String>()\n        var remaining = n\n\n        if (remaining >= 1_000_000_000_000) {\n            parts.add(\"${integerToWords(remaining / 1_000_000_000_000)} trillion\")\n            remaining %= 1_000_000_000_000\n        }\n        if (remaining >= 1_000_000_000) {\n            parts.add(\"${integerToWords(remaining / 1_000_000_000)} billion\")\n            remaining %= 1_000_000_000\n        }\n        if (remaining >= 1_000_000) {\n            parts.add(\"${integerToWords(remaining / 1_000_000)} million\")\n            remaining %= 1_000_000\n        }\n        if (remaining >= 1000) {\n            parts.add(\"${integerToWords(remaining / 1000)} thousand\")\n            remaining %= 1000\n        }\n        if (remaining >= 100) {\n            parts.add(\"${ONES[remaining.toInt() / 100]} hundred\")\n            remaining %= 100\n        }\n        if (remaining > 0) {\n            if (parts.isNotEmpty()) parts.add(\"and\")\n            if (remaining < 20) {\n                parts.add(ONES[remaining.toInt()])\n            } else {\n                val t = TENS[remaining.toInt() / 10]\n                val o = ONES[remaining.toInt() % 10]\n                parts.add(if (o.isEmpty()) t else \"$t $o\")\n            }\n        }\n        return parts.joinToString(\" \")\n    }\n}"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.7s)
-
-Let me verify the file looks correct:
-
-**Tool: read**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt"
-}
-```
-
-**Output:**
-```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt</path>
-<type>file</type>
-<content>1: package com.example.mytts.engine
-2: 
 3: import android.content.Context
-4: import android.util.Log
-5: 
-6: /**
-7:  * Converts English text to IPA phonemes for Kokoro TTS.
-8:  *
-9:  * Uses eSpeak-ng (via NDK/JNI) for grapheme-to-phoneme conversion, with
-10:  * minimal IPA normalization to produce phonemes compatible with the Kokoro
-11:  * model (raw IPA diphthongs, no E2M compact tokens).
-12:  */
-13: class PhonemeConverter(context: Context) {
-14:     companion object {
-15:         private const val TAG = "PhonemeConverter"
-16: 
-17:         // Characters that exist in the Kokoro VOCAB
-18:         val VALID_CHARS: Set<Char> = run {
-19:             val pad = '$'
-20:             val punctuation = ";:,.!?\u00A1\u00BF\u2014\u2026\"\u00AB\u00BB\u201C\u201D "
-21:             val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-22:             val lettersIpa =
-23:                 "\u0251\u0250\u0252\u00E6\u0253\u0299\u03B2\u0254\u0255\u00E7\u0257\u0256\u00F0\u02A4\u0259\u0258\u025A\u025B\u025C\u025D\u025E\u025F\u0284\u0261\u0260\u0262\u029B\u0266\u0267\u0127\u0265\u029C\u0268\u026A\u029D\u026D\u026C\u026B\u026E\u029F\u0271\u026F\u0270\u014B\u0273\u0272\u0274\u00F8\u0275\u0278\u03B8\u0153\u0276\u0298\u0279\u027A\u027E\u027B\u0280\u0281\u027D\u0282\u0283\u0288\u02A7\u0289\u028A\u028B\u2C71\u028C\u0263\u0264\u028D\u03C7\u028E\u028F\u0291\u0290\u0292\u0294\u02A1\u0295\u02A2\u01C0\u01C1\u01C2\u01C3\u02C8\u02CC\u02D0\u02D1\u02BC\u02B4\u02B0\u02B1\u02B2\u02B7\u02E0\u02E4\u02DE\u2193\u2191\u2192\u2197\u2198\u2019\u0329\u2018\u1D7B"
-24:             (listOf(pad) + punctuation.toList() + letters.toList() + lettersIpa.toList()).toSet()
-25:         }
-26:     }
-27: 
-28:     private val espeakBridge = EspeakBridge(context)
-29: 
-30:     init {
-31:         val success = espeakBridge.initialize()
-32:         if (!success) {
-33:             Log.e(TAG, "Failed to initialize eSpeak-ng!")
-34:         }
-35:     }
-36: 
-37:     /**
-38:      * Convert text to IPA phoneme string suitable for Kokoro tokenizer.
-39:      */
-40:     fun phonemize(text: String): String {
-41:         val normalized = normalizeText(text)
-42:         return phonemizeNormalized(normalized)
-43:     }
-44: 
-45:     /**
-46:      * Convert pre-normalized text to IPA phonemes.
-47:      * Skips normalizeText() since the caller already did it.
-48:      */
-49:     fun phonemizeNormalized(normalizedText: String): String {
-50:         val rawIpa = espeakBridge.textToPhonemes(normalizedText)
-51:         if (rawIpa.isEmpty()) {
-52:             Log.w(TAG, "eSpeak returned empty phonemes for: $normalizedText")
-53:             return ""
-54:         }
-55:         return postProcess(rawIpa)
-56:     }
-57: 
-58:     /**
-59:      * Release eSpeak-ng resources.
-60:      */
-61:     fun release() {
-62:         espeakBridge.terminate()
-63:     }
-64: 
-65:     /**
-66:      * Apply post-processing to convert eSpeak IPA output to Kokoro-compatible
-67:      * phoneme format. Only normalizes eSpeak-specific symbols; keeps raw IPA
-68:      * diphthongs (eɪ, aɪ, oʊ, etc.) intact — the model expects them as
-69:      * individual IPA characters, not compressed single-letter tokens.
-70:      */
-71:     private fun postProcess(phonemes: String): String {
-72:         // Strip tie characters (eSpeak may or may not produce them)
-73:         var result = phonemes.replace("^", "")
-74: 
-75:         // Basic IPA normalizations
-76:         result = result.replace("r", "\u0279")           // r → ɹ
-77:         result = result.replace("x", "k")                // x → k
-78:         result = result.replace("\u00E7", "k")            // ç → k
-79:         result = result.replace("\u026C", "l")            // ɬ → l
-80:         result = result.replace("\u02B2", "j")            // ʲ → j
-81:         result = result.replace("\u025A", "\u0259\u0279") // ɚ → əɹ
-82:         result = result.replace("\u0250", "\u0259")       // ɐ → ə
-83:         result = result.replace("\u0303", "")             // strip combining tilde
-84: 
-85:         // Strip syllabic consonant marks (combining char below)
-86:         result = result.replace("\u0329", "")
-87: 
-88:         // Strip $ pad token — must not leak into phoneme stream
-89:         result = result.replace("\$", "")
-90: 
-91:         // Filter to only valid VOCAB characters
-92:         result = result.filter { ch ->
-93:             ch in VALID_CHARS || ch.isWhitespace()
+4: import android.os.Build
+5: import android.os.PerformanceHintManager
+6: import android.os.Process
+7: import android.util.Log
+8: import com.example.mytts.BuildConfig
+9: import com.example.mytts.engine.KokoroEngine
+10: import java.util.concurrent.atomic.AtomicBoolean
+11: 
+12: /**
+13:  * Producer thread that converts text chunks to audio using the Kokoro engine.
+14:  * Runs inference on a background thread and feeds PCM to the AudioPlayer.
+15:  *
+16:  * On API 31+, uses PerformanceHintManager to tell the system about the
+17:  * workload pattern so it can make better CPU frequency/core decisions,
+18:  * especially important when the screen is off.
+19:  */
+20: class AudioProducer(
+21:     private val context: Context,
+22:     private val engine: KokoroEngine,
+23:     private val player: AudioPlayer,
+24:     private val onChunkReady: (chunkIndex: Int) -> Unit = {},
+25:     private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }
+26: ) {
+27:     companion object {
+28:         private const val TAG = "AudioProducer"
+29:         // Silence threshold: samples below this absolute value are considered silent
+30:         private const val SILENCE_THRESHOLD = 0.01f
+31:         // Target silence gap between chunks in milliseconds
+32:         private const val GAP_BETWEEN_CHUNKS_MS = 300
+33:         // Target inference duration hint for PerformanceHintManager (2 seconds).
+34:         // Set slightly below typical inference time to encourage the system to
+35:         // boost CPU frequency rather than coast on efficiency cores.
+36:         private const val TARGET_INFERENCE_NANOS = 2_000_000_000L
+37:     }
+38: 
+39:     private val running = AtomicBoolean(false)
+40:     private var producerThread: Thread? = null
+41:     private var hintSession: Any? = null // PerformanceHintManager.Session (API 31+)
+42: 
+43:     private var chunks: List<PreparedChunk> = emptyList()
+44:     private var voiceName: String = ""
+45:     private var speed: Float = 1.0f
+46:     private var startIndex: Int = 0
+47: 
+48:     /**
+49:      * Start producing audio from the given prepared chunks.
+50:      *
+51:      * @param chunks list of pre-processed chunks (already normalized at paste time)
+52:      * @param voice voice name to use
+53:      * @param speed speed multiplier (model-level, not playback rate)
+54:      * @param fromIndex start from this chunk index
+55:      */
+56:     fun start(
+57:         chunks: List<PreparedChunk>,
+58:         voice: String,
+59:         speed: Float = 1.0f,
+60:         fromIndex: Int = 0
+61:     ) {
+62:         stop()
+63:         this.chunks = chunks
+64:         this.voiceName = voice
+65:         this.speed = speed
+66:         this.startIndex = fromIndex
+67: 
+68:         running.set(true)
+69:         producerThread = Thread({
+70:             // Foreground priority so Android's EAS scheduler favors performance
+71:             // cores and doesn't deprioritize us when the screen is off.
+72:             Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND)
+73:             produceLoop()
+74:         }, "AudioProducer").also { it.start() }
+75:     }
+76: 
+77:     /**
+78:      * Create a PerformanceHintManager session for the current thread.
+79:      * Must be called ON the producer thread so we get the correct TID.
+80:      * Returns the session object, or null if unavailable.
+81:      */
+82:     private fun createHintSession(): Any? {
+83:         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+84:         return try {
+85:             val phm = context.getSystemService(Context.PERFORMANCE_HINT_SERVICE)
+86:                     as? PerformanceHintManager ?: return null
+87:             val tids = intArrayOf(Process.myTid())
+88:             val session = phm.createHintSession(tids, TARGET_INFERENCE_NANOS)
+89:             if (BuildConfig.DEBUG) Log.d(TAG, "PerformanceHintManager session created for TID ${tids[0]}")
+90:             session
+91:         } catch (e: Exception) {
+92:             Log.w(TAG, "Failed to create PerformanceHintManager session", e)
+93:             null
 94:         }
-95: 
-96:         return result.trim()
-97:     }
-98: 
-99:     /**
-100:      * Normalize text before phonemization.
-101:      *
-102:      * Only handles cases that eSpeak-ng cannot process correctly:
-103:      * - Full-width CJK punctuation (eSpeak's English voice ignores these)
-104:      * - Time expressions (colon is a clause separator in eSpeak)
-105:      * - Currency symbols (eSpeak reads "$500" as "dollar five hundred")
-106:      * - Currency magnitude suffixes like $50B (eSpeak doesn't know K/M/B/T)
-107:      * - Number ranges with hyphens (eSpeak may read "5-10" as "five minus ten")
-108:      *
-109:      * Everything else (numbers, ordinals, abbreviations, %, #, &, @, etc.)
-110:      * is handled natively by eSpeak-ng's English text normalization.
-111:      */
-112:     fun normalizeText(text: String): String {
-113:         var t = text
-114:             .lines().joinToString("\n") { it.trim() }
-115:             // Full-width CJK punctuation → ASCII equivalents
-116:             .replace("\u3001", ", ")
-117:             .replace("\u3002", ". ")
-118:             .replace("\uFF01", "! ")
-119:             .replace("\uFF0C", ", ")
-120:             .replace("\uFF1A", ": ")
-121:             .replace("\uFF1B", "; ")
-122:             .replace("\uFF1F", "? ")
-123: 
-124:         // --- Time expressions (colon is clause separator in eSpeak) ---
-125:         // 3:30pm → 3 30 p m, 12:00 → 12 o'clock, 3:05 → 3 oh 5
-126:         t = Regex("(\\d{1,2}):(\\d{2})\\s*([AaPp][Mm])?").replace(t) { match ->
-127:             val hour = match.groupValues[1].toIntOrNull() ?: return@replace match.value
-128:             val min = match.groupValues[2].toIntOrNull() ?: return@replace match.value
-129:             val ampm = match.groupValues[3]
-130:             if (hour > 24 || min > 59) return@replace match.value
-131:             val minPart = when {
-132:                 min == 0 -> "o'clock"
-133:                 min < 10 -> "oh $min"
-134:                 else -> "$min"
-135:             }
-136:             val suffix = when (ampm.lowercase()) {
-137:                 "am" -> " a m"
-138:                 "pm" -> " p m"
-139:                 else -> ""
-140:             }
-141:             "$hour $minPart$suffix"
-142:         }
+95:     }
+96: 
+97:     /**
+98:      * Report actual inference duration to the hint session.
+99:      */
+100:     private fun reportWorkDuration(durationNanos: Long) {
+101:         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+102:         try {
+103:             (hintSession as? PerformanceHintManager.Session)
+104:                 ?.reportActualWorkDuration(durationNanos)
+105:         } catch (_: Exception) {
+106:             // Ignore — hint session may have been closed
+107:         }
+108:     }
+109: 
+110:     /**
+111:      * Close the hint session.
+112:      */
+113:     private fun closeHintSession() {
+114:         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+115:         try {
+116:             (hintSession as? PerformanceHintManager.Session)?.close()
+117:         } catch (_: Exception) {}
+118:         hintSession = null
+119:     }
+120: 
+121:     private fun produceLoop() {
+122:         // Create performance hint session on the producer thread
+123:         hintSession = createHintSession()
+124: 
+125:         // Dump all chunks for debugging — verify no stale chunks from previous text
+126:         if (BuildConfig.DEBUG) {
+127:             Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
+128:             for (i in chunks.indices) {
+129:                 val c = chunks[i]
+130:                 Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
+131:             }
+132:         }
+133: 
+134:         try {
+135:             for (i in startIndex until chunks.size) {
+136:                 if (!running.get()) break
+137: 
+138:                 val chunk = chunks[i]
+139:                 val text = chunk.normalizedText.trim()
+140:                 if (text.isEmpty()) continue
+141: 
+142:                 if (!running.get()) break
 143: 
-144:         // --- Currency (eSpeak reads symbols in wrong order) ---
-145: 
-146:         // Currency with cents: $3.50 → 3 dollars and 50 cents
-147:         t = Regex("([\\$\u20AC\u00A3])\\s*(\\d+)\\.(\\d{2})\\b").replace(t) { match ->
-148:             val dollars = match.groupValues[2].toLongOrNull() ?: return@replace match.value
-149:             val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value
-150:             val currency = when (match.groupValues[1]) {
-151:                 "\$" -> "dollar" to "cent"
-152:                 "\u20AC" -> "euro" to "cent"
-153:                 "\u00A3" -> "pound" to "penny"
-154:                 else -> "dollar" to "cent"
-155:             }
-156:             val dollarUnit = if (dollars == 1L) currency.first else "${currency.first}s"
-157:             if (cents == 0) {
-158:                 "$dollars $dollarUnit"
-159:             } else {
-160:                 val centUnit = if (cents == 1) {
-161:                     currency.second
-162:                 } else if (currency.second == "penny") {
-163:                     "pence"
-164:                 } else {
-165:                     "${currency.second}s"
-166:                 }
-167:                 "$dollars $dollarUnit and $cents $centUnit"
-168:             }
-169:         }
-170: 
-171:         // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000
-172:         t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
-173:             .replace(t) { match ->
-174:                 val number = match.groupValues[2]
-175:                 val mag = match.groupValues[3].uppercase()
-176:                 val currency = when (match.groupValues[1]) {
-177:                     "\$" -> "dollars"; "\u20AC" -> "euros"
-178:                     "\u00A3" -> "pounds"; "\u00A5" -> "yen"
-179:                     else -> "dollars"
-180:                 }
-181:                 val magnitude = when (mag) {
-182:                     "T" -> " trillion"; "B" -> " billion"
-183:                     "M" -> " million"; "K" -> " thousand"
-184:                     else -> ""
-185:                 }
-186:                 "$number$magnitude $currency"
-187:             }
-188: 
-189:         // Clean up stray currency symbols not matched by patterns above
-190:         t = t.replace(Regex("[\\$\u20AC\u00A3\u00A5]"), " ")
-191: 
-192:         // Number ranges: 5-10 → 5 to 10 (eSpeak may read hyphen as "minus")
-193:         t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ")
-194: 
-195:         return t.trim()
-196:     }
-197: }
+144:                 try {
+145:                     if (BuildConfig.DEBUG) Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
+146:                     val startTime = System.nanoTime()
+147: 
+148:                     val pcm = engine.speakNormalized(text, voiceName, speed)
+149: 
+150:                     val elapsedNanos = System.nanoTime() - startTime
+151:                     reportWorkDuration(elapsedNanos)
+152: 
+153:                     val elapsedMs = elapsedNanos / 1_000_000
+154:                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
+155:                     if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsedMs}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsedMs.toFloat() / audioDuration))
+156: 
+157:                     if (pcm.isNotEmpty() && running.get()) {
+158:                         // Trim trailing silence and add a controlled gap
+159:                         // (skip gap if next chunk continues the same sentence)
+160:                         val nextIsContinuation = (i + 1 < chunks.size) && chunks[i + 1].isContinuation
+161:                         val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)
+162:                         player.enqueue(trimmed, i)
+163:                         onChunkReady(i)
+164:                     }
+165:                 } catch (e: Exception) {
+166:                     if (running.get()) {
+167:                         Log.e(TAG, "Failed to synthesize chunk $i", e)
+168:                         onError(i, e)
+169:                     }
+170:                 }
+171:             }
+172:         } catch (_: InterruptedException) {
+173:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer interrupted")
+174:             closeHintSession()
+175:             return
+176:         }
+177: 
+178:         closeHintSession()
+179: 
+180:         // Signal end: let player drain its queue naturally then stop
+181:         if (running.get()) {
+182:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer finished all chunks")
+183:             player.markProducerDone()
+184:         }
+185:     }
+186: 
+187:     fun stop() {
+188:         running.set(false)
+189:         producerThread?.interrupt()
+190:         // Short timeout: ONNX inference can't be interrupted mid-call, but
+191:         // the next start() calls stop() anyway so orphaned threads self-exit.
+192:         producerThread?.join(500)
+193:         producerThread = null
+194:         closeHintSession()
+195:     }
+196: 
+197:     /**
+198:      * Trim trailing silence from PCM audio and optionally append a silence gap.
+199:      * When [addGap] is true (default), appends ~300ms silence for natural
+200:      * inter-sentence pauses. When false (continuation chunks of the same
+201:      * sentence), only trims without adding extra silence.
+202:      *
+203:      * @param pcm raw PCM float samples
+204:      * @param sampleRate audio sample rate (e.g. 24000)
+205:      * @param addGap whether to append the inter-chunk silence gap
+206:      * @return trimmed PCM with optional trailing silence
+207:      */
+208:     private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int, addGap: Boolean = true): FloatArray {
+209:         if (pcm.isEmpty()) return pcm
+210: 
+211:         // Find last non-silent sample (scanning backwards)
+212:         var lastNonSilent = pcm.size - 1
+213:         while (lastNonSilent >= 0 && kotlin.math.abs(pcm[lastNonSilent]) < SILENCE_THRESHOLD) {
+214:             lastNonSilent--
+215:         }
+216: 
+217:         // Keep audio up to last non-silent sample (with small margin to avoid cutting off decay)
+218:         val margin = minOf(64, pcm.size - lastNonSilent - 1)
+219:         val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)
+220: 
+221:         // Calculate desired gap in samples (0 for continuation chunks)
+222:         val gapSamples = if (addGap) sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000 else 0
+223: 
+224:         // Create new array: trimmed audio + silence gap
+225:         val result = FloatArray(trimEnd + gapSamples)
+226:         System.arraycopy(pcm, 0, result, 0, trimEnd)
+227:         // Remaining samples are already 0.0f (silence gap)
+228: 
+229:         return result
+230:     }
+231: }
 
-(End of file - total 197 lines)
+(End of file - total 231 lines)
 </content>
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 15.2s)
+## Assistant (Build · Claude Opus 4.6 · 16.3s)
 
-File looks clean — 197 lines down from 377 (removed ~180 lines). Now let me build to verify it compiles:
+Now I need to change `AudioProducer` to accept `AudioBufferQueue` instead of `AudioPlayer`:
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
+  "oldString": " * Producer thread that converts text chunks to audio using the Kokoro engine.\n * Runs inference on a background thread and feeds PCM to the AudioPlayer.\n *\n * On API 31+, uses PerformanceHintManager to tell the system about the\n * workload pattern so it can make better CPU frequency/core decisions,\n * especially important when the screen is off.\n */\nclass AudioProducer(\n    private val context: Context,\n    private val engine: KokoroEngine,\n    private val player: AudioPlayer,\n    private val onChunkReady: (chunkIndex: Int) -> Unit = {},\n    private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }\n)",
+  "newString": " * Producer thread that converts text chunks to audio using the Kokoro engine.\n * Runs inference on a background thread and feeds PCM into an [AudioBufferQueue].\n *\n * On API 31+, uses PerformanceHintManager to tell the system about the\n * workload pattern so it can make better CPU frequency/core decisions,\n * especially important when the screen is off.\n */\nclass AudioProducer(\n    private val context: Context,\n    private val engine: KokoroEngine,\n    private val queue: AudioBufferQueue,\n    private val onChunkReady: (chunkIndex: Int) -> Unit = {},\n    private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }\n)"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 12.2s)
+
+Now replace `player.enqueue(trimmed, i)` with `queue.put(trimmed, i)`:
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
+  "oldString": "                        val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)\n                        player.enqueue(trimmed, i)\n                        onChunkReady(i)",
+  "newString": "                        val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)\n                        if (!queue.put(trimmed, i)) break  // queue closed (stopped)\n                        onChunkReady(i)"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 30.2s)
+
+Replace `player.markProducerDone()` with `queue.close()`:
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
+  "newString": "        // Signal end: let player drain the queue naturally then stop\n        if (running.get()) {\n            if (BuildConfig.DEBUG) Log.d(TAG, \"Producer finished all chunks\")\n            queue.close()\n        }",
+  "oldString": "        // Signal end: let player drain its queue naturally then stop\n        if (running.get()) {\n            if (BuildConfig.DEBUG) Log.d(TAG, \"Producer finished all chunks\")\n            player.markProducerDone()\n        }"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 9.8s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Build and verify",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Commit",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Build and verify",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Commit",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 9.6s)
+
+Now update `PlaybackController.kt` — create the queue and pass it to both sides:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "offset": 53,
+  "limit": 10
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt</path>
+<type>file</type>
+<content>53:     private var engine: KokoroEngine? = null
+54:     private var player: AudioPlayer? = null
+55:     private var producer: AudioProducer? = null
+56:     private var textProcessor: TextProcessor? = null
+57:     private var preparedChunks: List<PreparedChunk> = emptyList()
+58:     private var processJob: Job? = null
+59: 
+60:     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+61:     private var initJob: Job? = null
+62: 
+
+(Showing lines 53-62 of 396. Use offset=63 to continue.)
+</content>
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 11.5s)
+
+Add a `audioQueue` field:
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "newString": "    private var engine: KokoroEngine? = null\n    private var player: AudioPlayer? = null\n    private var producer: AudioProducer? = null\n    private var audioQueue: AudioBufferQueue? = null\n    private var textProcessor: TextProcessor? = null",
+  "oldString": "    private var engine: KokoroEngine? = null\n    private var player: AudioPlayer? = null\n    private var producer: AudioProducer? = null\n    private var textProcessor: TextProcessor? = null"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 8.0s)
+
+Now update the `play()` method where the player and producer are created. Let me re-read that section:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "offset": 113,
+  "limit": 55
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt</path>
+<type>file</type>
+<content>113: 
+114:                 // Find the starting chunk based on cursor position
+115:                 val startIndex = findChunkAtOffset(cursorPosition)
+116: 
+117:                 // Create player
+118:                 val audioPlayer = AudioPlayer(
+119:                     sampleRate = KokoroEngine.SAMPLE_RATE,
+120:                     onChunkStarted = { index ->
+121:                         _currentChunkIndex.value = index
+122:                     },
+123:                     onPlaybackFinished = {
+124:                         scope.launch(Dispatchers.Main) {
+125:                             if (_state.value != State.STOPPED) {
+126:                                 stop()
+127:                             }
+128:                         }
+129:                     }
+130:                 )
+131:                 player = audioPlayer
+132: 
+133:                 // Create producer
+134:                 val audioProducer = AudioProducer(
+135:                     context = context,
+136:                     engine = engine!!,
+137:                     player = audioPlayer,
+138:                     onChunkReady = { index ->
+139:                         // First chunk ready - start playback
+140:                         if (index == startIndex && _state.value == State.LOADING) {
+141:                             scope.launch(Dispatchers.Main) {
+142:                                 _state.value = State.PLAYING
+143:                                 _statusMessage.value = null
+144:                             }
+145:                         }
+146:                     },
+147:                     onError = { index, error ->
+148:                         Log.e(TAG, "Synthesis error at chunk $index", error)
+149:                         scope.launch(Dispatchers.Main) {
+150:                             _statusMessage.value = "Error: ${error.message}"
+151:                         }
+152:                     }
+153:                 )
+154:                 producer = audioProducer
+155: 
+156:                 // Start player first, then producer.
+157:                 // Slow mode uses the model's speed parameter (0.75) to generate
+158:                 // naturally slower speech with correct pitch, instead of reducing
+159:                 // the AudioTrack sample rate which would lower the pitch.
+160:                 val modelSpeed = if (slowMode) 0.75f else 1.0f
+161:                 audioPlayer.start()
+162:                 audioProducer.start(preparedChunks, voiceName, speed = modelSpeed, fromIndex = startIndex)
+163: 
+164:             } catch (e: Exception) {
+165:                 Log.e(TAG, "Failed to start playback", e)
+166:                 withContext(Dispatchers.Main) {
+167:                     _state.value = State.STOPPED
+
+(Showing lines 113-167 of 397. Use offset=168 to continue.)
+</content>
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 13.5s)
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "newString": "                // Find the starting chunk based on cursor position\n                val startIndex = findChunkAtOffset(cursorPosition)\n\n                // Create shared audio buffer queue (duration-based capacity)\n                val bufferQueue = AudioBufferQueue(KokoroEngine.SAMPLE_RATE)\n                audioQueue = bufferQueue\n\n                // Create player\n                val audioPlayer = AudioPlayer(\n                    sampleRate = KokoroEngine.SAMPLE_RATE,\n                    queue = bufferQueue,\n                    onChunkStarted = { index ->\n                        _currentChunkIndex.value = index\n                    },\n                    onPlaybackFinished = {\n                        scope.launch(Dispatchers.Main) {\n                            if (_state.value != State.STOPPED) {\n                                stop()\n                            }\n                        }\n                    }\n                )\n                player = audioPlayer\n\n                // Create producer\n                val audioProducer = AudioProducer(\n                    context = context,\n                    engine = engine!!,\n                    queue = bufferQueue,",
+  "oldString": "                // Find the starting chunk based on cursor position\n                val startIndex = findChunkAtOffset(cursorPosition)\n\n                // Create player\n                val audioPlayer = AudioPlayer(\n                    sampleRate = KokoroEngine.SAMPLE_RATE,\n                    onChunkStarted = { index ->\n                        _currentChunkIndex.value = index\n                    },\n                    onPlaybackFinished = {\n                        scope.launch(Dispatchers.Main) {\n                            if (_state.value != State.STOPPED) {\n                                stop()\n                            }\n                        }\n                    }\n                )\n                player = audioPlayer\n\n                // Create producer\n                val audioProducer = AudioProducer(\n                    context = context,\n                    engine = engine!!,\n                    player = audioPlayer,"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 7.7s)
+
+Now update the `stop()` method to clear the queue:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "limit": 30,
+  "offset": 196
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt</path>
+<type>file</type>
+<content>196:             State.LOADING -> { /* ignore during loading */ }
+197:             State.STOPPING -> { /* ignore while stopping */ }
+198:         }
+199:     }
+200: 
+201:     fun stop() {
+202:         if (_state.value == State.STOPPED || _state.value == State.STOPPING) return
+203: 
+204:         // Capture the current playback offset before clearing anything
+205:         val offset = getCurrentPlaybackOffset()
+206: 
+207:         _state.value = State.STOPPING
+208:         _statusMessage.value = null
+209: 
+210:         scope.launch(Dispatchers.Default) {
+211:             try {
+212:                 // Stop player FIRST for instant silence (pause+flush is immediate),
+213:                 // then stop producer (may block briefly waiting for ONNX inference).
+214:                 player?.stop()
+215:                 player = null
+216:                 producer?.stop()
+217:                 producer = null
+218:             } catch (e: Exception) {
+219:                 Log.e(TAG, "Error during stop cleanup", e)
+220:             }
+221: 
+222:             withContext(Dispatchers.Main) {
+223:                 _state.value = State.STOPPED
+224:                 _currentChunkIndex.value = -1
+225:                 _statusMessage.value = null
+
+(Showing lines 196-225 of 402. Use offset=226 to continue.)
+</content>
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 11.9s)
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "newString": "            try {\n                // Clear the queue first — unblocks the producer if it's waiting\n                // on queue.put(), and tells the player the stream is over.\n                audioQueue?.clear()\n                // Stop player FIRST for instant silence (pause+flush is immediate),\n                // then stop producer (may block briefly waiting for ONNX inference).\n                player?.stop()\n                player = null\n                producer?.stop()\n                producer = null\n                audioQueue = null",
+  "oldString": "            try {\n                // Stop player FIRST for instant silence (pause+flush is immediate),\n                // then stop producer (may block briefly waiting for ONNX inference).\n                player?.stop()\n                player = null\n                producer?.stop()\n                producer = null"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 7.8s)
+
+Now update the `release()` method too:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "limit": 20,
+  "offset": 385
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt</path>
+<type>file</type>
+<content>385:         return if (offset < chunk.endOffset) Pair(chunk.startOffset, chunk.endOffset) else null
+386:     }
+387: 
+388:     /**
+389:      * Release all resources. Call when the app is being destroyed.
+390:      */
+391:     fun release() {
+392:         // Synchronous cleanup for release — bypass the async stop
+393:         producer?.stop()
+394:         producer = null
+395:         player?.stop()
+396:         player = null
+397:         preparedChunks = emptyList()
+398:         textProcessor = null
+399:         _state.value = State.STOPPED
+400:         _currentChunkIndex.value = -1
+401:         initJob?.cancel()
+402:         engine?.release()
+403:         engine = null
+404:         scope.cancel()
+
+(Showing lines 385-404 of 406. Use offset=405 to continue.)
+</content>
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 11.8s)
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt",
+  "newString": "    fun release() {\n        // Synchronous cleanup for release — bypass the async stop\n        audioQueue?.clear()\n        producer?.stop()\n        producer = null\n        player?.stop()\n        player = null\n        audioQueue = null",
+  "oldString": "    fun release() {\n        // Synchronous cleanup for release — bypass the async stop\n        producer?.stop()\n        producer = null\n        player?.stop()\n        player = null"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 8.1s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Build and verify",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Commit",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Build and verify",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Commit",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 11.4s)
 
 **Tool: bash**
 
 **Input:**
 ```json
 {
-  "command": "./gradlew assembleDebug 2>&1 | tail -20",
-  "description": "Build to verify compilation",
-  "timeout": 300000
+  "command": "JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew assembleDebug 2>&1 | tail -30",
+  "description": "Build to verify all changes",
+  "timeout": 180000
 }
 ```
 
 **Output:**
 ```
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:configureCMakeDebug[arm64-v8a]
 > Task :app:buildCMakeDebug[arm64-v8a]
 > Task :app:mergeDebugJniLibFolders UP-TO-DATE
 > Task :app:mergeDebugNativeLibs UP-TO-DATE
@@ -3123,465 +3337,118 @@ File looks clean — 197 lines down from 377 (removed ~180 lines). Now let me bu
 > Task :app:createDebugApkListingFileRedirect UP-TO-DATE
 > Task :app:assembleDebug
 
-BUILD SUCCESSFUL in 1s
+BUILD SUCCESSFUL in 2s
 39 actionable tasks: 6 executed, 33 up-to-date
 
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 14.1s)
+## Assistant (Build · Claude Opus 4.6 · 8.7s)
 
-Build succeeds. Now commit this change:
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "git add app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt && git commit -m \"Simplify normalizeText: remove rules redundant with eSpeak-ng\n\neSpeak-ng natively handles numbers, ordinals, abbreviations, %, #, &, @,\ndigit-grouping commas, and smart quotes. Keep only the rules eSpeak gets\nwrong: full-width CJK punctuation, time expressions (colon is clause\nseparator), currency symbols (wrong word order), magnitude suffixes\n(\\$50B), and number-range hyphens.\n\nRemoves ~180 lines including numberToWords, integerToWords, ordinalToWords,\nyearToWords, digitToWord, and the ONES/TENS/ORDINAL lookup tables.\"",
-  "description": "Commit simplified normalizeText"
-}
-```
-
-**Output:**
-```
-[master ecedbd7] Simplify normalizeText: remove rules redundant with eSpeak-ng
- 1 file changed, 27 insertions(+), 207 deletions(-)
-
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Simplify normalizeText() — remove redundant rules, keep only necessary ones",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Clean up dead code: speak(), textToPhonemes(), phonemize(), unused properties, unused deps, misaki from docs",
-      "priority": "high",
-      "status": "in_progress"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Simplify normalizeText() — remove redundant rules, keep only necessary ones",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Clean up dead code: speak(), textToPhonemes(), phonemize(), unused properties, unused deps, misaki from docs",
-    "priority": "high",
-    "status": "in_progress"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 17.2s)
-
-Now commit 2: clean up dead code + remove misaki references. Let me make all the edits:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt",
-  "oldString": "    /**\n     * Convert text to phonemes (for pre-processing/chunking).\n     */\n    fun textToPhonemes(text: String): String {\n        return _phonemeConverter?.phonemize(text)\n            ?: throw IllegalStateException(\"Engine not initialized\")\n    }\n\n    /**",
-  "newString": "    /**"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt",
-  "oldString": "    /**\n     * Full pipeline: text -> phonemes -> synthesize.\n     */\n    fun speak(text: String, voiceName: String, speed: Float = 1.0f): FloatArray {\n        val phonemes = textToPhonemes(text)\n        return synthesize(phonemes, voiceName, speed)\n    }\n\n    /**\n     * Full pipeline for pre-normalized text: normalizedText -> phonemes -> synthesize.\n     * Skips normalizeText() since the caller already did it at paste time.\n     */\n    fun speakNormalized(normalizedText: String, voiceName: String, speed: Float = 1.0f): FloatArray {",
-  "newString": "    /**\n     * Full pipeline: normalizedText -> phonemes -> synthesize.\n     * Text must already be normalized (via normalizeText() at paste time).\n     */\n    fun speakNormalized(normalizedText: String, voiceName: String, speed: Float = 1.0f): FloatArray {"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt",
-  "oldString": "    /**\n     * Convert text to IPA phoneme string suitable for Kokoro tokenizer.\n     */\n    fun phonemize(text: String): String {\n        val normalized = normalizeText(text)\n        return phonemizeNormalized(normalized)\n    }\n\n    /**\n     * Convert pre-normalized text to IPA phonemes.\n     * Skips normalizeText() since the caller already did it.\n     */\n    fun phonemizeNormalized(normalizedText: String): String {",
-  "newString": "    /**\n     * Convert pre-normalized text to IPA phonemes.\n     * Text must already be normalized via normalizeText().\n     */\n    fun phonemizeNormalized(normalizedText: String): String {"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 19.1s)
-
-Now remove unused properties from AudioPlayer and AudioProducer:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt",
-  "newString": "class AudioPlayer(\n    private val sampleRate: Int = 24000,\n    private val onChunkStarted: (chunkIndex: Int) -> Unit = {},\n    private val onPlaybackFinished: () -> Unit = {}\n) {",
-  "oldString": "class AudioPlayer(\n    private val sampleRate: Int = 24000,\n    private val onChunkStarted: (chunkIndex: Int) -> Unit = {},\n    private val onPlaybackFinished: () -> Unit = {},\n    private val onUnderrun: () -> Unit = {}\n) {"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt",
-  "newString": "                        lastHintTimeMs = System.currentTimeMillis()\n                    }\n                    continue",
-  "oldString": "                        lastHintTimeMs = System.currentTimeMillis()\n                        onUnderrun()\n                    }\n                    continue"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt",
-  "newString": "    val queueSize: Int get() = queue.size\n}",
-  "oldString": "    val isRunning: Boolean get() = running.get()\n    val isPaused: Boolean get() = paused.get()\n    val queueSize: Int get() = queue.size\n}"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
-  "newString": "        producerThread = null\n    }\n\n    /**",
-  "oldString": "        producerThread = null\n    }\n\n    val isRunning: Boolean get() = running.get()\n\n    /**"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.9s)
-
-Remove unused `HighlightBorder` color:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/theme/Color.kt",
-  "newString": "// Highlight color for currently playing text chunk\nval HighlightYellow = Color(0xFFFFF9C4)",
-  "oldString": "// Highlight color for currently playing text chunk\nval HighlightYellow = Color(0xFFFFF9C4)\nval HighlightBorder = Color(0xFFFBC02D)"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.8s)
-
-Remove misaki from README:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/README.md",
-  "newString": "- [Kokoro-82M v1.0 ONNX](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX) -- the TTS model\n- [eSpeak-ng](https://github.com/espeak-ng/espeak-ng) -- text-to-phoneme engine (via [csukuangfj fork](https://github.com/csukuangfj/espeak-ng))\n- [Kokoro-82M-Android](https://github.com/puff-dayo/Kokoro-82M-Android) -- reference project for running Kokoro on Android",
-  "oldString": "- [Kokoro-82M v1.0 ONNX](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX) -- the TTS model\n- [eSpeak-ng](https://github.com/espeak-ng/espeak-ng) -- text-to-phoneme engine (via [csukuangfj fork](https://github.com/csukuangfj/espeak-ng))\n- [misaki](https://github.com/hexgrad/misaki) -- eSpeak-to-Kokoro phoneme mapping reference\n- [Kokoro-82M-Android](https://github.com/puff-dayo/Kokoro-82M-Android) -- reference project for running Kokoro on Android"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 15.7s)
-
-Fix stale misaki descriptions in BUILD.md:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/BUILD.md",
-  "newString": "        │   │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + IPA normalization",
-  "oldString": "        │   │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + misaki mapping"
-}
-```
-
-**Error:**
-```
-Could not find oldString in the file. It must match exactly, including whitespace, indentation, and line endings.
-```
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/BUILD.md",
-  "newString": "The raw IPA\n   output is then minimally normalized (e.g. `r` → `ɹ`, `ɚ` → `əɹ`) to match\n   the Kokoro model's expected phoneme set.",
-  "oldString": "The raw IPA\n   output is then transformed using the [misaki](https://github.com/hexgrad/misaki) E2M\n   mapping (diphthong merging, affricate joining, American English adjustments) to produce\n   phonemes matching the Kokoro model's training data."
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 16.1s)
-
-Let me find the exact text for the BUILD.md tree entry:
+Build passes. Let me do a quick sanity check on the unused imports:
 
 **Tool: grep**
 
 **Input:**
 ```json
 {
-  "pattern": "PhonemeConverter",
-  "include": "BUILD.md"
+  "include": "AudioPlayer.kt",
+  "pattern": "import.*TimeUnit|import.*LinkedBlocking"
 }
 ```
 
 **Output:**
 ```
-Found 3 matches
-/Users/cyb/works/mytts/BUILD.md:
-  Line 218: adb logcat -s KokoroEngine:* EspeakJNI:* EspeakBridge:* AudioPlayer:* AudioProducer:* PlaybackController:* PhonemeConverter:*
-  Line 302:         │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + misaki mapping
-  Line 341: 3. **Phonemization**: `PhonemeConverter` calls `EspeakBridge.textToPhonemes(text)` which
+No files found
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 16.3s)
+## Assistant (Build · Claude Opus 4.6 · 10.8s)
 
-**Tool: read**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/BUILD.md",
-  "offset": 300,
-  "limit": 10
-}
-```
-
-**Output:**
-```
-<path>/Users/cyb/works/mytts/BUILD.md</path>
-<type>file</type>
-<content>300:         │   ├── engine/
-301:         │   │   ├── KokoroEngine.kt   # ONNX session, synthesize()
-302:         │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + misaki mapping
-303:         │   │   ├── EspeakBridge.kt   # JNI wrapper, asset extraction
-304:         │   │   ├── Tokenizer.kt      # IPA chars -> token IDs
-305:         │   │   └── VoiceStyleLoader.kt  # .bin voice parser
-306:         │   ├── service/
-307:         │   │   └── PlaybackService.kt  # Foreground service
-308:         │   ├── ui/
-309:         │   │   ├── MainScreen.kt     # Compose UI
-
-(Showing lines 300-309 of 456. Use offset=310 to continue.)
-</content>
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 15.8s)
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/BUILD.md",
-  "newString": "        │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + IPA normalization",
-  "oldString": "        │   │   ├── PhonemeConverter.kt  # eSpeak-ng G2P + misaki mapping"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 16.4s)
-
-Now remove unused dependencies from build.gradle.kts:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/build.gradle.kts",
-  "newString": "    implementation(\"androidx.activity:activity-compose:1.9.3\")\n\n    // Core",
-  "oldString": "    implementation(\"androidx.activity:activity-compose:1.9.3\")\n    implementation(\"androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7\")\n    implementation(\"androidx.lifecycle:lifecycle-runtime-compose:2.8.7\")\n\n    // Core"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/build.gradle.kts",
-  "newString": "    implementation(\"androidx.lifecycle:lifecycle-runtime-ktx:2.8.7\")",
-  "oldString": "    implementation(\"androidx.lifecycle:lifecycle-runtime-ktx:2.8.7\")\n    implementation(\"androidx.media:media:1.7.0\")"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 20.1s)
-
-Now build to verify everything compiles:
+Good — the old imports were already cleaned up when I rewrote the file. Let me verify the final state of all changed files is correct:
 
 **Tool: bash**
 
 **Input:**
 ```json
 {
-  "command": "./gradlew assembleDebug 2>&1 | tail -20",
-  "description": "Build to verify dead code cleanup",
-  "timeout": 300000
+  "command": "git diff --stat",
+  "description": "Check changed files"
 }
 ```
 
 **Output:**
 ```
-> Task :app:mergeDebugNativeLibs UP-TO-DATE
-> Task :app:stripDebugDebugSymbols UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
-> Task :app:writeDebugAppMetadata UP-TO-DATE
-> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:processDebugResources
-> Task :app:compileDebugKotlin
-> Task :app:compileDebugJavaWithJavac
-> Task :app:dexBuilderDebug
-> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
-> Task :app:processDebugJavaRes UP-TO-DATE
-> Task :app:mergeProjectDexDebug
-> Task :app:mergeExtDexDebug
-> Task :app:mergeDebugJavaResource
-> Task :app:packageDebug
-> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
-> Task :app:assembleDebug
-
-BUILD SUCCESSFUL in 7s
-39 actionable tasks: 15 executed, 24 up-to-date
+ .../java/com/example/mytts/audio/AudioPlayer.kt    | 61 +++++-----------------
+ .../java/com/example/mytts/audio/AudioProducer.kt  | 10 ++--
+ .../com/example/mytts/audio/PlaybackController.kt  | 14 ++++-
+ 3 files changed, 31 insertions(+), 54 deletions(-)
 
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 16.0s)
-
-Build successful. Now commit:
+## Assistant (Build · Claude Opus 4.6 · 8.0s)
 
 **Tool: bash**
 
 **Input:**
 ```json
 {
-  "command": "git add -A && git commit -m \"Remove dead code, unused deps, and stale misaki references\n\nDead code removed:\n- KokoroEngine.speak() and textToPhonemes() (old pipeline, never called)\n- PhonemeConverter.phonemize() (only reachable via dead speak())\n- AudioPlayer.isRunning, isPaused (unused public properties)\n- AudioPlayer.onUnderrun callback (never wired up by any caller)\n- AudioProducer.isRunning (unused public property)\n- HighlightBorder color constant (unused)\n\nUnused dependencies removed:\n- lifecycle-viewmodel-compose (no ViewModel used)\n- lifecycle-runtime-compose (no lifecycle-aware collection used)\n- androidx.media:media (not imported anywhere)\n\nStale docs fixed:\n- README.md: remove misaki credit (E2M mapping was removed)\n- BUILD.md: fix PhonemeConverter description and pipeline docs\"",
-  "description": "Commit dead code cleanup"
+  "command": "git status",
+  "description": "Check for untracked files"
 }
 ```
 
 **Output:**
 ```
-[master c777034] Remove dead code, unused deps, and stale misaki references
- 8 files changed, 7 insertions(+), 43 deletions(-)
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   app/src/main/java/com/example/mytts/audio/AudioPlayer.kt
+	modified:   app/src/main/java/com/example/mytts/audio/AudioProducer.kt
+	modified:   app/src/main/java/com/example/mytts/audio/PlaybackController.kt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt
+
+no changes added to commit (use "git add" and/or "git commit -a")
 
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 15.0s)
+## Assistant (Build · Claude Opus 4.6 · 13.1s)
+
+All four files accounted for. Let me commit:
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git add -A && git commit -m \"Replace count-based audio queue with duration-based buffer\n\nThe old LinkedBlockingQueue(4) held at most 4 chunks regardless of\naudio length — 4 short sentences buffered only ~8s while 4 long ones\nwasted ~6 MB on ~60s. The new AudioBufferQueue measures capacity in\ntotal buffered audio duration (configurable, default 15s ≈ 1.44 MB).\n\nBenefits:\n- Consistent underrun protection regardless of sentence length\n- Predictable memory usage (bounded by duration, not chunk count)\n- Natural race-to-idle: many short sentences fill in a burst, then\n  the producer sleeps while the consumer drains — aligning with\n  big.LITTLE power-optimal scheduling\n- Queue is now owned by PlaybackController and shared between\n  producer and player via constructor injection\"",
+  "description": "Commit duration-based audio buffer"
+}
+```
+
+**Output:**
+```
+[master 6717baf] Replace count-based audio queue with duration-based buffer
+ 4 files changed, 148 insertions(+), 54 deletions(-)
+ create mode 100644 app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt
+
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 10.9s)
 
 **Tool: todowrite**
 
@@ -3590,12 +3457,32 @@ Build successful. Now commit:
 {
   "todos": [
     {
-      "content": "Simplify normalizeText() — remove redundant rules, keep only necessary ones",
+      "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
       "priority": "high",
       "status": "completed"
     },
     {
-      "content": "Clean up dead code: speak(), textToPhonemes(), phonemize(), unused properties, unused deps, misaki from docs",
+      "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Build and verify",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Commit",
       "priority": "high",
       "status": "completed"
     }
@@ -3607,12 +3494,32 @@ Build successful. Now commit:
 ```
 [
   {
-    "content": "Simplify normalizeText() — remove redundant rules, keep only necessary ones",
+    "content": "Create AudioBufferQueue.kt — duration-based buffer queue",
     "priority": "high",
     "status": "completed"
   },
   {
-    "content": "Clean up dead code: speak(), textToPhonemes(), phonemize(), unused properties, unused deps, misaki from docs",
+    "content": "Update AudioPlayer.kt — accept queue param, remove internal queue/producerDone",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update AudioProducer.kt — accept queue param, use queue.put/close",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Update PlaybackController.kt — create and own the queue, pass to both sides",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Build and verify",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Commit",
     "priority": "high",
     "status": "completed"
   }
@@ -3621,352 +3528,195 @@ Build successful. Now commit:
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 14.8s)
+## Assistant (Build · Claude Opus 4.6 · 15.5s)
 
-Done. Two commits created:
+Done. Commit `6717baf`.
 
-**Commit 1** (`ecedbd7`) — **Simplify normalizeText: remove rules redundant with eSpeak-ng**
-- Removed 11 redundant normalization rules (numbers, ordinals, abbreviations, %, #, &, @, smart quotes, years, digit-grouping commas, space collapsing)
-- Kept 5 necessary rules (CJK punctuation, time, currency, magnitude suffixes, number ranges)
-- Removed ~180 lines including all number-to-words helper functions and lookup tables
-- Currency/time rules now output numbers (e.g. `"3 dollars"`) and let eSpeak convert to words
+### Summary of changes
 
-**Commit 2** (`c777034`) — **Remove dead code, unused deps, and stale misaki references**
-- Dead code: `speak()`, `textToPhonemes()`, `phonemize()`, `isRunning`/`isPaused` properties, `onUnderrun` callback, `HighlightBorder` color
-- Unused deps: `lifecycle-viewmodel-compose`, `lifecycle-runtime-compose`, `androidx.media:media`
-- Docs: removed misaki from README credits, fixed BUILD.md descriptions
+**New file: `AudioBufferQueue.kt`**
+- `ReentrantLock` + `Condition`-based queue measuring capacity in total buffered samples
+- `MAX_BUFFER_SECONDS = 15f` — configurable constant at the top of the companion object
+- `put(pcm, chunkIndex)` blocks when `totalSamples >= maxSamples`, wakes instantly when the consumer drains enough
+- `take(timeoutMs)` blocks when empty, returns `null` on timeout or closed+drained
+- `close()` signals producer-done, `clear()` discards everything and unblocks all waiters
+
+**Modified: `AudioPlayer.kt`**
+- Removed internal `LinkedBlockingQueue`, `AudioChunk` data class, `producerDone` AtomicBoolean, `enqueue()`, `markProducerDone()`
+- Accepts `AudioBufferQueue` via constructor parameter
+- Consumer loop uses `queue.take(200)` and checks `queue.isClosed` for natural end
+
+**Modified: `AudioProducer.kt`**
+- Accepts `AudioBufferQueue` instead of `AudioPlayer`
+- Uses `queue.put(trimmed, i)` instead of `player.enqueue()`
+- Uses `queue.close()` instead of `player.markProducerDone()`
+
+**Modified: `PlaybackController.kt`**
+- Creates `AudioBufferQueue` and passes it to both producer and player
+- Calls `audioQueue?.clear()` on stop (unblocks producer before thread joins)
+- Cleans up `audioQueue` in `release()`
+
+To adjust the buffer size, change `AudioBufferQueue.MAX_BUFFER_SECONDS` in `AudioBufferQueue.kt:30` and rebuild.
 
 ---
 
 ## User
 
-please investigate below sentence, it's very long, and not handled correctly. the chunking happens at all non word chars like "-", ",", ":", this is bad. chunking at "-" is not acceptable, "," or ":" are okay. it happens because the total length exceeds 50? propose approaches to deal with this issue   sample text to debug: We’re hitting the worst-case scenarios for the big AI labs: energy, their biggest expense, is at multi-year highs, capital from the Gulf is not available for obvious reasons, there are serious concerns about a rate hike, and RAM prices are crashing because new models won’t need as much, but labs already bought them at sky-high prices. And that last innovation came from their biggest competitor, Google. 
+fix a regression: play for some time, it may enter underrun and never come back, the cpu usage drops to 0, just like the producer thread is blocked forever, only stop & play again will continue
 
 ---
 
-## Assistant (Plan · claude-opus-4.6 · 14.4s)
+## Assistant (Build · Claude Opus 4.6 · 15.9s)
+
+_Thinking:_
+
+The user is reporting a regression where playback enters underrun and never recovers. The producer thread appears blocked forever (CPU drops to 0). This sounds like a deadlock or a condition where the producer thread is permanently blocked on `queue.put()`.
+
+Let me think about what could cause this:
+
+1. The `AudioBufferQueue.put()` blocks when `totalSamples + pcm.size > maxSamples`. But what if a single chunk's PCM is larger than `maxSamples`? Then `totalSamples + pcm.size > maxSamples` would be true even when `totalSamples == 0` (queue empty). The condition would never become false, and the producer would block forever.
 
 
+2. With `maxSamples = 15f * 24000 = 360,000 samples`, a longer sentence could easily generate 15-20 seconds of audio, producing a PCM array that exceeds the buffer limit. So when a single chunk's size surpasses `maxSamples`, the `put()` method deadlocks because the blocking condition remains true even with an empty queue. That's the bug—I need to handle oversized chunks by either increasing the buffer or allowing them through.
 
-Let me investigate the TextChunker to understand exactly how it handles this sentence.
+The solution is to modify `put()` so that if the queue is empty and a chunk still doesn't fit, I accept it anyway since individual chunks can't be split at this level. Let me check the code to confirm this approach works.
+
+This is almost certainly a deadlock in `AudioBufferQueue.put()`. Let me verify my hypothesis:
 
 **Tool: read**
 
 **Input:**
 ```json
 {
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt"
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt"
 }
 ```
 
 **Output:**
 ```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt</path>
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt</path>
 <type>file</type>
 <content>1: package com.example.mytts.audio
 2: 
-3: import android.icu.text.BreakIterator
-4: import java.util.Locale
-5: 
-6: /**
-7:  * A chunk of text with its position in the original input.
-8:  */
-9: data class TextChunk(
-10:     val text: String,
-11:     val startOffset: Int,
-12:     val endOffset: Int
-13: )
-14: 
-15: /**
-16:  * Splits text into chunks suitable for TTS inference.
-17:  * Each chunk should produce phonemes within the model's token limit (~400).
-18:  * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
-19:  * abbreviation/decimal handling), then clause boundaries, then word boundaries.
-20:  */
-21: object TextChunker {
-22: 
-23:     // Approximate: 1 word ≈ 5-8 phoneme tokens. 400 tokens ≈ 50-80 words.
-24:     // Use conservative limit of ~50 words per chunk for safety.
-25:     private const val MAX_WORDS_PER_CHUNK = 50
-26:     // Minimum chunk size to avoid tiny fragments
-27:     private const val MIN_WORDS_PER_CHUNK = 3
-28: 
-29:     private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
-30: 
-31:     /**
-32:      * Split text into chunks with offset tracking.
-33:      * Empty text returns an empty list.
-34:      */
-35:     fun chunk(text: String): List<TextChunk> {
-36:         if (text.isBlank()) return emptyList()
-37: 
-38:         // First split into sentences using ICU4J BreakIterator
-39:         val sentences = splitIntoSentences(text)
-40:         val chunks = mutableListOf<TextChunk>()
-41: 
-42:         for (sentence in sentences) {
-43:             if (sentence.text.isBlank()) continue
+3: import java.util.concurrent.TimeUnit
+4: import java.util.concurrent.locks.ReentrantLock
+5: import kotlin.concurrent.withLock
+6: 
+7: /**
+8:  * A thread-safe audio buffer queue whose capacity is measured in total
+9:  * buffered audio **duration** (sample count) rather than chunk count.
+10:  *
+11:  * This gives consistent buffering regardless of sentence length:
+12:  * many short sentences or few long ones all occupy the same amount
+13:  * of audio runway. The producer blocks on [put] when full and wakes
+14:  * instantly when space opens — no sleep-polling.
+15:  *
+16:  * @param sampleRate audio sample rate (e.g. 24000)
+17:  */
+18: class AudioBufferQueue(private val sampleRate: Int) {
+19: 
+20:     companion object {
+21:         /**
+22:          * Maximum buffered audio in seconds. Adjust this value to trade
+23:          * memory (~96 KB per second at 24 kHz mono float) against underrun
+24:          * protection. 15 s ≈ 1.44 MB — enough to survive a ~10 s inference
+25:          * stall when the screen is off and the CPU is throttled.
+26:          */
+27:         const val MAX_BUFFER_SECONDS = 15f
+28:     }
+29: 
+30:     /** A single entry: PCM audio + the index of the originating PreparedChunk. */
+31:     data class Entry(val pcm: FloatArray, val chunkIndex: Int)
+32: 
+33:     private val lock = ReentrantLock()
+34:     private val notFull = lock.newCondition()
+35:     private val notEmpty = lock.newCondition()
+36: 
+37:     private val deque = ArrayDeque<Entry>()
+38:     private var totalSamples = 0L
+39:     private val maxSamples = (MAX_BUFFER_SECONDS * sampleRate).toLong()
+40: 
+41:     @Volatile
+42:     var isClosed = false
+43:         private set
 44: 
-45:             val wordCount = sentence.text.trim().split(Regex("\\s+")).size
-46:             if (wordCount <= MAX_WORDS_PER_CHUNK) {
-47:                 chunks.add(sentence)
-48:             } else {
-49:                 // Sentence too long - split at clause boundaries
-50:                 val clauses = splitKeepingDelimiters(sentence.text, CLAUSE_SEPARATORS, sentence.startOffset)
-51:                 for (clause in clauses) {
-52:                     if (clause.text.isBlank()) continue
-53:                     val clauseWordCount = clause.text.trim().split(Regex("\\s+")).size
-54:                     if (clauseWordCount <= MAX_WORDS_PER_CHUNK) {
-55:                         chunks.add(clause)
-56:                     } else {
-57:                         // Still too long - split at word boundaries
-58:                         chunks.addAll(splitByWords(clause.text, clause.startOffset))
-59:                     }
-60:                 }
-61:             }
-62:         }
-63: 
-64:         // Merge tiny chunks with their neighbors
-65:         return mergeSmallChunks(chunks)
-66:     }
-67: 
-68:     /**
-69:      * Split text into sentences using ICU4J BreakIterator.
-70:      * Handles abbreviations (Dr., Mr., U.S.A.), decimal numbers (3.14),
-71:      * ellipses (...), and other edge cases automatically.
-72:      */
-73:     private fun splitIntoSentences(text: String): List<TextChunk> {
-74:         val result = mutableListOf<TextChunk>()
-75:         val bi = BreakIterator.getSentenceInstance(Locale.US)
-76:         bi.setText(text)
-77: 
-78:         var start = bi.first()
-79:         var end = bi.next()
-80:         while (end != BreakIterator.DONE) {
-81:             val segment = text.substring(start, end)
-82:             if (segment.isNotBlank()) {
-83:                 result.add(TextChunk(segment, start, end))
-84:             }
-85:             start = end
-86:             end = bi.next()
-87:         }
-88: 
-89:         // Handle any remaining text (shouldn't happen with BreakIterator, but be safe)
-90:         if (start < text.length) {
-91:             val remaining = text.substring(start)
-92:             if (remaining.isNotBlank()) {
-93:                 result.add(TextChunk(remaining, start, text.length))
-94:             }
-95:         }
-96: 
-97:         if (result.isEmpty() && text.isNotBlank()) {
-98:             result.add(TextChunk(text, 0, text.length))
-99:         }
-100: 
-101:         return result
+45:     /** Total buffered audio duration in seconds (thread-safe read). */
+46:     val bufferedSeconds: Float
+47:         get() = lock.withLock { totalSamples.toFloat() / sampleRate }
+48: 
+49:     /** Number of chunks currently in the buffer. */
+50:     val size: Int
+51:         get() = lock.withLock { deque.size }
+52: 
+53:     /**
+54:      * Add a chunk. Blocks if the buffer is full (by duration).
+55:      *
+56:      * @return true if the chunk was added, false if the queue was closed.
+57:      */
+58:     fun put(pcm: FloatArray, chunkIndex: Int): Boolean {
+59:         lock.withLock {
+60:             while (totalSamples + pcm.size > maxSamples && !isClosed) {
+61:                 notFull.await()
+62:             }
+63:             if (isClosed) return false
+64: 
+65:             deque.addLast(Entry(pcm, chunkIndex))
+66:             totalSamples += pcm.size
+67:             notEmpty.signal()
+68:             return true
+69:         }
+70:     }
+71: 
+72:     /**
+73:      * Take the next chunk. Blocks up to [timeoutMs] if empty.
+74:      *
+75:      * @return the next [Entry], or null on timeout / closed-and-drained.
+76:      */
+77:     fun take(timeoutMs: Long): Entry? {
+78:         lock.withLock {
+79:             var remaining = TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+80:             while (deque.isEmpty() && !isClosed && remaining > 0) {
+81:                 remaining = notEmpty.awaitNanos(remaining)
+82:             }
+83:             if (deque.isEmpty()) return null  // timeout or closed-and-drained
+84: 
+85:             val entry = deque.removeFirst()
+86:             totalSamples -= entry.pcm.size
+87:             notFull.signal()
+88:             return entry
+89:         }
+90:     }
+91: 
+92:     /**
+93:      * Signal that the producer is done. Remaining entries can still be
+94:      * drained via [take]. Wakes all waiting threads.
+95:      */
+96:     fun close() {
+97:         lock.withLock {
+98:             isClosed = true
+99:             notFull.signalAll()
+100:             notEmpty.signalAll()
+101:         }
 102:     }
 103: 
 104:     /**
-105:      * Split text while keeping delimiters attached to the preceding segment.
-106:      * Tracks offsets relative to the original text.
+105:      * Discard all buffered entries and wake blocked threads.
+106:      * Call from [stop] to unblock the producer immediately.
 107:      */
-108:     private fun splitKeepingDelimiters(
-109:         text: String,
-110:         pattern: Regex,
-111:         baseOffset: Int = 0
-112:     ): List<TextChunk> {
-113:         val result = mutableListOf<TextChunk>()
-114:         var lastEnd = 0
-115: 
-116:         val matches = pattern.findAll(text)
-117:         for (match in matches) {
-118:             val segEnd = match.range.last + 1
-119:             if (segEnd > lastEnd) {
-120:                 val segText = text.substring(lastEnd, segEnd)
-121:                 if (segText.isNotBlank()) {
-122:                     result.add(TextChunk(segText, baseOffset + lastEnd, baseOffset + segEnd))
-123:                 }
-124:                 lastEnd = segEnd
-125:             }
-126:         }
-127: 
-128:         // Remaining text after last delimiter
-129:         if (lastEnd < text.length) {
-130:             val remaining = text.substring(lastEnd)
-131:             if (remaining.isNotBlank()) {
-132:                 result.add(TextChunk(remaining, baseOffset + lastEnd, baseOffset + text.length))
-133:             }
-134:         }
-135: 
-136:         if (result.isEmpty() && text.isNotBlank()) {
-137:             result.add(TextChunk(text, baseOffset, baseOffset + text.length))
-138:         }
-139: 
-140:         return result
-141:     }
-142: 
-143:     /**
-144:      * Split by word boundaries when clause splitting isn't enough.
-145:      */
-146:     private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
-147:         val words = text.split(Regex("(?<=\\s)"))
-148:         val chunks = mutableListOf<TextChunk>()
-149:         var currentWords = mutableListOf<String>()
-150:         var chunkStart = 0
-151:         var pos = 0
-152: 
-153:         for (word in words) {
-154:             currentWords.add(word)
-155:             pos += word.length
-156:             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
-157:                 val chunkText = currentWords.joinToString("")
-158:                 chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
-159:                 chunkStart = pos
-160:                 currentWords = mutableListOf()
-161:             }
-162:         }
-163: 
-164:         if (currentWords.isNotEmpty()) {
-165:             val chunkText = currentWords.joinToString("")
-166:             chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
-167:         }
-168: 
-169:         return chunks
-170:     }
-171: 
-172:     /**
-173:      * Merge chunks that are too small with their next neighbor.
-174:      */
-175:     private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {
-176:         if (chunks.size <= 1) return chunks
-177: 
-178:         val merged = mutableListOf<TextChunk>()
-179:         var i = 0
-180:         while (i < chunks.size) {
-181:             var current = chunks[i]
-182:             val wordCount = current.text.trim().split(Regex("\\s+")).size
-183: 
-184:             // If tiny and there's a next chunk, merge with next
-185:             if (wordCount < MIN_WORDS_PER_CHUNK && i + 1 < chunks.size) {
-186:                 val next = chunks[i + 1]
-187:                 current = TextChunk(
-188:                     current.text + next.text,
-189:                     current.startOffset,
-190:                     next.endOffset
-191:                 )
-192:                 i += 2
-193:             } else {
-194:                 i++
-195:             }
-196:             merged.add(current)
-197:         }
-198:         return merged
-199:     }
-200: }
+108:     fun clear() {
+109:         lock.withLock {
+110:             deque.clear()
+111:             totalSamples = 0
+112:             isClosed = true
+113:             notFull.signalAll()
+114:             notEmpty.signalAll()
+115:         }
+116:     }
+117: }
 
-(End of file - total 200 lines)
+(End of file - total 117 lines)
 </content>
 ```
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 78.6s)
-
-_Thinking:_
-
-Let me analyze the problem:
-
-1. The sample text is: "We're hitting the worst-case scenarios for the big AI labs: energy, their biggest expense, is at multi-year highs, capital from the Gulf is not available for obvious reasons, there are serious concerns about a rate hike, and RAM prices are crashing because new models won't need as much, but labs already bought them at sky-high prices. And that last innovation came from their biggest competitor, Google."
-
-2. ICU4J BreakIterator will split this into two sentences:
-   - "We're hitting the worst-case scenarios ... sky-high prices. "
-   - "And that last innovation came from their biggest competitor, Google."
-
-3. Now I'm counting the words in the first sentence by splitting on whitespace to verify the break point is working correctly.
-
-4. The clause-splitting regex uses separators like commas, semicolons, colons, and hyphens to break up longer sentences.
-
-5. I'm spotting the issue: the hyphen pattern is catching compound words like "worst-case," "multi-year," and "sky-high," which shouldn't trigger splits at all. I'm walking through how the chunks would be merged after splitting. Most of these segments fall below the minimum word threshold, so they'd get combined with their neighbors in a cascading fashion. The merging logic is straightforward—each undersized chunk just attaches to the next one, creating progressively larger segments until they meet the word count requirement. I need to trace through how the regex splits the text to understand what chunks actually get created. The delimiter pattern matches hyphens and punctuation like colons and commas, so "worst-case" gets split at the hyphen, "labs:" at the colon, and so on. Each segment includes everything from the previous split point through the end of the current match, which means the delimiters themselves get attached to the preceding text. I'm realizing the issue—the hyphen in my regex is splitting compound words like "worst-case" across chunk boundaries, which breaks the flow when these segments are read aloud. The first chunk ends with "worst-" and the next begins with "case scenarios," so the word gets fragmented instead of staying together.
-
-The solution is to remove the hyphen from the clause separators regex, though I need to be careful since em dashes and en dashes are legitimate clause boundaries, while hyphens between words without spaces are not. I'm weighing whether to simply strip out the hyphen entirely for simplicity, even though that means losing the ability to split at space-separated hyphens like "word - word."
-
-Alternatively, I could use a more sophisticated regex that treats hyphens specially—only matching them when they're surrounded by spaces—while keeping the other separators as-is. Or I could just increase the word limit threshold to avoid triggering clause splitting for this particular sentence, though that doesn't address the underlying issue with hyphenated words.
-
-The cleanest solution seems to be removing hyphens from the regex entirely. Em dashes and en dashes already handle the real clause breaks, and plain hyphens in English almost always connect compound words rather than separate clauses. The edge case of "word - word" with spaces is rare enough that it's worth sacrificing for better handling of the common case. aced hyphen as dash) can be handled by the em/en dash or is rare enough not to matter.
-
-Actually wait, let me reconsider. In practice, people DO use " - " as a clause separator in informal text. And the sample text itself has `: energy, their biggest expense, is at multi-year highs,` — the commas and colons are the real clause separators here.
-
-I think the cleanest approach is:
-1. Remove plain hyphen `-` from CLAUSE_SEPARATORS (keep `–` and `—`)
-2. Optionally, add `\s+-\s+` as a separate pattern for space-surrounded hyphens
-
-But #2 complicates the regex. Let me just go with #1 — remove `-` entirely. The em/en dashes cover the real clause separator use case.
-
-Now I'm checking whether MAX_WORDS_PER_CHUNK=50 is actually appropriate by counting the words in that first sentence more carefully. Let me work through it word by word to see if 50 is reasonable or if I need to adjust it. I'm working through how the text would split at clause boundaries—commas, semicolons, colons, and dashes. After identifying all the separator positions, I'm breaking the passage into segments and checking which ones meet the minimum word count threshold. Some segments are too small and need to be merged with adjacent ones, while others like the RAM pricing clause and the capital availability statement stand on their own as complete thoughts. Chunk 2 is a bit short at exactly 3 words, which might feel choppy even though it's technically valid. I think the straightforward fix is to remove the plain hyphen from CLAUSE_SEPARATORS. But I should also reconsider whether MAX_WORDS_PER_CHUNK needs adjustment—the current 50-word limit was conservative, but since the int8 model struggles with long token counts and KokoroEngine already handles that with its soft phoneme split at 80 characters, maybe I don't need to keep that constraint as tight.
-
-Actually, looking back at what we discovered, the soft phoneme split created unnatural pauses, and the user rejected the aggressive TextChunker approach too, so MAX_WORDS=50 is already the right compromise. I'll just fix the hyphen issue and present that to the user.
-
-Now let me trace through exactly what happens with this text.
-
-## Analysis
-
-The sample text has **two sentences** (split by ICU4J BreakIterator at the period):
-
-1. `"We're hitting the worst-case scenarios ... sky-high prices."` — **56 words**
-2. `"And that last innovation came from their biggest competitor, Google."` — **10 words**
-
-Sentence 1 exceeds `MAX_WORDS_PER_CHUNK = 50`, so it falls into clause splitting using:
-
-```kotlin
-private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
-```
-
-**The problem**: the regex includes `\\-` (plain hyphen), so it matches hyphens inside compound words like `worst-case`, `multi-year`, `sky-high`. The `splitKeepingDelimiters` function then produces fragments like:
-
-| # | Chunk | Words |
-|---|-------|-------|
-| 1 | `"We're hitting the worst-"` | 4 |
-| 2 | `"case scenarios for the big AI labs: "` | 7 |
-| 3 | `"energy, "` | 1 |
-| 4 | `"their biggest expense, "` | 3 |
-| 5 | `"is at multi-"` | 3 |
-| 6 | `"year highs, "` | 2 |
-| 7 | `"capital from the Gulf is not available for obvious reasons, "` | 10 |
-| 8 | `"there are serious concerns about a rate hike, "` | 8 |
-| 9 | `"and RAM prices are crashing because new models won't need as much, "` | 12 |
-| 10 | `"but labs already bought them at sky-"` | 7 |
-| 11 | `"high prices."` | 2 |
-
-Chunks 1+2 split "worst-case", chunks 5+6 split "multi-year", chunks 10+11 split "sky-high". The `mergeSmallChunks` pass will fix *some* of these (it merges chunks < 3 words with the next), but chunks 1, 5, and 10 all have >= 3 words so they survive as standalone chunks with broken compound words.
-
-## Proposed Fix
-
-**Remove plain hyphen `-` from `CLAUSE_SEPARATORS`.** Keep em dash `—` and en dash `–` which are legitimate clause separators.
-
-```kotlin
-// Before:
-private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
-
-// After:
-private val CLAUSE_SEPARATORS = Regex("[,;:–—]+\\s*")
-```
-
-With this fix, the same sentence would split only at commas and colons, producing:
-
-| # | Chunk | Words |
-|---|-------|-------|
-| 1 | `"We're hitting the worst-case scenarios for the big AI labs: "` | 10 |
-| 2 | `"energy, "` → merged with 3 | 1 |
-| 3 | `"their biggest expense, "` | 3 |
-| 4 | `"is at multi-year highs, "` | 5 |
-| 5 | `"capital from the Gulf is not available for obvious reasons, "` | 10 |
-| 6 | `"there are serious concerns about a rate hike, "` | 8 |
-| 7 | `"and RAM prices are crashing because new models won't need as much, "` | 12 |
-| 8 | `"but labs already bought them at sky-high prices."` | 8 |
-
-After merge: chunk 1+2 combine to `"We're hitting the worst-case scenarios for the big AI labs: energy, "` (11 words). All compound words intact. All splits at natural clause boundaries.
-
-This is a one-line change. No need to adjust `MAX_WORDS_PER_CHUNK` — the comma/colon splits already bring every clause well under 50 words. Want me to go ahead with this?
 
 ---
 
@@ -3974,13 +3724,13 @@ This is a one-line change. No need to adjust `MAX_WORDS_PER_CHUNK` — the comma
 
 ---
 
-## Assistant (Compaction · claude-opus-4.6 · 144.2s)
+## Assistant (Compaction · Claude Opus 4.6 · 146.5s)
 
 
 
 ## Goal
 
-Build an Android app ("MyTTS") that lets users type/paste text and play it as audio using the Kokoro-82M TTS model with int8 quantization (ONNX). The app runs directly on a Redmi K90 Pro Max with Snapdragon CPU. Natural-sounding voice with low power consumption.
+Build an Android app ("MyTTS") that lets users type/paste text and play it as audio using the Kokoro-82M TTS model with int8 quantization (ONNX). The app runs directly on a Redmi K90 Pro Max with Snapdragon 8 CPU. Natural-sounding voice with low power consumption.
 
 ## Instructions
 
@@ -3989,7 +3739,7 @@ Build an Android app ("MyTTS") that lets users type/paste text and play it as au
 - **Model bundled in APK assets** — `model_quantized.onnx` (92.4 MB int8) and voice `.bin` files in APK assets
 - **ONNX Runtime must be version 1.20.0 exactly** — newer versions use ARM SME instructions unsupported on the target phone
 - **CPU Execution Provider only** — not NNAPI/XNNPACK
-- **1 producer thread, queue size 4, background priority on performance core**
+- **1 producer thread, background priority on performance core**
 - **English only**
 - **Sample rate: 24000 Hz** (Kokoro v1.0)
 - **Dev environment**: macOS M4, Android Studio installed, `ANDROID_HOME=$HOME/Library/Android/sdk`, `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`, SDK 35, build-tools 34.0.0, Java 21
@@ -4058,29 +3808,35 @@ Build an Android app ("MyTTS") that lets users type/paste text and play it as au
 ### eSpeak-ng Integration Details:
 - Uses the **csukuangfj fork** (commit `f6fed6c58b5e0998b8e68c6610125e2d07d595a7`)
 - Built as static library via CMake FetchContent
-- JNI bridge uses `espeak_TextToPhonemes()` with `phonememode = 0x02 | 0x80 | ('^' << 8)` — processes text clause by clause
+- JNI bridge uses `espeak_TextToPhonemes()` — now pre-splits text at clause-boundary punctuation (`, ` `; ` `: `) before sending fragments to eSpeak
 - Voice set to `en-us`
 - Data files: English-only (~800 KB) extracted from APK assets to `context.filesDir/espeak-ng-data/` on first launch
 
-### TextChunker current behavior:
-- Uses ICU4J `BreakIterator.getSentenceInstance()` for sentence splitting
-- `MAX_WORDS_PER_CHUNK=50`, `MIN_WORDS_PER_CHUNK=3`
-- Splits at clause boundaries (commas, semicolons, colons, dashes) if sentence exceeds 50 words
-- Small chunks (<3 words) get merged with neighbors
-- **BUG FOUND**: `CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")` includes plain hyphen `-`, which incorrectly splits compound words like `worst-case`, `multi-year`, `sky-high`
+### Clause-boundary punctuation fix — TWO ITERATIONS:
+- **First attempt (backward scan)**: Tried to scan backward from eSpeak's `textPtr` position to find consumed delimiters. **FAILED** — likely because eSpeak processed the whole text as one clause, or `textPtr` positioning was different than assumed.
+- **Second attempt (pre-split) — WORKS**: Pre-split input text at `, ` `; ` `: ` ourselves, phonemize each fragment independently through eSpeak, rejoin with the punctuation character. Guarantees commas appear in the phoneme stream for the Kokoro model to produce natural pauses.
+- Safe edge cases: `3,000` (no space after comma) is not split.
+
+### TextChunker — simplified long-sentence chunking:
+- **Old behavior**: Split long sentences (>50 words) at clause separators (commas, semicolons, colons, hyphens, dashes) using `CLAUSE_SEPARATORS` regex. This incorrectly split compound words like `worst-case`, `multi-year`, `sky-high`.
+- **New behavior**: Removed `CLAUSE_SEPARATORS` and `splitKeepingDelimiters()` entirely. Long sentences now split directly at word boundaries every ~50 words.
+- **Continuation markers**: `TextChunk` and `PreparedChunk` have `isContinuation: Boolean`. Sub-chunks after the first are marked `isContinuation=true`. AudioProducer skips the 300ms inter-sentence gap before continuation chunks.
+- **Tiny tail absorption**: `splitByWords()` absorbs tails < 3 words into the previous sub-chunk.
 
 ### AudioProducer.trimAndPadSilence:
-- Has the original `SILENCE_THRESHOLD` and `TRIM_MARGIN_SAMPLES` values from commit `41f784e`
+- Takes `addGap: Boolean` parameter
+- Uses look-ahead: if `chunks[i+1].isContinuation`, passes `addGap=false` to skip 300ms gap
+- Has `SILENCE_THRESHOLD` and `TRIM_MARGIN_SAMPLES` values
 - Scans backwards from end to find last non-silent sample
-- Appends `GAP_BETWEEN_CHUNKS_MS=300` ms of silence padding between chunks
+- Appends `GAP_BETWEEN_CHUNKS_MS=300` ms of silence padding between chunks (when `addGap=true`)
 
 ### KokoroEngine:
 - Has hard limit (400 tokens) split path with recursive splitting and crossfade concat
 - The old `SOFT_MAX_PHONEME_LENGTH = 80` code was reverted
 
 ### Screen-off audio muting — FIXED:
-- **Root cause**: `AudioProducer.kt:59` had `Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)` (priority 10). When screen off, Android throttles background-priority threads.
-- **Fix**: Changed to `Process.THREAD_PRIORITY_DEFAULT` (priority 0).
+- **Root cause**: `AudioProducer.kt` had `Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)` (priority 10). When screen off, Android throttles background-priority threads.
+- **Fix**: Changed to `Process.THREAD_PRIORITY_FOREGROUND` (priority -2) in latest commit.
 
 ### Hint tone buffering issue — FIXED with separate static AudioTrack:
 - **Original problem**: Writing tiny 150ms hint tones to the main streaming AudioTrack caused them to accumulate in the buffer and play back-to-back when real audio arrived.
@@ -4088,36 +3844,33 @@ Build an Android app ("MyTTS") that lets users type/paste text and play it as au
 
 ### Highlight scroll drift — FIXED:
 - **Root cause**: Auto-scroll used linear character-ratio (`charOffset / textLen * scrollMax`) which diverges from actual pixel position due to line wrapping and varying line lengths. Also no centering offset.
-- **Fix**: Use `TextLayoutResult.getLineForOffset()` + `getLineTop()/getLineBottom()` for pixel-accurate position, subtract half viewport height to center highlight. Applied to all three scroll sites: playback auto-scroll, initial scroll on app open, scroll on playback stop.
+- **Fix**: Use `TextLayoutResult.getLineForOffset()` + `getLineTop()/getLineBottom()` for pixel-accurate position, subtract half viewport height to center highlight.
 
 ### Stale chunks race condition — FIXED:
-- **Root cause**: `PlaybackController.processText()` launched an untracked fire-and-forget coroutine. If called twice rapidly (startup processing old saved text, then paste with new text), the old coroutine could finish last and overwrite `preparedChunks` with stale chunks.
-- **Fix**: Track the Job in `processJob`, cancel it before launching a new one. Also clear `preparedChunks` on processing failure.
+- **Root cause**: `PlaybackController.processText()` launched an untracked fire-and-forget coroutine. If called twice rapidly, old coroutine could overwrite with stale chunks.
+- **Fix**: Track the Job in `processJob`, cancel it before launching a new one.
 
-### Power Optimization — ONLY #1 KEPT, #2-5 REVERTED:
-- **#1 KEPT (commit `f1bfeb0`)**: Added `setInterOpNumThreads(1)` to ONNX SessionOptions, closed SessionOptions after createSession(). Prevents ORT from spawning threads equal to CPU core count.
-- **#2-5 REVERTED by user due to regression** — wake lock management, blocking queue backpressure, ReentrantLock pause waiting, UI memoization all caused issues.
-
-### Slow mode fix — model speed parameter:
-- **Old behavior**: AudioTrack sample rate reduced to 18000 Hz (24000×0.75), which lowered pitch unnaturally.
-- **Fix (commit `5b5d9bf`)**: Pass `speed=0.75f` to Kokoro model's duration predictor instead. Model generates naturally slower speech with correct pitch. AudioTrack always at native 24000 Hz.
-- **Note**: If speed parameter is inverted (0.75 = faster), need to flip to 1.333f.
+### Power Optimization — Research and Implementation:
+- **PARTIAL_WAKE_LOCK prevents CPU suspend but NOT frequency scaling** — Xiaomi/HyperOS aggressively caps CPU frequency when screen off
+- **Foreground service is in `foreground` cgroup, NOT `top-app`** — lower uclamp_min values, scheduler less aggressive about big cores
+- **Thread.sleep polling wastes 50-250ms per cycle under CPU pressure** — timer coalescing on Android inflates sleep durations when screen off
+- **Race-to-idle generally uses 10-30% less energy** than sustained low-power on big.LITTLE SoCs for bursty compute workloads
+- **PerformanceHintManager (API 31+)** tells ADPF about workload pattern for better CPU frequency/core decisions
+- **ONNX Runtime `session.set_denormal_as_zero`** prevents rare catastrophic slowdowns from near-zero float intermediates
+- **sched_setaffinity** is callable from userspace but constrained by cpuset cgroups and core_ctl — not implemented
 
 ### normalizeText() simplified — eSpeak-ng handles most text normalization natively:
-- **Removed**: smart quotes, abbreviations (Dr./Mr./etc.), percentages, hashtag numbers, & and @, ordinals, year pronunciation, digit-grouping commas, general number-to-words conversion, space collapsing — all handled natively by eSpeak-ng
+- **Removed**: smart quotes, abbreviations (Dr./Mr./etc.), percentages, hashtag numbers, & and @, ordinals, year pronunciation, digit-grouping commas, general number-to-words conversion, space collapsing
 - **Kept only 5 necessary rules**: full-width CJK punctuation, time expressions (colon is clause separator in eSpeak), currency symbols (eSpeak reads "$500" as "dollar five hundred" — wrong order), currency magnitude suffixes like $50B (eSpeak doesn't know K/M/B/T), number-range hyphens (eSpeak may read as "minus")
-- Currency/time rules now output numbers (e.g. `"3 dollars and 50 cents"`) and let eSpeak convert them to words
-- All number helper functions removed: `numberToWords`, `integerToWords`, `ordinalToWords`, `yearToWords`, `digitToWord`, and ONES/TENS/ORDINAL_ONES/ORDINAL_TENS lookup tables
 
-### Dead code cleaned up:
-- `KokoroEngine.speak()` and `textToPhonemes()` — old pipeline entry points, never called
-- `PhonemeConverter.phonemize()` — only reachable via dead `speak()` chain
-- `AudioPlayer.isRunning`, `isPaused` — unused public properties
-- `AudioPlayer.onUnderrun` callback — constructor param never provided by any caller
-- `AudioProducer.isRunning` — unused public property
-- `HighlightBorder` color constant — unused
-- Unused dependencies removed: `lifecycle-viewmodel-compose`, `lifecycle-runtime-compose`, `androidx.media:media`
-- Misaki references removed from README.md credits and BUILD.md descriptions
+### Currency comma-grouping bug — FIXED:
+- **Bug**: `$50,000` was pronounced "fifty dollar zero zero zero" because currency regex `\d+` only matched `50`, leaving `,000` orphaned.
+- **Fix**: Changed regex to `\d{1,3}(?:,\d{3})*` to match comma-grouped digits, then strip commas before conversion. Applied to both currency regexes (with-cents and magnitude).
+
+### Duration-based audio buffer — IMPLEMENTED BUT HAS REGRESSION:
+- **Replaced count-based `LinkedBlockingQueue(4)`** with new `AudioBufferQueue` that measures capacity in total buffered audio duration (15 seconds, configurable)
+- **Queue owned by PlaybackController**, passed to both producer and player
+- **CRITICAL BUG FOUND (current task)**: After playing for some time, playback enters underrun and never recovers. CPU drops to 0 — producer thread appears permanently blocked. Only stop & play again recovers.
 
 ## Accomplished
 
@@ -4136,7 +3889,7 @@ Build an Android app ("MyTTS") that lets users type/paste text and play it as au
 12. **`e0421f2`** — Fix stop button delay: instant silence via pause+flush before thread joins
 13. **`7d02669`** — Fix highlight scroll: use pixel-accurate positioning with viewport centering
 14. **`0ab085f`** — Fix stale chunks race: cancel in-flight processText before re-launch
-15. **`9740d04`** — Add debug logging: dump all chunks at producer start (temporary, user will delete after testing)
+15. **`9740d04`** — Add debug logging: dump all chunks at producer start
 16. **`e4b06e5`** — Guard Log.d calls with BuildConfig.DEBUG to strip from release builds
 17. **`984b673`** — Fix status bar: use dark icons on light background for readability
 18. **`f1bfeb0`** — #1 Power: limit ONNX inter-op threads to 1 and close SessionOptions
@@ -4146,39 +3899,65 @@ Build an Android app ("MyTTS") that lets users type/paste text and play it as au
 22. **`c45f161`** — Release v0.1: set versionName and add release steps to BUILD.md (tagged `v0.1`)
 23. **`ecedbd7`** — Simplify normalizeText: remove rules redundant with eSpeak-ng
 24. **`c777034`** — Remove dead code, unused deps, and stale misaki references
+25. **`3b5dbc3`** — Simplify long-sentence chunking: remove clause splitting, add continuation markers
+26. **`7cf8d31`** — Preserve clause-boundary punctuation in phoneme stream (pre-split approach)
+27. **`2f768d4`** — Fix currency normalization for comma-grouped numbers like $50,000
+28. **`8efdbb9`** — Replace sleep-polling backpressure with blocking queue.put()
+29. **`a20697b`** — Raise producer thread priority to FOREGROUND + enable ONNX denormal-as-zero
+30. **`7cb680c`** — Add PerformanceHintManager to signal sustained inference workload
+31. **`6717baf`** — Replace count-based audio queue with duration-based buffer (HAS REGRESSION)
 
-### PENDING — TextChunker hyphen bug fix:
-- **Bug**: `CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")` includes plain hyphen `-`, which splits compound words like `worst-case`, `multi-year`, `sky-high` across chunks
-- **Proposed fix**: Remove plain hyphen from the regex, keep em dash `–` and en dash `—`
-- Change `CLAUSE_SEPARATORS` from `Regex("[,;:\\-–—]+\\s*")` to `Regex("[,;:–—]+\\s*")`
-- The user agreed this is the right approach — **ready to implement**
-- This is a one-line change in `TextChunker.kt` line 29
-- Test with sample text: "We're hitting the worst-case scenarios for the big AI labs: energy, their biggest expense, is at multi-year highs, capital from the Gulf is not available for obvious reasons, there are serious concerns about a rate hike, and RAM prices are crashing because new models won't need as much, but labs already bought them at sky-high prices. And that last innovation came from their biggest competitor, Google."
+### CURRENT BUG — Producer thread deadlock in AudioBufferQueue:
+The user reports that after playing for some time, playback enters underrun and the producer thread appears permanently blocked (CPU drops to 0). The likely root cause is in `AudioBufferQueue.put()` line 60:
+
+```kotlin
+while (totalSamples + pcm.size > maxSamples && !isClosed) {
+    notFull.await()
+}
+```
+
+**The bug**: If a single chunk's PCM array is larger than `maxSamples` (360,000 samples = 15 seconds), then even when the queue is completely empty (`totalSamples == 0`), the condition `0 + pcm.size > maxSamples` is still true. The producer will block forever because the consumer can never free enough space — the queue is already empty.
+
+A 50-word sentence at 24kHz can produce ~15-20 seconds of audio = 360,000-480,000 samples, easily exceeding the 360,000 sample limit.
+
+**The fix needed**: In `put()`, if the queue is empty (`totalSamples == 0`), always accept the chunk regardless of its size. A single chunk must always be enqueueable — you can't split it at the queue level.
+
+The fix should change the blocking condition from:
+```kotlin
+while (totalSamples + pcm.size > maxSamples && !isClosed)
+```
+to:
+```kotlin
+while (totalSamples > 0 && totalSamples + pcm.size > maxSamples && !isClosed)
+```
+
+This way, when the queue is empty, any chunk passes through immediately. The capacity limit only applies when there's already buffered audio.
 
 ## Relevant files / directories
 
 ### Project root: `/Users/cyb/works/mytts/`
 
-**Audio pipeline:**
-- `app/src/main/java/com/example/mytts/audio/AudioPlayer.kt` — Audio playback consumer, crossfade, AudioTrack drain, hint tone (MODE_STATIC)
-- `app/src/main/java/com/example/mytts/audio/AudioProducer.kt` — Producer thread, ONNX inference scheduling, trimAndPadSilence
-- `app/src/main/java/com/example/mytts/audio/TextProcessor.kt` — Orchestrates chunking + normalizeText()
-- `app/src/main/java/com/example/mytts/audio/TextChunker.kt` — Sentence splitting (ICU4J BreakIterator, MAX_WORDS=50). **LINE 29 NEEDS FIX: remove hyphen from CLAUSE_SEPARATORS**
-- `app/src/main/java/com/example/mytts/audio/PlaybackController.kt` — State machine, orchestrates player+producer
+**Audio pipeline (PRIMARY FILES FOR CURRENT BUG):**
+- `app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt` — **NEW, HAS BUG**: Duration-based buffer queue. `put()` deadlocks when a single chunk exceeds `maxSamples`. Fix needed on line 60.
+- `app/src/main/java/com/example/mytts/audio/AudioPlayer.kt` — Audio playback consumer, crossfade, AudioTrack drain, hint tone (MODE_STATIC). Consumer thread at `THREAD_PRIORITY_AUDIO` (-16). Now accepts `AudioBufferQueue` via constructor.
+- `app/src/main/java/com/example/mytts/audio/AudioProducer.kt` — Producer thread at `THREAD_PRIORITY_FOREGROUND` (-2), ONNX inference scheduling, trimAndPadSilence, PerformanceHintManager. Now accepts `AudioBufferQueue` via constructor.
+- `app/src/main/java/com/example/mytts/audio/TextProcessor.kt` — Orchestrates chunking + normalizeText(), passes `isContinuation` through
+- `app/src/main/java/com/example/mytts/audio/TextChunker.kt` — Sentence splitting (ICU4J BreakIterator, MAX_WORDS=50), word-boundary splitting for long sentences, continuation markers, tiny tail absorption
+- `app/src/main/java/com/example/mytts/audio/PlaybackController.kt` — State machine, orchestrates player+producer, **now owns AudioBufferQueue** and passes it to both sides
 
 **Engine files:**
-- `app/src/main/java/com/example/mytts/engine/KokoroEngine.kt` — ONNX inference, hard token split (400 max). Dead `speak()` and `textToPhonemes()` already removed.
-- `app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt` — eSpeak phonemization + postProcess() + simplified normalizeText(). Dead `phonemize()` already removed.
+- `app/src/main/java/com/example/mytts/engine/KokoroEngine.kt` — ONNX inference, hard token split (400 max), denormal-as-zero config
+- `app/src/main/java/com/example/mytts/engine/PhonemeConverter.kt` — eSpeak phonemization + postProcess() + normalizeText() with currency comma-grouping fix
 - `app/src/main/java/com/example/mytts/engine/Tokenizer.kt` — Pure char→int VOCAB mapping (179 chars), MAX_PHONEME_LENGTH=400
 - `app/src/main/java/com/example/mytts/engine/VoiceStyleLoader.kt` — Loads voice style .bin files (510×256 matrix)
 - `app/src/main/java/com/example/mytts/engine/EspeakBridge.kt` — Kotlin JNI wrapper for eSpeak-ng
 
 **eSpeak JNI:**
-- `app/src/main/cpp/espeak_jni.cpp` — C++ JNI bridge
+- `app/src/main/cpp/espeak_jni.cpp` — C++ JNI bridge. Pre-splits text at clause-boundary punctuation before eSpeak processing.
 - `app/src/main/cpp/CMakeLists.txt` — CMake build config
 
 **Service & UI:**
-- `app/src/main/java/com/example/mytts/service/PlaybackService.kt` — Foreground service with PARTIAL_WAKE_LOCK, mediaPlayback type
+- `app/src/main/java/com/example/mytts/service/PlaybackService.kt` — Foreground service with PARTIAL_WAKE_LOCK (1-hour timeout), mediaPlayback type
 - `app/src/main/java/com/example/mytts/ui/MainScreen.kt` — Compose UI
 - `app/src/main/java/com/example/mytts/MainActivity.kt` — Activity, service binding, status bar fix
 - `app/src/main/java/com/example/mytts/util/PreferencesManager.kt` — SharedPreferences persistence
@@ -4188,7 +3967,7 @@ Build an Android app ("MyTTS") that lets users type/paste text and play it as au
 - `plan.txt` — Original requirements spec
 - `build.gradle.kts` (root), `settings.gradle.kts`, `app/build.gradle.kts` — Build config, versionName "0.1"
 - `BUILD.md` — Build & test guide with release steps
-- `README.md` — Project overview (misaki credit removed)
+- `README.md` — Project overview
 - `release.keystore` — Release signing key (password: `mytts123`, alias: `mytts`)
 
 ---
@@ -4197,64 +3976,2157 @@ Build an Android app ("MyTTS") that lets users type/paste text and play it as au
 
 ---
 
-## Assistant (Plan · claude-opus-4.6 · 13.3s)
+## Assistant (Build · Claude Opus 4.6 · 8.3s)
 
 
 
-Based on the context, the next pending task is the **TextChunker hyphen bug fix** — a one-line change that's already been analyzed and agreed upon.
+Based on the context, the current outstanding task is fixing the **producer thread deadlock bug in `AudioBufferQueue.put()`**. Let me verify the current state of the code and apply the fix.
 
-Here's the plan:
+**Tool: read**
 
-## Plan: Fix TextChunker hyphen splitting bug
-
-**Problem**: `CLAUSE_SEPARATORS` regex on line 29 of `TextChunker.kt` includes a plain hyphen `-`, which incorrectly splits compound words like `worst-case`, `multi-year`, `sky-high` across chunks.
-
-**Change**: In `app/src/main/java/com/example/mytts/audio/TextChunker.kt` line 29, change:
-```
-Regex("[,;:\\-–—]+\\s*")
-```
-to:
-```
-Regex("[,;:–—]+\\s*")
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt"
+}
 ```
 
-**Verification**: Mentally trace the test sentence:
-> "We're hitting the worst-case scenarios for the big AI labs: energy, their biggest expense, is at multi-year highs, capital from the Gulf is not available for obvious reasons, there are serious concerns about a rate hike, and RAM prices are crashing because new models won't need as much, but labs already bought them at sky-high prices."
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.audio
+2: 
+3: import java.util.concurrent.TimeUnit
+4: import java.util.concurrent.locks.ReentrantLock
+5: import kotlin.concurrent.withLock
+6: 
+7: /**
+8:  * A thread-safe audio buffer queue whose capacity is measured in total
+9:  * buffered audio **duration** (sample count) rather than chunk count.
+10:  *
+11:  * This gives consistent buffering regardless of sentence length:
+12:  * many short sentences or few long ones all occupy the same amount
+13:  * of audio runway. The producer blocks on [put] when full and wakes
+14:  * instantly when space opens — no sleep-polling.
+15:  *
+16:  * @param sampleRate audio sample rate (e.g. 24000)
+17:  */
+18: class AudioBufferQueue(private val sampleRate: Int) {
+19: 
+20:     companion object {
+21:         /**
+22:          * Maximum buffered audio in seconds. Adjust this value to trade
+23:          * memory (~96 KB per second at 24 kHz mono float) against underrun
+24:          * protection. 15 s ≈ 1.44 MB — enough to survive a ~10 s inference
+25:          * stall when the screen is off and the CPU is throttled.
+26:          */
+27:         const val MAX_BUFFER_SECONDS = 15f
+28:     }
+29: 
+30:     /** A single entry: PCM audio + the index of the originating PreparedChunk. */
+31:     data class Entry(val pcm: FloatArray, val chunkIndex: Int)
+32: 
+33:     private val lock = ReentrantLock()
+34:     private val notFull = lock.newCondition()
+35:     private val notEmpty = lock.newCondition()
+36: 
+37:     private val deque = ArrayDeque<Entry>()
+38:     private var totalSamples = 0L
+39:     private val maxSamples = (MAX_BUFFER_SECONDS * sampleRate).toLong()
+40: 
+41:     @Volatile
+42:     var isClosed = false
+43:         private set
+44: 
+45:     /** Total buffered audio duration in seconds (thread-safe read). */
+46:     val bufferedSeconds: Float
+47:         get() = lock.withLock { totalSamples.toFloat() / sampleRate }
+48: 
+49:     /** Number of chunks currently in the buffer. */
+50:     val size: Int
+51:         get() = lock.withLock { deque.size }
+52: 
+53:     /**
+54:      * Add a chunk. Blocks if the buffer is full (by duration).
+55:      *
+56:      * @return true if the chunk was added, false if the queue was closed.
+57:      */
+58:     fun put(pcm: FloatArray, chunkIndex: Int): Boolean {
+59:         lock.withLock {
+60:             while (totalSamples + pcm.size > maxSamples && !isClosed) {
+61:                 notFull.await()
+62:             }
+63:             if (isClosed) return false
+64: 
+65:             deque.addLast(Entry(pcm, chunkIndex))
+66:             totalSamples += pcm.size
+67:             notEmpty.signal()
+68:             return true
+69:         }
+70:     }
+71: 
+72:     /**
+73:      * Take the next chunk. Blocks up to [timeoutMs] if empty.
+74:      *
+75:      * @return the next [Entry], or null on timeout / closed-and-drained.
+76:      */
+77:     fun take(timeoutMs: Long): Entry? {
+78:         lock.withLock {
+79:             var remaining = TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+80:             while (deque.isEmpty() && !isClosed && remaining > 0) {
+81:                 remaining = notEmpty.awaitNanos(remaining)
+82:             }
+83:             if (deque.isEmpty()) return null  // timeout or closed-and-drained
+84: 
+85:             val entry = deque.removeFirst()
+86:             totalSamples -= entry.pcm.size
+87:             notFull.signal()
+88:             return entry
+89:         }
+90:     }
+91: 
+92:     /**
+93:      * Signal that the producer is done. Remaining entries can still be
+94:      * drained via [take]. Wakes all waiting threads.
+95:      */
+96:     fun close() {
+97:         lock.withLock {
+98:             isClosed = true
+99:             notFull.signalAll()
+100:             notEmpty.signalAll()
+101:         }
+102:     }
+103: 
+104:     /**
+105:      * Discard all buffered entries and wake blocked threads.
+106:      * Call from [stop] to unblock the producer immediately.
+107:      */
+108:     fun clear() {
+109:         lock.withLock {
+110:             deque.clear()
+111:             totalSamples = 0
+112:             isClosed = true
+113:             notFull.signalAll()
+114:             notEmpty.signalAll()
+115:         }
+116:     }
+117: }
 
-With the fix, splits should occur at commas, colons, and dashes (en/em) but NOT at hyphens in compound words.
+(End of file - total 117 lines)
+</content>
+```
 
-**Commit**: One commit with message like "Fix TextChunker: remove hyphen from clause separators to preserve compound words"
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git log --oneline -5",
+  "description": "Check recent git history",
+  "workdir": "/Users/cyb/works/mytts"
+}
+```
+
+**Output:**
+```
+6717baf Replace count-based audio queue with duration-based buffer
+1351ddb Add PerformanceHintManager to signal sustained inference workload
+43a21fb Raise producer thread priority and enable ONNX denormal-as-zero
+a43a4c7 Replace sleep-polling backpressure with blocking queue.put()
+dd3320f Fix currency normalization for comma-grouped numbers like $50,000
+
+```
 
 ---
 
-Beyond this fix, I don't see any other pending tasks from the context. Shall I proceed with implementing this one-line fix and committing it?
+## Assistant (Build · Claude Opus 4.6 · 6.8s)
+
+Good. The bug is confirmed on line 60. The latest commit is `6717baf` which introduced this regression. Let me apply the fix.
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+      "status": "in_progress",
+      "priority": "high"
+    },
+    {
+      "content": "Build to verify the fix compiles",
+      "status": "pending",
+      "priority": "high"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+    "status": "in_progress",
+    "priority": "high"
+  },
+  {
+    "content": "Build to verify the fix compiles",
+    "status": "pending",
+    "priority": "high"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 9.3s)
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt",
+  "oldString": "            while (totalSamples + pcm.size > maxSamples && !isClosed) {",
+  "newString": "            while (totalSamples > 0 && totalSamples + pcm.size > maxSamples && !isClosed) {"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 9.2s)
+
+Now let me verify the fix looks correct and build:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt",
+  "offset": 53,
+  "limit": 20
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt</path>
+<type>file</type>
+<content>53:     /**
+54:      * Add a chunk. Blocks if the buffer is full (by duration).
+55:      *
+56:      * @return true if the chunk was added, false if the queue was closed.
+57:      */
+58:     fun put(pcm: FloatArray, chunkIndex: Int): Boolean {
+59:         lock.withLock {
+60:             while (totalSamples > 0 && totalSamples + pcm.size > maxSamples && !isClosed) {
+61:                 notFull.await()
+62:             }
+63:             if (isClosed) return false
+64: 
+65:             deque.addLast(Entry(pcm, chunkIndex))
+66:             totalSamples += pcm.size
+67:             notEmpty.signal()
+68:             return true
+69:         }
+70:     }
+71: 
+72:     /**
+
+(Showing lines 53-72 of 117. Use offset=73 to continue.)
+</content>
+```
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "ANDROID_HOME=$HOME/Library/Android/sdk JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ./gradlew assembleDebug 2>&1 | tail -20",
+  "description": "Build debug APK to verify fix compiles",
+  "workdir": "/Users/cyb/works/mytts",
+  "timeout": 300000
+}
+```
+
+**Output:**
+```
+> Task :app:buildCMakeDebug[arm64-v8a]
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:compileDebugKotlin
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 1s
+39 actionable tasks: 6 executed, 33 up-to-date
+
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 7.4s)
+
+Build succeeds. Let me update the todos and commit.
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Build to verify the fix compiles",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Commit the fix",
+      "priority": "high",
+      "status": "in_progress"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Build to verify the fix compiles",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Commit the fix",
+    "priority": "high",
+    "status": "in_progress"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 11.5s)
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git add app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt && git commit -m \"Fix producer deadlock: allow oversized chunks when queue is empty\n\nA single chunk with more samples than maxSamples (e.g. a 50-word\nsentence producing >15s of audio) would block forever in put() even\nwhen the queue was completely empty, because the condition\n'totalSamples + pcm.size > maxSamples' was always true.\n\nAdd 'totalSamples > 0' guard so an empty queue always accepts the\nnext chunk regardless of its size.\"",
+  "description": "Commit the deadlock fix",
+  "workdir": "/Users/cyb/works/mytts"
+}
+```
+
+**Output:**
+```
+[master 7bc83c6] Fix producer deadlock: allow oversized chunks when queue is empty
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 6.4s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Build to verify the fix compiles",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Commit the fix",
+      "priority": "high",
+      "status": "completed"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Build to verify the fix compiles",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Commit the fix",
+    "priority": "high",
+    "status": "completed"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 9.4s)
+
+Done. Committed as `7bc83c6`.
+
+**The fix**: Changed the blocking condition in `AudioBufferQueue.put()` (line 60) from:
+```kotlin
+while (totalSamples + pcm.size > maxSamples && !isClosed)
+```
+to:
+```kotlin
+while (totalSamples > 0 && totalSamples + pcm.size > maxSamples && !isClosed)
+```
+
+When the queue is empty (`totalSamples == 0`), any chunk is now accepted immediately regardless of size. The capacity limit only applies when there's already buffered audio. This prevents the permanent deadlock when a long sentence produces more than 15 seconds of audio.
+
+No other outstanding tasks were identified. Let me know if there's anything else to work on, or if you'd like me to review `plan.txt` for any remaining unimplemented features.
 
 ---
 
 ## User
 
-when is this TextChunker called? if the whole sentence is not long enough, "-" won't be treated as clause separator, and "worst-case" is pronounced correctly. so i think the issue might be deeper
+it's fixed, please amend commit the bugfix to previous patch and drop this one, keep the commit message of previous patch untouched as the bug is not there
 
 ---
 
-## Assistant (Plan · claude-opus-4.6 · 14.1s)
-
-
-
-Good point. Let me trace through the logic more carefully. The `CLAUSE_SEPARATORS` regex is only used when a sentence exceeds `MAX_WORDS_PER_CHUNK` (50 words). For shorter sentences, hyphens would never trigger that path. Let me look at the actual code to understand where the real issue might be.
+## Assistant (Build · Claude Haiku 4.5 · 7.2s)
 
 _Thinking:_
 
-The user is making a good point. Let me think about this more carefully.
+The user is asking me to:
+1. Amend the bugfix into the previous commit (6717baf "Replace count-based audio queue with duration-based buffer")
+2. Drop the new commit I just made (7bc83c6)
+3. Keep the original commit message untouched
 
-The TextChunker splits text into chunks. The `CLAUSE_SEPARATORS` regex is only used when a sentence exceeds `MAX_WORDS_PER_CHUNK` (50 words). If a sentence has fewer than 50 words, it won't be split at clause boundaries at all, and the hyphen in "worst-case" would never be hit.
+So I need to:
+1. Reset to the previous commit (6717baf)
+2. Apply the fix
+3. Amend the commit with the fix included
+4. The original commit message stays the same
 
-So the question is: when IS this actually a problem? Let me look at the TextChunker code to understand the flow better.
+Let me do this carefully. First, I should get the hash of the commit before 6717baf to reset to that point.
 
-The user is suggesting the bug might be deeper than just the regex — perhaps the hyphen causes issues elsewhere, like in eSpeak phonemization or word counting.
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git log --oneline -3",
+  "description": "Check current commits",
+  "workdir": "/Users/cyb/works/mytts"
+}
+```
+
+**Output:**
+```
+7bc83c6 Fix producer deadlock: allow oversized chunks when queue is empty
+6717baf Replace count-based audio queue with duration-based buffer
+1351ddb Add PerformanceHintManager to signal sustained inference workload
+
+```
+
+---
+
+## Assistant (Build · Claude Haiku 4.5 · 5.8s)
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git reset --soft HEAD~1 && git reset HEAD app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt && git commit --amend --no-edit",
+  "description": "Amend the fix into the previous commit and drop the new one",
+  "workdir": "/Users/cyb/works/mytts"
+}
+```
+
+**Output:**
+```
+Unstaged changes after reset:
+M	app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt
+[master 0a61c3d] Replace count-based audio queue with duration-based buffer
+ Date: Sun Apr 5 17:19:21 2026 +0800
+ 4 files changed, 148 insertions(+), 54 deletions(-)
+ create mode 100644 app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt
+
+```
+
+---
+
+## Assistant (Build · Claude Haiku 4.5 · 5.1s)
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git add app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt && git commit --amend --no-edit",
+  "description": "Add the fix to the amended commit",
+  "workdir": "/Users/cyb/works/mytts"
+}
+```
+
+**Output:**
+```
+[master 88aa6c1] Replace count-based audio queue with duration-based buffer
+ Date: Sun Apr 5 17:19:21 2026 +0800
+ 4 files changed, 148 insertions(+), 54 deletions(-)
+ create mode 100644 app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt
+
+```
+
+---
+
+## Assistant (Build · Claude Haiku 4.5 · 5.3s)
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git log --oneline -3",
+  "description": "Verify the fix is amended and old commit dropped",
+  "workdir": "/Users/cyb/works/mytts"
+}
+```
+
+**Output:**
+```
+88aa6c1 Replace count-based audio queue with duration-based buffer
+1351ddb Add PerformanceHintManager to signal sustained inference workload
+43a21fb Raise producer thread priority and enable ONNX denormal-as-zero
+
+```
+
+---
+
+## Assistant (Build · Claude Haiku 4.5 · 7.1s)
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Build to verify the fix compiles",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Commit the fix",
+      "priority": "high",
+      "status": "completed"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Fix producer deadlock in AudioBufferQueue.put() — allow oversized chunks when queue is empty",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Build to verify the fix compiles",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Commit the fix",
+    "priority": "high",
+    "status": "completed"
+  }
+]
+```
+
+---
+
+## Assistant (Build · Claude Haiku 4.5 · 4.9s)
+
+Done. The bugfix has been amended into the previous commit `88aa6c1` ("Replace count-based audio queue with duration-based buffer"), the separate commit was dropped, and the original message is preserved.
+
+---
+
+## User
+
+now investigate app memory issue: when app starts with a text of aboud 1500 words, the initial RES size is 341M, bigger than expected but generally okay. but when play starts, RES increases rapidly to about 630M, keep that size for some time, then increases gradually to 900M, stay at that level until end (whole text of ~1500 words play done). I'm suspecting there are memory leak in the app, please dive deep and give your analysis.
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 17.9s)
+
+_Thinking:_
+
+The user wants me to investigate memory issues in the app. I need to analyze the code to understand where memory might be leaking or accumulating. Let me trace the entire audio pipeline to understand memory allocation patterns.
+
+Let me think about the memory profile they described:
+1. App starts with ~1500 words of text: 341MB RES (baseline)
+2. Play starts: rapidly jumps to ~630MB (+289MB)
+3. Gradually increases to ~900MB (+270MB more)
+4. Stays at 900MB until playback finishes
+
+This pattern suggests:
+- The initial jump (341→630) could be ONNX model warmup, AudioTrack allocation, voice style loading, etc.
 
 
-I need to trace through the TextChunker logic to see exactly when `CLAUSE_SEPARATORS` gets invoked and whether the hyphen handling is the real culprit or if there's something else going on upstream.
+- The gradual increase (630→900) points to either a leak or accumulation of data that's not being freed during playback.
+
+I need to trace through the key components to find where memory is building up: the AudioBufferQueue and whether it's properly releasing PCM arrays, the AudioProducer holding onto processed chunks, the PlaybackController keeping the full PreparedChunk list in memory, any caching in TextProcessor, intermediate tensors in the ONNX session, accumulated crossfade buffers in AudioPlayer, and how trimAndPadSilence handles its allocations.
+
+Let me examine the source files to get a complete picture of what's happening.
+
+I'll do a thorough investigation of the memory lifecycle across the entire audio pipeline. Let me read all the key files in parallel.
+
+**Tool: todowrite**
+
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Read and analyze AudioBufferQueue memory behavior",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Read and analyze AudioProducer memory allocation",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Read and analyze AudioPlayer memory behavior (consumer side)",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Read and analyze PlaybackController lifecycle and chunk retention",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Read and analyze KokoroEngine ONNX inference memory",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Read and analyze TextProcessor / TextChunker chunk storage",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "content": "Check for FloatArray copies in trimAndPadSilence and crossfade",
+      "priority": "medium",
+      "status": "pending"
+    },
+    {
+      "content": "Synthesize findings and present analysis",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+**Output:**
+```
+[
+  {
+    "content": "Read and analyze AudioBufferQueue memory behavior",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Read and analyze AudioProducer memory allocation",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Read and analyze AudioPlayer memory behavior (consumer side)",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Read and analyze PlaybackController lifecycle and chunk retention",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Read and analyze KokoroEngine ONNX inference memory",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Read and analyze TextProcessor / TextChunker chunk storage",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "content": "Check for FloatArray copies in trimAndPadSilence and crossfade",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "Synthesize findings and present analysis",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 10.0s)
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioBufferQueue.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.audio
+2: 
+3: import java.util.concurrent.TimeUnit
+4: import java.util.concurrent.locks.ReentrantLock
+5: import kotlin.concurrent.withLock
+6: 
+7: /**
+8:  * A thread-safe audio buffer queue whose capacity is measured in total
+9:  * buffered audio **duration** (sample count) rather than chunk count.
+10:  *
+11:  * This gives consistent buffering regardless of sentence length:
+12:  * many short sentences or few long ones all occupy the same amount
+13:  * of audio runway. The producer blocks on [put] when full and wakes
+14:  * instantly when space opens — no sleep-polling.
+15:  *
+16:  * @param sampleRate audio sample rate (e.g. 24000)
+17:  */
+18: class AudioBufferQueue(private val sampleRate: Int) {
+19: 
+20:     companion object {
+21:         /**
+22:          * Maximum buffered audio in seconds. Adjust this value to trade
+23:          * memory (~96 KB per second at 24 kHz mono float) against underrun
+24:          * protection. 15 s ≈ 1.44 MB — enough to survive a ~10 s inference
+25:          * stall when the screen is off and the CPU is throttled.
+26:          */
+27:         const val MAX_BUFFER_SECONDS = 15f
+28:     }
+29: 
+30:     /** A single entry: PCM audio + the index of the originating PreparedChunk. */
+31:     data class Entry(val pcm: FloatArray, val chunkIndex: Int)
+32: 
+33:     private val lock = ReentrantLock()
+34:     private val notFull = lock.newCondition()
+35:     private val notEmpty = lock.newCondition()
+36: 
+37:     private val deque = ArrayDeque<Entry>()
+38:     private var totalSamples = 0L
+39:     private val maxSamples = (MAX_BUFFER_SECONDS * sampleRate).toLong()
+40: 
+41:     @Volatile
+42:     var isClosed = false
+43:         private set
+44: 
+45:     /** Total buffered audio duration in seconds (thread-safe read). */
+46:     val bufferedSeconds: Float
+47:         get() = lock.withLock { totalSamples.toFloat() / sampleRate }
+48: 
+49:     /** Number of chunks currently in the buffer. */
+50:     val size: Int
+51:         get() = lock.withLock { deque.size }
+52: 
+53:     /**
+54:      * Add a chunk. Blocks if the buffer is full (by duration).
+55:      *
+56:      * @return true if the chunk was added, false if the queue was closed.
+57:      */
+58:     fun put(pcm: FloatArray, chunkIndex: Int): Boolean {
+59:         lock.withLock {
+60:             while (totalSamples > 0 && totalSamples + pcm.size > maxSamples && !isClosed) {
+61:                 notFull.await()
+62:             }
+63:             if (isClosed) return false
+64: 
+65:             deque.addLast(Entry(pcm, chunkIndex))
+66:             totalSamples += pcm.size
+67:             notEmpty.signal()
+68:             return true
+69:         }
+70:     }
+71: 
+72:     /**
+73:      * Take the next chunk. Blocks up to [timeoutMs] if empty.
+74:      *
+75:      * @return the next [Entry], or null on timeout / closed-and-drained.
+76:      */
+77:     fun take(timeoutMs: Long): Entry? {
+78:         lock.withLock {
+79:             var remaining = TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+80:             while (deque.isEmpty() && !isClosed && remaining > 0) {
+81:                 remaining = notEmpty.awaitNanos(remaining)
+82:             }
+83:             if (deque.isEmpty()) return null  // timeout or closed-and-drained
+84: 
+85:             val entry = deque.removeFirst()
+86:             totalSamples -= entry.pcm.size
+87:             notFull.signal()
+88:             return entry
+89:         }
+90:     }
+91: 
+92:     /**
+93:      * Signal that the producer is done. Remaining entries can still be
+94:      * drained via [take]. Wakes all waiting threads.
+95:      */
+96:     fun close() {
+97:         lock.withLock {
+98:             isClosed = true
+99:             notFull.signalAll()
+100:             notEmpty.signalAll()
+101:         }
+102:     }
+103: 
+104:     /**
+105:      * Discard all buffered entries and wake blocked threads.
+106:      * Call from [stop] to unblock the producer immediately.
+107:      */
+108:     fun clear() {
+109:         lock.withLock {
+110:             deque.clear()
+111:             totalSamples = 0
+112:             isClosed = true
+113:             notFull.signalAll()
+114:             notEmpty.signalAll()
+115:         }
+116:     }
+117: }
+
+(End of file - total 117 lines)
+</content>
+```
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.audio
+2: 
+3: import android.content.Context
+4: import android.os.Build
+5: import android.os.PerformanceHintManager
+6: import android.os.Process
+7: import android.util.Log
+8: import com.example.mytts.BuildConfig
+9: import com.example.mytts.engine.KokoroEngine
+10: import java.util.concurrent.atomic.AtomicBoolean
+11: 
+12: /**
+13:  * Producer thread that converts text chunks to audio using the Kokoro engine.
+14:  * Runs inference on a background thread and feeds PCM into an [AudioBufferQueue].
+15:  *
+16:  * On API 31+, uses PerformanceHintManager to tell the system about the
+17:  * workload pattern so it can make better CPU frequency/core decisions,
+18:  * especially important when the screen is off.
+19:  */
+20: class AudioProducer(
+21:     private val context: Context,
+22:     private val engine: KokoroEngine,
+23:     private val queue: AudioBufferQueue,
+24:     private val onChunkReady: (chunkIndex: Int) -> Unit = {},
+25:     private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }
+26: ) {
+27:     companion object {
+28:         private const val TAG = "AudioProducer"
+29:         // Silence threshold: samples below this absolute value are considered silent
+30:         private const val SILENCE_THRESHOLD = 0.01f
+31:         // Target silence gap between chunks in milliseconds
+32:         private const val GAP_BETWEEN_CHUNKS_MS = 300
+33:         // Target inference duration hint for PerformanceHintManager (2 seconds).
+34:         // Set slightly below typical inference time to encourage the system to
+35:         // boost CPU frequency rather than coast on efficiency cores.
+36:         private const val TARGET_INFERENCE_NANOS = 2_000_000_000L
+37:     }
+38: 
+39:     private val running = AtomicBoolean(false)
+40:     private var producerThread: Thread? = null
+41:     private var hintSession: Any? = null // PerformanceHintManager.Session (API 31+)
+42: 
+43:     private var chunks: List<PreparedChunk> = emptyList()
+44:     private var voiceName: String = ""
+45:     private var speed: Float = 1.0f
+46:     private var startIndex: Int = 0
+47: 
+48:     /**
+49:      * Start producing audio from the given prepared chunks.
+50:      *
+51:      * @param chunks list of pre-processed chunks (already normalized at paste time)
+52:      * @param voice voice name to use
+53:      * @param speed speed multiplier (model-level, not playback rate)
+54:      * @param fromIndex start from this chunk index
+55:      */
+56:     fun start(
+57:         chunks: List<PreparedChunk>,
+58:         voice: String,
+59:         speed: Float = 1.0f,
+60:         fromIndex: Int = 0
+61:     ) {
+62:         stop()
+63:         this.chunks = chunks
+64:         this.voiceName = voice
+65:         this.speed = speed
+66:         this.startIndex = fromIndex
+67: 
+68:         running.set(true)
+69:         producerThread = Thread({
+70:             // Foreground priority so Android's EAS scheduler favors performance
+71:             // cores and doesn't deprioritize us when the screen is off.
+72:             Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND)
+73:             produceLoop()
+74:         }, "AudioProducer").also { it.start() }
+75:     }
+76: 
+77:     /**
+78:      * Create a PerformanceHintManager session for the current thread.
+79:      * Must be called ON the producer thread so we get the correct TID.
+80:      * Returns the session object, or null if unavailable.
+81:      */
+82:     private fun createHintSession(): Any? {
+83:         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+84:         return try {
+85:             val phm = context.getSystemService(Context.PERFORMANCE_HINT_SERVICE)
+86:                     as? PerformanceHintManager ?: return null
+87:             val tids = intArrayOf(Process.myTid())
+88:             val session = phm.createHintSession(tids, TARGET_INFERENCE_NANOS)
+89:             if (BuildConfig.DEBUG) Log.d(TAG, "PerformanceHintManager session created for TID ${tids[0]}")
+90:             session
+91:         } catch (e: Exception) {
+92:             Log.w(TAG, "Failed to create PerformanceHintManager session", e)
+93:             null
+94:         }
+95:     }
+96: 
+97:     /**
+98:      * Report actual inference duration to the hint session.
+99:      */
+100:     private fun reportWorkDuration(durationNanos: Long) {
+101:         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+102:         try {
+103:             (hintSession as? PerformanceHintManager.Session)
+104:                 ?.reportActualWorkDuration(durationNanos)
+105:         } catch (_: Exception) {
+106:             // Ignore — hint session may have been closed
+107:         }
+108:     }
+109: 
+110:     /**
+111:      * Close the hint session.
+112:      */
+113:     private fun closeHintSession() {
+114:         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+115:         try {
+116:             (hintSession as? PerformanceHintManager.Session)?.close()
+117:         } catch (_: Exception) {}
+118:         hintSession = null
+119:     }
+120: 
+121:     private fun produceLoop() {
+122:         // Create performance hint session on the producer thread
+123:         hintSession = createHintSession()
+124: 
+125:         // Dump all chunks for debugging — verify no stale chunks from previous text
+126:         if (BuildConfig.DEBUG) {
+127:             Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
+128:             for (i in chunks.indices) {
+129:                 val c = chunks[i]
+130:                 Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
+131:             }
+132:         }
+133: 
+134:         try {
+135:             for (i in startIndex until chunks.size) {
+136:                 if (!running.get()) break
+137: 
+138:                 val chunk = chunks[i]
+139:                 val text = chunk.normalizedText.trim()
+140:                 if (text.isEmpty()) continue
+141: 
+142:                 if (!running.get()) break
+143: 
+144:                 try {
+145:                     if (BuildConfig.DEBUG) Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
+146:                     val startTime = System.nanoTime()
+147: 
+148:                     val pcm = engine.speakNormalized(text, voiceName, speed)
+149: 
+150:                     val elapsedNanos = System.nanoTime() - startTime
+151:                     reportWorkDuration(elapsedNanos)
+152: 
+153:                     val elapsedMs = elapsedNanos / 1_000_000
+154:                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
+155:                     if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsedMs}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsedMs.toFloat() / audioDuration))
+156: 
+157:                     if (pcm.isNotEmpty() && running.get()) {
+158:                         // Trim trailing silence and add a controlled gap
+159:                         // (skip gap if next chunk continues the same sentence)
+160:                         val nextIsContinuation = (i + 1 < chunks.size) && chunks[i + 1].isContinuation
+161:                         val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)
+162:                         if (!queue.put(trimmed, i)) break  // queue closed (stopped)
+163:                         onChunkReady(i)
+164:                     }
+165:                 } catch (e: Exception) {
+166:                     if (running.get()) {
+167:                         Log.e(TAG, "Failed to synthesize chunk $i", e)
+168:                         onError(i, e)
+169:                     }
+170:                 }
+171:             }
+172:         } catch (_: InterruptedException) {
+173:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer interrupted")
+174:             closeHintSession()
+175:             return
+176:         }
+177: 
+178:         closeHintSession()
+179: 
+180:         // Signal end: let player drain the queue naturally then stop
+181:         if (running.get()) {
+182:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer finished all chunks")
+183:             queue.close()
+184:         }
+185:     }
+186: 
+187:     fun stop() {
+188:         running.set(false)
+189:         producerThread?.interrupt()
+190:         // Short timeout: ONNX inference can't be interrupted mid-call, but
+191:         // the next start() calls stop() anyway so orphaned threads self-exit.
+192:         producerThread?.join(500)
+193:         producerThread = null
+194:         closeHintSession()
+195:     }
+196: 
+197:     /**
+198:      * Trim trailing silence from PCM audio and optionally append a silence gap.
+199:      * When [addGap] is true (default), appends ~300ms silence for natural
+200:      * inter-sentence pauses. When false (continuation chunks of the same
+201:      * sentence), only trims without adding extra silence.
+202:      *
+203:      * @param pcm raw PCM float samples
+204:      * @param sampleRate audio sample rate (e.g. 24000)
+205:      * @param addGap whether to append the inter-chunk silence gap
+206:      * @return trimmed PCM with optional trailing silence
+207:      */
+208:     private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int, addGap: Boolean = true): FloatArray {
+209:         if (pcm.isEmpty()) return pcm
+210: 
+211:         // Find last non-silent sample (scanning backwards)
+212:         var lastNonSilent = pcm.size - 1
+213:         while (lastNonSilent >= 0 && kotlin.math.abs(pcm[lastNonSilent]) < SILENCE_THRESHOLD) {
+214:             lastNonSilent--
+215:         }
+216: 
+217:         // Keep audio up to last non-silent sample (with small margin to avoid cutting off decay)
+218:         val margin = minOf(64, pcm.size - lastNonSilent - 1)
+219:         val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)
+220: 
+221:         // Calculate desired gap in samples (0 for continuation chunks)
+222:         val gapSamples = if (addGap) sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000 else 0
+223: 
+224:         // Create new array: trimmed audio + silence gap
+225:         val result = FloatArray(trimEnd + gapSamples)
+226:         System.arraycopy(pcm, 0, result, 0, trimEnd)
+227:         // Remaining samples are already 0.0f (silence gap)
+228: 
+229:         return result
+230:     }
+231: }
+
+(End of file - total 231 lines)
+</content>
+```
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioPlayer.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.audio
+2: 
+3: import android.media.AudioAttributes
+4: import android.media.AudioFormat
+5: import android.media.AudioTrack
+6: import android.os.Process
+7: import android.util.Log
+8: import com.example.mytts.BuildConfig
+9: import java.util.concurrent.atomic.AtomicBoolean
+10: import kotlin.math.PI
+11: import kotlin.math.sin
+12: 
+13: /**
+14:  * Audio playback consumer that reads PCM chunks from an [AudioBufferQueue]
+15:  * and plays them via AudioTrack. Runs on its own thread with elevated priority.
+16:  *
+17:  * The queue is owned externally (by PlaybackController) and shared with the
+18:  * AudioProducer. Capacity is measured in audio duration, not chunk count.
+19:  */
+20: class AudioPlayer(
+21:     private val sampleRate: Int = 24000,
+22:     private val queue: AudioBufferQueue,
+23:     private val onChunkStarted: (chunkIndex: Int) -> Unit = {},
+24:     private val onPlaybackFinished: () -> Unit = {}
+25: ) {
+26:     companion object {
+27:         private const val TAG = "AudioPlayer"
+28:         // Crossfade samples to avoid pops at chunk boundaries
+29:         private const val CROSSFADE_SAMPLES = 128
+30:         // Buffering hint tone parameters
+31:         private const val HINT_FREQUENCY_HZ = 1200.0
+32:         private const val HINT_DURATION_MS = 150
+33:         private const val HINT_VOLUME = 0.05f  // 5% volume
+34:         private const val HINT_INTERVAL_MS = 1000L  // repeat once per second
+35:     }
+36: 
+37:     private val running = AtomicBoolean(false)
+38:     private val paused = AtomicBoolean(false)
+39:     private var audioTrack: AudioTrack? = null
+40:     private var hintTrack: AudioTrack? = null  // Separate static track for hint tones
+41:     private var playerThread: Thread? = null
+42:     private val stoppedExplicitly = AtomicBoolean(false)
+43: 
+44:     /**
+45:      * Start the audio player thread.
+46:      */
+47:     fun start() {
+48:         if (running.get()) return
+49: 
+50:         val bufSize = AudioTrack.getMinBufferSize(
+51:             sampleRate,
+52:             AudioFormat.CHANNEL_OUT_MONO,
+53:             AudioFormat.ENCODING_PCM_FLOAT
+54:         ).coerceAtLeast(sampleRate) // At least 1 second buffer
+55: 
+56:         audioTrack = AudioTrack.Builder()
+57:             .setAudioAttributes(
+58:                 AudioAttributes.Builder()
+59:                     .setUsage(AudioAttributes.USAGE_MEDIA)
+60:                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+61:                     .build()
+62:             )
+63:             .setAudioFormat(
+64:                 AudioFormat.Builder()
+65:                     .setSampleRate(sampleRate)
+66:                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+67:                     .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+68:                     .build()
+69:             )
+70:             .setBufferSizeInBytes(bufSize * 4) // float = 4 bytes
+71:             .setTransferMode(AudioTrack.MODE_STREAM)
+72:             .build()
+73: 
+74:         // Create a separate static AudioTrack for hint tones.
+75:         // MODE_STATIC plays immediately with minimal latency, avoiding the
+76:         // buffer-accumulation problem of writing tiny tones to the streaming track.
+77:         val audioAttrs = AudioAttributes.Builder()
+78:             .setUsage(AudioAttributes.USAGE_MEDIA)
+79:             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+80:             .build()
+81:         val audioFmt = AudioFormat.Builder()
+82:             .setSampleRate(sampleRate)
+83:             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+84:             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+85:             .build()
+86:         val hintTone = generateHintTone(sampleRate)
+87:         hintTrack = AudioTrack.Builder()
+88:             .setAudioAttributes(audioAttrs)
+89:             .setAudioFormat(audioFmt)
+90:             .setBufferSizeInBytes(hintTone.size * 4)
+91:             .setTransferMode(AudioTrack.MODE_STATIC)
+92:             .build().also {
+93:                 it.write(hintTone, 0, hintTone.size, AudioTrack.WRITE_BLOCKING)
+94:             }
+95: 
+96:         running.set(true)
+97:         paused.set(false)
+98:         stoppedExplicitly.set(false)
+99: 
+100:         playerThread = Thread({
+101:             Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
+102:             playLoop()
+103:         }, "AudioPlayer").also { it.start() }
+104:     }
+105: 
+106:     private fun playLoop() {
+107:         val track = audioTrack ?: return
+108:         var naturalEnd = false
+109:         var totalFramesWritten = 0L
+110:         var lastHintTimeMs = 0L
+111: 
+112:         try {
+113:             track.play()
+114:             var previousTail: FloatArray? = null
+115: 
+116:             while (running.get()) {
+117:                 // Wait while paused (between chunks)
+118:                 if (paused.get()) {
+119:                     try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+120:                     continue
+121:                 }
+122: 
+123:                 val entry = queue.take(200)
+124: 
+125:                 if (entry == null) {
+126:                     // Queue empty: if producer is done and queue is drained, finish
+127:                     if (queue.isClosed) {
+128:                         if (BuildConfig.DEBUG) Log.d(TAG, "Queue drained and closed — finishing playback")
+129:                         naturalEnd = true
+130:                         break
+131:                     }
+132:                     // Underrun: producer still working but queue starved
+133:                     if (System.currentTimeMillis() - lastHintTimeMs >= HINT_INTERVAL_MS) {
+134:                         if (BuildConfig.DEBUG) Log.d(TAG, "Underrun detected — playing hint tone")
+135:                         hintTrack?.let { ht ->
+136:                             try { ht.stop() } catch (_: Exception) {}
+137:                             ht.reloadStaticData()
+138:                             ht.play()
+139:                         }
+140:                         lastHintTimeMs = System.currentTimeMillis()
+141:                     }
+142:                     continue
+143:                 }
+144: 
+145:                 // Real chunk arrived — reset hint cooldown
+146:                 lastHintTimeMs = 0L
+147:                 onChunkStarted(entry.chunkIndex)
+148: 
+149:                 var pcm = entry.pcm
+150:                 if (pcm.isEmpty()) continue
+151: 
+152:                 // Apply crossfade with previous chunk's tail to avoid pops
+153:                 if (previousTail != null && previousTail.isNotEmpty()) {
+154:                     val fadeLen = minOf(CROSSFADE_SAMPLES, pcm.size, previousTail.size)
+155:                     for (i in 0 until fadeLen) {
+156:                         val fadeIn = i.toFloat() / fadeLen
+157:                         pcm[i] = pcm[i] * fadeIn
+158:                     }
+159:                 }
+160: 
+161:                 // Save tail for next crossfade
+162:                 if (pcm.size >= CROSSFADE_SAMPLES) {
+163:                     previousTail = pcm.sliceArray(pcm.size - CROSSFADE_SAMPLES until pcm.size)
+164:                     val fadeLen = CROSSFADE_SAMPLES
+165:                     val fadeStart = pcm.size - fadeLen
+166:                     for (i in 0 until fadeLen) {
+167:                         val fadeOut = 1.0f - (i.toFloat() / fadeLen) * 0.3f
+168:                         pcm[fadeStart + i] = pcm[fadeStart + i] * fadeOut
+169:                     }
+170:                 }
+171: 
+172:                 // Write PCM to AudioTrack — pause-aware: waits inside the loop
+173:                 // so remaining data is written after resume (not lost)
+174:                 var offset = 0
+175:                 while (offset < pcm.size && running.get()) {
+176:                     if (paused.get()) {
+177:                         try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+178:                         continue
+179:                     }
+180:                     val written = track.write(pcm, offset, pcm.size - offset, AudioTrack.WRITE_BLOCKING)
+181:                     if (written < 0) {
+182:                         Log.e(TAG, "AudioTrack write error: $written")
+183:                         break
+184:                     }
+185:                     offset += written
+186:                     totalFramesWritten += written
+187:                 }
+188:             }
+189: 
+190:             // Only stop/drain track if we weren't explicitly stopped
+191:             // (explicit stop() handles track cleanup itself)
+192:             if (!stoppedExplicitly.get()) {
+193:                 try {
+194:                     track.stop()
+195:                 } catch (_: Exception) {}
+196: 
+197:                 // Wait for AudioTrack to finish playing all buffered audio.
+198:                 // After stop(), playbackHeadPosition continues advancing until
+199:                 // all written frames have been rendered to hardware.
+200:                 // Do NOT call flush() here — it discards unplayed audio!
+201:                 if (naturalEnd && totalFramesWritten > 0) {
+202:                     val timeoutMs = 5000L
+203:                     val startTime = System.currentTimeMillis()
+204:                     while (System.currentTimeMillis() - startTime < timeoutMs) {
+205:                         val headPos = track.playbackHeadPosition.toLong() and 0xFFFFFFFFL
+206:                         if (headPos >= totalFramesWritten) {
+207:                             if (BuildConfig.DEBUG) Log.d(TAG, "AudioTrack fully drained: head=$headPos, written=$totalFramesWritten")
+208:                             break
+209:                         }
+210:                         try { Thread.sleep(50) } catch (_: InterruptedException) { break }
+211:                     }
+212:                     if (System.currentTimeMillis() - startTime >= timeoutMs) {
+213:                         Log.w(TAG, "AudioTrack drain timeout after ${timeoutMs}ms")
+214:                     }
+215:                 }
+216:             }
+217:         } catch (e: Exception) {
+218:             Log.w(TAG, "playLoop exiting due to exception", e)
+219:         }
+220: 
+221:         // Only fire onPlaybackFinished for natural end (not explicit stop)
+222:         if (naturalEnd && !stoppedExplicitly.get()) {
+223:             onPlaybackFinished()
+224:         }
+225:     }
+226: 
+227:     /**
+228:      * Generate a short, quiet hint tone to signal buffering/underrun.
+229:      * 1200Hz sine wave, ~150ms, 5% volume, with Hann window fade-in/fade-out
+230:      * to avoid click artifacts.
+231:      */
+232:     private fun generateHintTone(effectiveRate: Int): FloatArray {
+233:         val numSamples = effectiveRate * HINT_DURATION_MS / 1000
+234:         val tone = FloatArray(numSamples)
+235:         val angularFreq = 2.0 * PI * HINT_FREQUENCY_HZ / effectiveRate
+236:         for (i in 0 until numSamples) {
+237:             // Hann window envelope: smooth fade-in and fade-out
+238:             val envelope = 0.5f * (1.0f - kotlin.math.cos(2.0f * PI.toFloat() * i / numSamples))
+239:             tone[i] = (HINT_VOLUME * envelope * sin(angularFreq * i)).toFloat()
+240:         }
+241:         return tone
+242:     }
+243: 
+244:     fun pause() {
+245:         paused.set(true)
+246:         audioTrack?.pause()
+247:     }
+248: 
+249:     fun resume() {
+250:         paused.set(false)
+251:         audioTrack?.play()
+252:     }
+253: 
+254:     fun stop() {
+255:         stoppedExplicitly.set(true)
+256:         running.set(false)
+257:         paused.set(false)
+258: 
+259:         // Immediately silence audio BEFORE waiting for thread join.
+260:         // pause() + flush() is instant — stops hardware playback and discards
+261:         // any buffered audio, so the user hears silence right away.
+262:         val track = audioTrack
+263:         audioTrack = null
+264:         if (track != null) {
+265:             try { track.pause() } catch (_: Exception) {}
+266:             try { track.flush() } catch (_: Exception) {}
+267:         }
+268:         val ht = hintTrack
+269:         hintTrack = null
+270:         if (ht != null) {
+271:             try { ht.stop() } catch (_: Exception) {}
+272:         }
+273: 
+274:         // Now clean up the player thread (may block briefly)
+275:         playerThread?.interrupt()
+276:         playerThread?.join(500)
+277:         playerThread = null
+278: 
+279:         // Final resource release
+280:         if (track != null) {
+281:             try { track.stop() } catch (_: Exception) {}
+282:             try { track.release() } catch (_: Exception) {}
+283:         }
+284:         if (ht != null) {
+285:             try { ht.release() } catch (_: Exception) {}
+286:         }
+287:     }
+288: }
+
+(End of file - total 288 lines)
+</content>
+```
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/PlaybackController.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.audio
+2: 
+3: import android.content.Context
+4: import android.util.Log
+5: import com.example.mytts.BuildConfig
+6: import com.example.mytts.engine.KokoroEngine
+7: import kotlinx.coroutines.*
+8: import kotlinx.coroutines.flow.MutableStateFlow
+9: import kotlinx.coroutines.flow.StateFlow
+10: import kotlinx.coroutines.flow.asStateFlow
+11: 
+12: /**
+13:  * State machine orchestrating the AudioProducer and AudioPlayer.
+14:  * States: STOPPED -> LOADING -> PLAYING <-> PAUSED -> STOPPED
+15:  */
+16: class PlaybackController(
+17:     private val context: Context
+18: ) {
+19:     companion object {
+20:         private const val TAG = "PlaybackController"
+21:     }
+22: 
+23:     enum class State {
+24:         STOPPED,
+25:         LOADING,   // Engine initializing or first chunk being generated
+26:         PLAYING,
+27:         PAUSED,
+28:         STOPPING   // Waiting for producer/player threads to finish
+29:     }
+30: 
+31:     private val _state = MutableStateFlow(State.STOPPED)
+32:     val state: StateFlow<State> = _state.asStateFlow()
+33: 
+34:     /** Index of the chunk currently being played (for text highlighting). */
+35:     private val _currentChunkIndex = MutableStateFlow(-1)
+36:     val currentChunkIndex: StateFlow<Int> = _currentChunkIndex.asStateFlow()
+37: 
+38:     /** Status message for the UI (loading info, errors, etc.). */
+39:     private val _statusMessage = MutableStateFlow<String?>(null)
+40:     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
+41: 
+42:     /** Whether text is being pre-processed (chunking + normalization). */
+43:     private val _isProcessing = MutableStateFlow(false)
+44:     val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
+45: 
+46:     /**
+47:      * Character offset where playback was stopped (or ended naturally).
+48:      * -1 means no meaningful position. UI should watch this to restore cursor.
+49:      */
+50:     private val _stoppedAtOffset = MutableStateFlow(-1)
+51:     val stoppedAtOffset: StateFlow<Int> = _stoppedAtOffset.asStateFlow()
+52: 
+53:     private var engine: KokoroEngine? = null
+54:     private var player: AudioPlayer? = null
+55:     private var producer: AudioProducer? = null
+56:     private var audioQueue: AudioBufferQueue? = null
+57:     private var textProcessor: TextProcessor? = null
+58:     private var preparedChunks: List<PreparedChunk> = emptyList()
+59:     private var processJob: Job? = null
+60: 
+61:     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+62:     private var initJob: Job? = null
+63: 
+64:     /**
+65:      * Start playback from the given text at the specified cursor position.
+66:      *
+67:      * @param text full text to speak
+68:      * @param cursorPosition character offset where playback should start
+69:      * @param voiceName voice to use
+70:      * @param slowMode if true, play at 0.75x speed
+71:      */
+72:     fun play(text: String, cursorPosition: Int, voiceName: String, slowMode: Boolean) {
+73:         if (_state.value == State.PLAYING || _state.value == State.LOADING || _state.value == State.STOPPING) return
+74: 
+75:         _state.value = State.LOADING
+76:         _statusMessage.value = "Preparing..."
+77:         _currentChunkIndex.value = -1
+78: 
+79:         scope.launch(Dispatchers.Default) {
+80:             try {
+81:                 // Initialize engine if needed
+82:                 if (engine == null || !engine!!.isLoaded) {
+83:                     withContext(Dispatchers.Main) {
+84:                         _statusMessage.value = "Loading model (may take a few seconds)..."
+85:                     }
+86:                     val eng = KokoroEngine(context)
+87:                     eng.initialize()
+88:                     engine = eng
+89:                     // Ensure textProcessor exists
+90:                     if (textProcessor == null) {
+91:                         eng.phonemeConverter?.let { converter ->
+92:                             textProcessor = TextProcessor(converter)
+93:                         }
+94:                     }
+95:                 }
+96: 
+97:                 // If chunks weren't pre-processed (e.g. processText wasn't called),
+98:                 // do it now as a fallback
+99:                 if (preparedChunks.isEmpty() && text.isNotBlank()) {
+100:                     textProcessor?.let { tp ->
+101:                         preparedChunks = tp.processText(text)
+102:                     }
+103:                 }
+104: 
+105:                 // Use pre-processed chunks (already chunked + normalized at paste time)
+106:                 if (preparedChunks.isEmpty()) {
+107:                     withContext(Dispatchers.Main) {
+108:                         _state.value = State.STOPPED
+109:                         _statusMessage.value = "No text to speak"
+110:                     }
+111:                     return@launch
+112:                 }
+113: 
+114:                 // Find the starting chunk based on cursor position
+115:                 val startIndex = findChunkAtOffset(cursorPosition)
+116: 
+117:                 // Create shared audio buffer queue (duration-based capacity)
+118:                 val bufferQueue = AudioBufferQueue(KokoroEngine.SAMPLE_RATE)
+119:                 audioQueue = bufferQueue
+120: 
+121:                 // Create player
+122:                 val audioPlayer = AudioPlayer(
+123:                     sampleRate = KokoroEngine.SAMPLE_RATE,
+124:                     queue = bufferQueue,
+125:                     onChunkStarted = { index ->
+126:                         _currentChunkIndex.value = index
+127:                     },
+128:                     onPlaybackFinished = {
+129:                         scope.launch(Dispatchers.Main) {
+130:                             if (_state.value != State.STOPPED) {
+131:                                 stop()
+132:                             }
+133:                         }
+134:                     }
+135:                 )
+136:                 player = audioPlayer
+137: 
+138:                 // Create producer
+139:                 val audioProducer = AudioProducer(
+140:                     context = context,
+141:                     engine = engine!!,
+142:                     queue = bufferQueue,
+143:                     onChunkReady = { index ->
+144:                         // First chunk ready - start playback
+145:                         if (index == startIndex && _state.value == State.LOADING) {
+146:                             scope.launch(Dispatchers.Main) {
+147:                                 _state.value = State.PLAYING
+148:                                 _statusMessage.value = null
+149:                             }
+150:                         }
+151:                     },
+152:                     onError = { index, error ->
+153:                         Log.e(TAG, "Synthesis error at chunk $index", error)
+154:                         scope.launch(Dispatchers.Main) {
+155:                             _statusMessage.value = "Error: ${error.message}"
+156:                         }
+157:                     }
+158:                 )
+159:                 producer = audioProducer
+160: 
+161:                 // Start player first, then producer.
+162:                 // Slow mode uses the model's speed parameter (0.75) to generate
+163:                 // naturally slower speech with correct pitch, instead of reducing
+164:                 // the AudioTrack sample rate which would lower the pitch.
+165:                 val modelSpeed = if (slowMode) 0.75f else 1.0f
+166:                 audioPlayer.start()
+167:                 audioProducer.start(preparedChunks, voiceName, speed = modelSpeed, fromIndex = startIndex)
+168: 
+169:             } catch (e: Exception) {
+170:                 Log.e(TAG, "Failed to start playback", e)
+171:                 withContext(Dispatchers.Main) {
+172:                     _state.value = State.STOPPED
+173:                     _statusMessage.value = "Error: ${e.message}"
+174:                 }
+175:             }
+176:         }
+177:     }
+178: 
+179:     fun pause() {
+180:         if (_state.value != State.PLAYING) return
+181:         player?.pause()
+182:         _state.value = State.PAUSED
+183:     }
+184: 
+185:     fun resume() {
+186:         if (_state.value != State.PAUSED) return
+187:         player?.resume()
+188:         _state.value = State.PLAYING
+189:     }
+190: 
+191:     fun togglePlayPause(text: String, cursorPosition: Int, voiceName: String, slowMode: Boolean) {
+192:         when (_state.value) {
+193:             State.STOPPED -> play(text, cursorPosition, voiceName, slowMode)
+194:             State.PLAYING -> pause()
+195:             State.PAUSED -> resume()
+196:             State.LOADING -> { /* ignore during loading */ }
+197:             State.STOPPING -> { /* ignore while stopping */ }
+198:         }
+199:     }
+200: 
+201:     fun stop() {
+202:         if (_state.value == State.STOPPED || _state.value == State.STOPPING) return
+203: 
+204:         // Capture the current playback offset before clearing anything
+205:         val offset = getCurrentPlaybackOffset()
+206: 
+207:         _state.value = State.STOPPING
+208:         _statusMessage.value = null
+209: 
+210:         scope.launch(Dispatchers.Default) {
+211:             try {
+212:                 // Clear the queue first — unblocks the producer if it's waiting
+213:                 // on queue.put(), and tells the player the stream is over.
+214:                 audioQueue?.clear()
+215:                 // Stop player FIRST for instant silence (pause+flush is immediate),
+216:                 // then stop producer (may block briefly waiting for ONNX inference).
+217:                 player?.stop()
+218:                 player = null
+219:                 producer?.stop()
+220:                 producer = null
+221:                 audioQueue = null
+222:             } catch (e: Exception) {
+223:                 Log.e(TAG, "Error during stop cleanup", e)
+224:             }
+225: 
+226:             withContext(Dispatchers.Main) {
+227:                 _state.value = State.STOPPED
+228:                 _currentChunkIndex.value = -1
+229:                 _statusMessage.value = null
+230:                 _stoppedAtOffset.value = offset
+231:             }
+232:         }
+233:     }
+234: 
+235:     /**
+236:      * Get the character offset of the chunk that was playing when stop was called.
+237:      * Returns the start of the current chunk, or -1 if unknown.
+238:      */
+239:     private fun getCurrentPlaybackOffset(): Int {
+240:         val index = _currentChunkIndex.value
+241:         if (index < 0 || index >= preparedChunks.size) return -1
+242:         return preparedChunks[index].startOffset
+243:     }
+244: 
+245:     /**
+246:      * Get the text range (startOffset, endOffset) of the currently playing chunk.
+247:      * Returns null if nothing is playing.
+248:      */
+249:     fun getCurrentChunkRange(): Pair<Int, Int>? {
+250:         val index = _currentChunkIndex.value
+251:         if (index < 0 || index >= preparedChunks.size) return null
+252:         val chunk = preparedChunks[index]
+253:         return Pair(chunk.startOffset, chunk.endOffset)
+254:     }
+255: 
+256:     /**
+257:      * Get available voice names. Requires engine to be initialized.
+258:      * If not initialized, returns empty list.
+259:      */
+260:     fun getAvailableVoices(): List<String> {
+261:         return engine?.getAvailableVoices() ?: emptyList()
+262:     }
+263: 
+264:     /**
+265:      * Pre-initialize the engine (call early so voices list is available).
+266:      */
+267:     fun preInitialize(onComplete: (List<String>) -> Unit) {
+268:         if (engine != null && engine!!.isLoaded) {
+269:             onComplete(engine!!.getAvailableVoices())
+270:             return
+271:         }
+272:         initJob = scope.launch(Dispatchers.Default) {
+273:             try {
+274:                 withContext(Dispatchers.Main) {
+275:                     _statusMessage.value = "Loading model..."
+276:                 }
+277:                 val eng = KokoroEngine(context)
+278:                 eng.initialize()
+279:                 engine = eng
+280:                 // Create TextProcessor now that PhonemeConverter is available
+281:                 eng.phonemeConverter?.let { converter ->
+282:                     textProcessor = TextProcessor(converter)
+283:                 }
+284:                 val voices = eng.getAvailableVoices()
+285:                 withContext(Dispatchers.Main) {
+286:                     _statusMessage.value = null
+287:                     onComplete(voices)
+288:                 }
+289:             } catch (e: Exception) {
+290:                 Log.e(TAG, "Pre-initialization failed", e)
+291:                 withContext(Dispatchers.Main) {
+292:                     _statusMessage.value = "Model load failed: ${e.message}"
+293:                     onComplete(emptyList())
+294:                 }
+295:             }
+296:         }
+297:     }
+298: 
+299:     /**
+300:      * Reset playback position state. Call when the text content changes
+301:      * (e.g. paste) so stale offsets don't cause incorrect cursor placement.
+302:      */
+303:     fun resetPlaybackPosition() {
+304:         _stoppedAtOffset.value = -1
+305:         _currentChunkIndex.value = -1
+306:         preparedChunks = emptyList()
+307:     }
+308: 
+309:     /**
+310:      * Pre-process text: chunk and normalize. Call on paste or app startup.
+311:      * Runs on Dispatchers.Default. UI should observe [isProcessing] to show status.
+312:      */
+313:     fun processText(text: String) {
+314:         val tp = textProcessor ?: return // Engine not initialized yet
+315:         // Cancel any in-flight processing to prevent stale chunks from
+316:         // a previous call overwriting our result (race condition).
+317:         processJob?.cancel()
+318:         if (text.isBlank()) {
+319:             preparedChunks = emptyList()
+320:             return
+321:         }
+322:         _isProcessing.value = true
+323:         _statusMessage.value = "Processing text..."
+324:         processJob = scope.launch(Dispatchers.Default) {
+325:             try {
+326:                 val chunks = tp.processText(text)
+327:                 preparedChunks = chunks
+328:                 if (BuildConfig.DEBUG) Log.d(TAG, "Text processed: ${chunks.size} chunks")
+329:             } catch (e: CancellationException) {
+330:                 throw e // Don't swallow cancellation
+331:             } catch (e: Exception) {
+332:                 Log.e(TAG, "Text processing failed", e)
+333:                 preparedChunks = emptyList()
+334:             } finally {
+335:                 withContext(Dispatchers.Main) {
+336:                     _isProcessing.value = false
+337:                     _statusMessage.value = null
+338:                 }
+339:             }
+340:         }
+341:     }
+342: 
+343:     /**
+344:      * Find which chunk contains the given character offset using binary search.
+345:      * Chunks are sorted by startOffset (non-overlapping, contiguous).
+346:      * Returns 0 if offset is before all chunks or chunks are empty.
+347:      */
+348:     private fun findChunkAtOffset(offset: Int): Int {
+349:         val chunks = preparedChunks
+350:         if (chunks.isEmpty()) return 0
+351: 
+352:         var lo = 0
+353:         var hi = chunks.size - 1
+354:         while (lo < hi) {
+355:             val mid = (lo + hi) ushr 1
+356:             if (chunks[mid].endOffset <= offset) {
+357:                 lo = mid + 1
+358:             } else {
+359:                 hi = mid
+360:             }
+361:         }
+362:         // lo is now the first chunk where endOffset > offset
+363:         return if (lo < chunks.size && offset < chunks[lo].endOffset) lo else 0
+364:     }
+365: 
+366:     /**
+367:      * Get the text range (startOffset, endOffset) of the chunk containing the
+368:      * given character offset. Uses binary search. Returns null if no chunks exist.
+369:      */
+370:     fun getChunkRangeAtOffset(offset: Int): Pair<Int, Int>? {
+371:         val chunks = preparedChunks
+372:         if (chunks.isEmpty()) return null
+373: 
+374:         var lo = 0
+375:         var hi = chunks.size - 1
+376:         while (lo < hi) {
+377:             val mid = (lo + hi) ushr 1
+378:             if (chunks[mid].endOffset <= offset) {
+379:                 lo = mid + 1
+380:             } else {
+381:                 hi = mid
+382:             }
+383:         }
+384:         val chunk = chunks[lo]
+385:         return if (offset < chunk.endOffset) Pair(chunk.startOffset, chunk.endOffset) else null
+386:     }
+387: 
+388:     /**
+389:      * Release all resources. Call when the app is being destroyed.
+390:      */
+391:     fun release() {
+392:         // Synchronous cleanup for release — bypass the async stop
+393:         audioQueue?.clear()
+394:         producer?.stop()
+395:         producer = null
+396:         player?.stop()
+397:         player = null
+398:         audioQueue = null
+399:         preparedChunks = emptyList()
+400:         textProcessor = null
+401:         _state.value = State.STOPPED
+402:         _currentChunkIndex.value = -1
+403:         initJob?.cancel()
+404:         engine?.release()
+405:         engine = null
+406:         scope.cancel()
+407:     }
+408: }
+
+(End of file - total 408 lines)
+</content>
+```
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/KokoroEngine.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.engine
+2: 
+3: import ai.onnxruntime.OnnxTensor
+4: import ai.onnxruntime.OrtEnvironment
+5: import ai.onnxruntime.OrtSession
+6: import android.content.Context
+7: import android.util.Log
+8: 
+9: /**
+10:  * Wraps the Kokoro ONNX model for TTS inference.
+11:  * Thread-safe: session.run() is synchronized internally by ORT.
+12:  */
+13: class KokoroEngine(private val context: Context) {
+14:     companion object {
+15:         private const val TAG = "KokoroEngine"
+16:         private const val MODEL_FILE = "model_quantized.onnx"
+17:         private const val CROSSFADE_SAMPLES = 100  // ~4ms at 24kHz
+18:         const val SAMPLE_RATE = 24000
+19:     }
+20: 
+21:     private var environment: OrtEnvironment? = null
+22:     private var session: OrtSession? = null
+23:     private var _phonemeConverter: PhonemeConverter? = null
+24:     private var voiceStyleLoader: VoiceStyleLoader? = null
+25: 
+26:     /** Expose PhonemeConverter so TextProcessor can use normalizeText(). */
+27:     val phonemeConverter: PhonemeConverter?
+28:         get() = _phonemeConverter
+29: 
+30:     val isLoaded: Boolean get() = session != null
+31: 
+32:     /**
+33:      * Initialize the ONNX runtime and load the model.
+34:      * Call from a background thread - this is slow (~2-5 seconds).
+35:      */
+36:     fun initialize() {
+37:         if (session != null) return
+38: 
+39:         Log.i(TAG, "Initializing ONNX Runtime...")
+40:         val startTime = System.currentTimeMillis()
+41: 
+42:         environment = OrtEnvironment.getEnvironment()
+43:         val options = OrtSession.SessionOptions().apply {
+44:             // CPU EP is best for int8 quantized model
+45:             // Use 1 thread for both intra-op (within an operator) and inter-op
+46:             // (parallel graph execution) to minimize power consumption.
+47:             // Without setInterOpNumThreads(1), ORT defaults to CPU core count,
+48:             // spawning unnecessary threads on big.LITTLE SoCs.
+49:             setIntraOpNumThreads(1)
+50:             setInterOpNumThreads(1)
+51:             // Graph optimization
+52:             setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
+53:             // Flush denormal floats to zero — prevents rare but catastrophic
+54:             // slowdowns when near-zero values hit the slow denormal path on ARM.
+55:             addConfigEntry("session.set_denormal_as_zero", "1")
+56:         }
+57: 
+58:         val modelBytes = context.assets.open(MODEL_FILE).use { it.readBytes() }
+59:         session = environment!!.createSession(modelBytes, options)
+60:         options.close() // SessionOptions implements AutoCloseable
+61: 
+62:         _phonemeConverter = PhonemeConverter(context)
+63:         voiceStyleLoader = VoiceStyleLoader(context)
+64: 
+65:         val elapsed = System.currentTimeMillis() - startTime
+66:         Log.i(TAG, "Engine initialized in ${elapsed}ms")
+67:     }
+68: 
+69:     /**
+70:      * Get available voice names.
+71:      */
+72:     fun getAvailableVoices(): List<String> {
+73:         return voiceStyleLoader?.getAvailableVoices() ?: emptyList()
+74:     }
+75: 
+76:     /**
+77:      * Convert pre-normalized text to phonemes (skips normalizeText()).
+78:      */
+79:     fun textToPhonemeNormalized(normalizedText: String): String {
+80:         return _phonemeConverter?.phonemizeNormalized(normalizedText)
+81:             ?: throw IllegalStateException("Engine not initialized")
+82:     }
+83: 
+84:     /**
+85:      * Synthesize speech from phoneme string.
+86:      * If the phoneme string exceeds the model's token limit, it is split at
+87:      * a word boundary (IPA space) and each part is synthesized separately,
+88:      * then the audio segments are concatenated with a short crossfade.
+89:      *
+90:      * @param phonemes IPA phoneme string
+91:      * @param voiceName name of the voice style to use
+92:      * @param speed playback speed multiplier (1.0 = normal, >1 = faster)
+93:      * @return PCM float samples at [SAMPLE_RATE] Hz
+94:      */
+95:     fun synthesize(phonemes: String, voiceName: String, speed: Float = 1.0f): FloatArray {
+96:         val tokens = Tokenizer.tokenizeWithPadding(phonemes)
+97:         val maxTokens = Tokenizer.MAX_PHONEME_LENGTH + 2
+98: 
+99:         if (tokens.size <= maxTokens) {
+100:             return synthesizeTokens(tokens, voiceName, speed)
+101:         }
+102: 
+103:         // Phonemes exceed model limit — split at word boundary and concatenate
+104:         Log.i(TAG, "Phonemes exceed limit (${tokens.size} tokens, max $maxTokens), splitting")
+105:         val maxChars = Tokenizer.MAX_PHONEME_LENGTH
+106:         val splitPos = phonemes.lastIndexOf(' ', maxChars - 1)
+107:         if (splitPos <= 0) {
+108:             // No word boundary — truncate as last resort
+109:             Log.w(TAG, "No word boundary found for splitting, truncating")
+110:             return synthesizeTokens(tokens.take(maxTokens).toLongArray(), voiceName, speed)
+111:         }
+112: 
+113:         val firstPart = phonemes.substring(0, splitPos).trim()
+114:         val secondPart = phonemes.substring(splitPos + 1).trim()
+115:         if (firstPart.isEmpty()) return synthesize(secondPart, voiceName, speed)
+116:         if (secondPart.isEmpty()) return synthesize(firstPart, voiceName, speed)
+117: 
+118:         val audio1 = synthesize(firstPart, voiceName, speed)
+119:         val audio2 = synthesize(secondPart, voiceName, speed)
+120: 
+121:         return crossfadeConcat(audio1, audio2)
+122:     }
+123: 
+124:     /**
+125:      * Concatenate two audio segments with a short crossfade to avoid clicks.
+126:      */
+127:     private fun crossfadeConcat(a: FloatArray, b: FloatArray): FloatArray {
+128:         // ~4ms crossfade at 24kHz — inaudible but prevents splice clicks
+129:         val fadeLen = minOf(CROSSFADE_SAMPLES, a.size, b.size)
+130:         val result = FloatArray(a.size + b.size - fadeLen)
+131:         // Copy non-overlapping part of a
+132:         a.copyInto(result, 0, 0, a.size - fadeLen)
+133:         // Crossfade overlap region
+134:         for (i in 0 until fadeLen) {
+135:             val t = i.toFloat() / fadeLen
+136:             result[a.size - fadeLen + i] = a[a.size - fadeLen + i] * (1f - t) + b[i] * t
+137:         }
+138:         // Copy non-overlapping part of b
+139:         b.copyInto(result, a.size, fadeLen, b.size)
+140:         return result
+141:     }
+142: 
+143:     /**
+144:      * Low-level synthesis: run ONNX inference on pre-tokenized input.
+145:      */
+146:     private fun synthesizeTokens(tokens: LongArray, voiceName: String, speed: Float): FloatArray {
+147:         val sess = session ?: throw IllegalStateException("Engine not initialized")
+148:         val loader = voiceStyleLoader ?: throw IllegalStateException("Engine not initialized")
+149: 
+150:         // Load voice style matrix [510][256] and select row by token count.
+151:         // The style matrix is indexed by sequence length: row N = style for N tokens.
+152:         val styleMatrix = loader.loadVoice(voiceName)
+153:         val styleIndex = minOf(tokens.size, styleMatrix.size - 1)
+154:         val styleRow = arrayOf(styleMatrix[styleIndex]) // shape [1][256]
+155: 
+156:         // Create ONNX tensors
+157:         val env = environment!!
+158:         val tokenTensor = OnnxTensor.createTensor(env, arrayOf(tokens))
+159:         val styleTensor = OnnxTensor.createTensor(env, styleRow)
+160:         val speedTensor = OnnxTensor.createTensor(env, floatArrayOf(speed))
+161: 
+162:         val inputs = mapOf(
+163:             "input_ids" to tokenTensor,
+164:             "style" to styleTensor,
+165:             "speed" to speedTensor
+166:         )
+167: 
+168:         return try {
+169:             val results = sess.run(inputs)
+170:             // Model output is 2D [1][samples] — extract the inner array
+171:             val output = results[0].value
+172:             val audio = if (output is FloatArray) {
+173:                 output
+174:             } else {
+175:                 @Suppress("UNCHECKED_CAST")
+176:                 (output as Array<FloatArray>)[0]
+177:             }
+178:             results.close()
+179:             audio
+180:         } finally {
+181:             tokenTensor.close()
+182:             styleTensor.close()
+183:             speedTensor.close()
+184:         }
+185:     }
+186: 
+187:     /**
+188:      * Full pipeline: normalizedText -> phonemes -> synthesize.
+189:      * Text must already be normalized (via normalizeText() at paste time).
+190:      */
+191:     fun speakNormalized(normalizedText: String, voiceName: String, speed: Float = 1.0f): FloatArray {
+192:         val phonemes = textToPhonemeNormalized(normalizedText)
+193:         return synthesize(phonemes, voiceName, speed)
+194:     }
+195: 
+196:     fun release() {
+197:         _phonemeConverter?.release()
+198:         session?.close()
+199:         session = null
+200:         environment?.close()
+201:         environment = null
+202:         _phonemeConverter = null
+203:         voiceStyleLoader = null
+204:         Log.i(TAG, "Engine released")
+205:     }
+206: }
+
+(End of file - total 206 lines)
+</content>
+```
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextProcessor.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextProcessor.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.audio
+2: 
+3: import com.example.mytts.engine.PhonemeConverter
+4: 
+5: /**
+6:  * A text chunk that has been pre-processed: chunked and normalized at paste time.
+7:  * Normalization is done eagerly so that play-time only needs phonemization + synthesis.
+8:  */
+9: data class PreparedChunk(
+10:     val originalText: String,     // raw text as user sees it
+11:     val normalizedText: String,   // after normalizeText() — ready for phonemization
+12:     val startOffset: Int,         // char position in the original full text
+13:     val endOffset: Int,
+14:     val isContinuation: Boolean = false  // true = sub-chunk of a split sentence, no gap before it
+15: )
+16: 
+17: /**
+18:  * Pre-processes pasted text: splits into chunks and normalizes each chunk.
+19:  * This runs at paste time (on a background thread) so that play-time is faster.
+20:  */
+21: class TextProcessor(private val phonemeConverter: PhonemeConverter) {
+22: 
+23:     /**
+24:      * Split [text] into sentence-boundary chunks and normalize each one.
+25:      * Returns a list of [PreparedChunk] with both original and normalized text.
+26:      */
+27:     fun processText(text: String): List<PreparedChunk> {
+28:         val chunks = TextChunker.chunk(text)
+29:         return chunks.map { chunk ->
+30:             PreparedChunk(
+31:                 originalText = chunk.text,
+32:                 normalizedText = phonemeConverter.normalizeText(chunk.text),
+33:                 startOffset = chunk.startOffset,
+34:                 endOffset = chunk.endOffset,
+35:                 isContinuation = chunk.isContinuation
+36:             )
+37:         }
+38:     }
+39: }
+
+(End of file - total 39 lines)
+</content>
+```
 
 **Tool: read**
 
@@ -4280,223 +6152,480 @@ I need to trace through the TextChunker logic to see exactly when `CLAUSE_SEPARA
 9: data class TextChunk(
 10:     val text: String,
 11:     val startOffset: Int,
-12:     val endOffset: Int
-13: )
-14: 
-15: /**
-16:  * Splits text into chunks suitable for TTS inference.
-17:  * Each chunk should produce phonemes within the model's token limit (~400).
-18:  * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
-19:  * abbreviation/decimal handling), then clause boundaries, then word boundaries.
-20:  */
-21: object TextChunker {
-22: 
-23:     // Approximate: 1 word ≈ 5-8 phoneme tokens. 400 tokens ≈ 50-80 words.
-24:     // Use conservative limit of ~50 words per chunk for safety.
-25:     private const val MAX_WORDS_PER_CHUNK = 50
-26:     // Minimum chunk size to avoid tiny fragments
-27:     private const val MIN_WORDS_PER_CHUNK = 3
-28: 
-29:     private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
-30: 
-31:     /**
-32:      * Split text into chunks with offset tracking.
-33:      * Empty text returns an empty list.
-34:      */
-35:     fun chunk(text: String): List<TextChunk> {
-36:         if (text.isBlank()) return emptyList()
-37: 
-38:         // First split into sentences using ICU4J BreakIterator
-39:         val sentences = splitIntoSentences(text)
-40:         val chunks = mutableListOf<TextChunk>()
-41: 
-42:         for (sentence in sentences) {
-43:             if (sentence.text.isBlank()) continue
-44: 
-45:             val wordCount = sentence.text.trim().split(Regex("\\s+")).size
-46:             if (wordCount <= MAX_WORDS_PER_CHUNK) {
-47:                 chunks.add(sentence)
-48:             } else {
-49:                 // Sentence too long - split at clause boundaries
-50:                 val clauses = splitKeepingDelimiters(sentence.text, CLAUSE_SEPARATORS, sentence.startOffset)
-51:                 for (clause in clauses) {
-52:                     if (clause.text.isBlank()) continue
-53:                     val clauseWordCount = clause.text.trim().split(Regex("\\s+")).size
-54:                     if (clauseWordCount <= MAX_WORDS_PER_CHUNK) {
-55:                         chunks.add(clause)
-56:                     } else {
-57:                         // Still too long - split at word boundaries
-58:                         chunks.addAll(splitByWords(clause.text, clause.startOffset))
-59:                     }
-60:                 }
-61:             }
-62:         }
+12:     val endOffset: Int,
+13:     val isContinuation: Boolean = false
+14: )
+15: 
+16: /**
+17:  * Splits text into chunks suitable for TTS inference.
+18:  * Each chunk should produce phonemes within the model's token limit (~400).
+19:  * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
+20:  * abbreviation/decimal handling), then word boundaries for oversized sentences.
+21:  * Sub-chunks of a split sentence are marked as continuations so the audio
+22:  * layer can omit the inter-sentence silence gap between them.
+23:  */
+24: object TextChunker {
+25: 
+26:     // Approximate: 1 word ≈ 5-8 phoneme tokens. 400 tokens ≈ 50-80 words.
+27:     // Use conservative limit of ~50 words per chunk for safety.
+28:     private const val MAX_WORDS_PER_CHUNK = 50
+29:     // Minimum chunk size to avoid tiny fragments
+30:     private const val MIN_WORDS_PER_CHUNK = 3
+31: 
+32:     /**
+33:      * Split text into chunks with offset tracking.
+34:      * Empty text returns an empty list.
+35:      *
+36:      * Sentences within the word limit become one chunk each.
+37:      * Longer sentences are split at word boundaries every ~50 words;
+38:      * sub-chunks after the first are marked [isContinuation]=true
+39:      * so the audio layer can skip the inter-sentence silence gap.
+40:      */
+41:     fun chunk(text: String): List<TextChunk> {
+42:         if (text.isBlank()) return emptyList()
+43: 
+44:         // First split into sentences using ICU4J BreakIterator
+45:         val sentences = splitIntoSentences(text)
+46:         val chunks = mutableListOf<TextChunk>()
+47: 
+48:         for (sentence in sentences) {
+49:             if (sentence.text.isBlank()) continue
+50: 
+51:             val wordCount = sentence.text.trim().split(Regex("\\s+")).size
+52:             if (wordCount <= MAX_WORDS_PER_CHUNK) {
+53:                 chunks.add(sentence)
+54:             } else {
+55:                 // Sentence too long - split at word boundaries
+56:                 chunks.addAll(splitByWords(sentence.text, sentence.startOffset))
+57:             }
+58:         }
+59: 
+60:         // Merge tiny chunks with their neighbors (only non-continuation chunks)
+61:         return mergeSmallChunks(chunks)
+62:     }
 63: 
-64:         // Merge tiny chunks with their neighbors
-65:         return mergeSmallChunks(chunks)
-66:     }
-67: 
-68:     /**
-69:      * Split text into sentences using ICU4J BreakIterator.
-70:      * Handles abbreviations (Dr., Mr., U.S.A.), decimal numbers (3.14),
-71:      * ellipses (...), and other edge cases automatically.
-72:      */
-73:     private fun splitIntoSentences(text: String): List<TextChunk> {
-74:         val result = mutableListOf<TextChunk>()
-75:         val bi = BreakIterator.getSentenceInstance(Locale.US)
-76:         bi.setText(text)
-77: 
-78:         var start = bi.first()
-79:         var end = bi.next()
-80:         while (end != BreakIterator.DONE) {
-81:             val segment = text.substring(start, end)
-82:             if (segment.isNotBlank()) {
-83:                 result.add(TextChunk(segment, start, end))
-84:             }
-85:             start = end
-86:             end = bi.next()
-87:         }
-88: 
-89:         // Handle any remaining text (shouldn't happen with BreakIterator, but be safe)
-90:         if (start < text.length) {
-91:             val remaining = text.substring(start)
-92:             if (remaining.isNotBlank()) {
-93:                 result.add(TextChunk(remaining, start, text.length))
-94:             }
+64:     /**
+65:      * Split text into sentences using ICU4J BreakIterator.
+66:      * Handles abbreviations (Dr., Mr., U.S.A.), decimal numbers (3.14),
+67:      * ellipses (...), and other edge cases automatically.
+68:      */
+69:     private fun splitIntoSentences(text: String): List<TextChunk> {
+70:         val result = mutableListOf<TextChunk>()
+71:         val bi = BreakIterator.getSentenceInstance(Locale.US)
+72:         bi.setText(text)
+73: 
+74:         var start = bi.first()
+75:         var end = bi.next()
+76:         while (end != BreakIterator.DONE) {
+77:             val segment = text.substring(start, end)
+78:             if (segment.isNotBlank()) {
+79:                 result.add(TextChunk(segment, start, end))
+80:             }
+81:             start = end
+82:             end = bi.next()
+83:         }
+84: 
+85:         // Handle any remaining text (shouldn't happen with BreakIterator, but be safe)
+86:         if (start < text.length) {
+87:             val remaining = text.substring(start)
+88:             if (remaining.isNotBlank()) {
+89:                 result.add(TextChunk(remaining, start, text.length))
+90:             }
+91:         }
+92: 
+93:         if (result.isEmpty() && text.isNotBlank()) {
+94:             result.add(TextChunk(text, 0, text.length))
 95:         }
 96: 
-97:         if (result.isEmpty() && text.isNotBlank()) {
-98:             result.add(TextChunk(text, 0, text.length))
-99:         }
-100: 
-101:         return result
-102:     }
-103: 
-104:     /**
-105:      * Split text while keeping delimiters attached to the preceding segment.
-106:      * Tracks offsets relative to the original text.
-107:      */
-108:     private fun splitKeepingDelimiters(
-109:         text: String,
-110:         pattern: Regex,
-111:         baseOffset: Int = 0
-112:     ): List<TextChunk> {
-113:         val result = mutableListOf<TextChunk>()
-114:         var lastEnd = 0
-115: 
-116:         val matches = pattern.findAll(text)
-117:         for (match in matches) {
-118:             val segEnd = match.range.last + 1
-119:             if (segEnd > lastEnd) {
-120:                 val segText = text.substring(lastEnd, segEnd)
-121:                 if (segText.isNotBlank()) {
-122:                     result.add(TextChunk(segText, baseOffset + lastEnd, baseOffset + segEnd))
-123:                 }
-124:                 lastEnd = segEnd
-125:             }
-126:         }
-127: 
-128:         // Remaining text after last delimiter
-129:         if (lastEnd < text.length) {
-130:             val remaining = text.substring(lastEnd)
-131:             if (remaining.isNotBlank()) {
-132:                 result.add(TextChunk(remaining, baseOffset + lastEnd, baseOffset + text.length))
-133:             }
-134:         }
-135: 
-136:         if (result.isEmpty() && text.isNotBlank()) {
-137:             result.add(TextChunk(text, baseOffset, baseOffset + text.length))
-138:         }
-139: 
-140:         return result
-141:     }
-142: 
-143:     /**
-144:      * Split by word boundaries when clause splitting isn't enough.
-145:      */
-146:     private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
-147:         val words = text.split(Regex("(?<=\\s)"))
-148:         val chunks = mutableListOf<TextChunk>()
-149:         var currentWords = mutableListOf<String>()
-150:         var chunkStart = 0
-151:         var pos = 0
-152: 
-153:         for (word in words) {
-154:             currentWords.add(word)
-155:             pos += word.length
-156:             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
-157:                 val chunkText = currentWords.joinToString("")
-158:                 chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
-159:                 chunkStart = pos
-160:                 currentWords = mutableListOf()
-161:             }
-162:         }
-163: 
-164:         if (currentWords.isNotEmpty()) {
-165:             val chunkText = currentWords.joinToString("")
-166:             chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))
-167:         }
-168: 
-169:         return chunks
-170:     }
-171: 
-172:     /**
-173:      * Merge chunks that are too small with their next neighbor.
-174:      */
-175:     private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {
-176:         if (chunks.size <= 1) return chunks
-177: 
-178:         val merged = mutableListOf<TextChunk>()
-179:         var i = 0
-180:         while (i < chunks.size) {
-181:             var current = chunks[i]
-182:             val wordCount = current.text.trim().split(Regex("\\s+")).size
-183: 
-184:             // If tiny and there's a next chunk, merge with next
-185:             if (wordCount < MIN_WORDS_PER_CHUNK && i + 1 < chunks.size) {
-186:                 val next = chunks[i + 1]
-187:                 current = TextChunk(
-188:                     current.text + next.text,
-189:                     current.startOffset,
-190:                     next.endOffset
-191:                 )
-192:                 i += 2
-193:             } else {
-194:                 i++
-195:             }
-196:             merged.add(current)
-197:         }
-198:         return merged
-199:     }
-200: }
+97:         return result
+98:     }
+99: 
+100:     /**
+101:      * Split by word boundaries when a sentence exceeds [MAX_WORDS_PER_CHUNK].
+102:      * The first sub-chunk keeps [isContinuation]=false; subsequent ones are
+103:      * marked true so the audio layer omits the inter-sentence silence gap.
+104:      * Tiny tails (< [MIN_WORDS_PER_CHUNK] words) are absorbed into the
+105:      * previous sub-chunk to avoid sentence-final fragments.
+106:      */
+107:     private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
+108:         val words = text.split(Regex("(?<=\\s)"))
+109:         val chunks = mutableListOf<TextChunk>()
+110:         var currentWords = mutableListOf<String>()
+111:         var chunkStart = 0
+112:         var pos = 0
+113: 
+114:         for ((index, word) in words.withIndex()) {
+115:             currentWords.add(word)
+116:             pos += word.length
+117: 
+118:             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
+119:                 // Check if remaining words would form a tiny tail
+120:                 val remaining = words.size - (index + 1)
+121:                 if (remaining in 1 until MIN_WORDS_PER_CHUNK) {
+122:                     // Don't split yet — absorb the tail into this chunk
+123:                     continue
+124:                 }
+125: 
+126:                 val chunkText = currentWords.joinToString("")
+127:                 chunks.add(TextChunk(
+128:                     chunkText,
+129:                     baseOffset + chunkStart,
+130:                     baseOffset + pos,
+131:                     isContinuation = chunks.isNotEmpty()
+132:                 ))
+133:                 chunkStart = pos
+134:                 currentWords = mutableListOf()
+135:             }
+136:         }
+137: 
+138:         if (currentWords.isNotEmpty()) {
+139:             val chunkText = currentWords.joinToString("")
+140:             chunks.add(TextChunk(
+141:                 chunkText,
+142:                 baseOffset + chunkStart,
+143:                 baseOffset + pos,
+144:                 isContinuation = chunks.isNotEmpty()
+145:             ))
+146:         }
+147: 
+148:         return chunks
+149:     }
+150: 
+151:     /**
+152:      * Merge chunks that are too small with their next neighbor.
+153:      * Continuation chunks (from word-boundary splits) are left as-is since
+154:      * [splitByWords] already absorbs tiny tails.
+155:      */
+156:     private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {
+157:         if (chunks.size <= 1) return chunks
+158: 
+159:         val merged = mutableListOf<TextChunk>()
+160:         var i = 0
+161:         while (i < chunks.size) {
+162:             var current = chunks[i]
+163:             val wordCount = current.text.trim().split(Regex("\\s+")).size
+164: 
+165:             // If tiny and there's a next chunk, merge with next
+166:             if (wordCount < MIN_WORDS_PER_CHUNK && i + 1 < chunks.size) {
+167:                 val next = chunks[i + 1]
+168:                 current = TextChunk(
+169:                     current.text + next.text,
+170:                     current.startOffset,
+171:                     next.endOffset
+172:                 )
+173:                 i += 2
+174:             } else {
+175:                 i++
+176:             }
+177:             merged.add(current)
+178:         }
+179:         return merged
+180:     }
+181: }
 
-(End of file - total 200 lines)
+(End of file - total 181 lines)
 </content>
 ```
 
 ---
 
-## Assistant (Plan · claude-opus-4.6 · 13.9s)
+## Assistant (Plan · Claude Opus 4.6 · 16.4s)
 
-You're right to question this. Let me trace the logic:
+**Tool: todowrite**
 
-1. `CLAUSE_SEPARATORS` on line 29 is only used in `splitKeepingDelimiters()` (line 50)
-2. That's only called when a sentence has **more than 50 words** (line 46-51)
-3. For normal-length sentences, the hyphen in the regex is never reached
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Read and analyze AudioBufferQueue memory behavior",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze AudioProducer memory allocation",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze AudioPlayer memory behavior (consumer side)",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze PlaybackController lifecycle and chunk retention",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze KokoroEngine ONNX inference memory",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "content": "Read and analyze TextProcessor / TextChunker chunk storage",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Check for FloatArray copies in trimAndPadSilence and crossfade",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "content": "Check VoiceStyleLoader caching behavior",
+      "priority": "medium",
+      "status": "pending"
+    },
+    {
+      "content": "Check PhonemeConverter / EspeakBridge native memory",
+      "priority": "medium",
+      "status": "pending"
+    },
+    {
+      "content": "Synthesize findings and present analysis",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
 
-So the real question is: **where does the actual problem with compound-hyphenated words manifest?**
+**Output:**
+```
+[
+  {
+    "content": "Read and analyze AudioBufferQueue memory behavior",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze AudioProducer memory allocation",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze AudioPlayer memory behavior (consumer side)",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze PlaybackController lifecycle and chunk retention",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze KokoroEngine ONNX inference memory",
+    "priority": "high",
+    "status": "in_progress"
+  },
+  {
+    "content": "Read and analyze TextProcessor / TextChunker chunk storage",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Check for FloatArray copies in trimAndPadSilence and crossfade",
+    "priority": "medium",
+    "status": "completed"
+  },
+  {
+    "content": "Check VoiceStyleLoader caching behavior",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "Check PhonemeConverter / EspeakBridge native memory",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "content": "Synthesize findings and present analysis",
+    "priority": "high",
+    "status": "pending"
+  }
+]
+```
 
-The possible deeper issues I can think of:
+---
 
-1. **Word counting** — Line 45 uses `split(Regex("\\s+"))` to count words, which correctly treats `worst-case` as one word (no whitespace). So word counting is fine.
+## Assistant (Plan · Claude Opus 4.6 · 8.7s)
 
-2. **eSpeak-ng phonemization** — Does eSpeak handle hyphenated compounds correctly? It might insert a pause or break at the hyphen.
+Now let me check the remaining files that could contribute to memory — VoiceStyleLoader (caching?), PhonemeConverter, and EspeakBridge:
 
-3. **`normalizeText()` in PhonemeConverter** — Does it do anything with hyphens?
+**Tool: read**
 
-4. **`postProcess()` in PhonemeConverter** — Does the IPA post-processing strip or mishandle anything related to hyphens?
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/VoiceStyleLoader.kt"
+}
+```
 
-Let me check the PhonemeConverter to see if hyphens are touched there:
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/VoiceStyleLoader.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.engine
+2: 
+3: import android.content.Context
+4: import android.util.Log
+5: import java.nio.ByteBuffer
+6: import java.nio.ByteOrder
+7: 
+8: /**
+9:  * Loads Kokoro voice style vectors from assets/voices/.
+10:  *
+11:  * Kokoro v1.0 ONNX voices are stored as .bin files containing raw little-endian
+12:  * float32 data (no header). Legacy .npy files (NumPy format) are also supported
+13:  * as a fallback.
+14:  *
+15:  * Each voice is a float array of 130,560 floats (510 × 256) representing the
+16:  * speaker's style embedding. For ONNX input, we return shape [1][N] where
+17:  * N = total floats.
+18:  */
+19: class VoiceStyleLoader(private val context: Context) {
+20: 
+21:     companion object {
+22:         private const val TAG = "VoiceStyleLoader"
+23:         private const val VOICES_DIR = "voices"
+24:         // Kokoro v1.0 style vector dimensions
+25:         private const val STYLE_DIM = 256
+26:     }
+27: 
+28:     /** Cached voice names (without extension). */
+29:     private var voiceNames: List<String>? = null
+30: 
+31:     /** Cache loaded style vectors. */
+32:     private val styleCache = mutableMapOf<String, Array<FloatArray>>()
+33: 
+34:     /**
+35:      * Get list of available voice names from assets.
+36:      * Supports both .bin (v1.0) and .npy (legacy) files.
+37:      */
+38:     fun getAvailableVoices(): List<String> {
+39:         voiceNames?.let { return it }
+40:         val names = try {
+41:             context.assets.list(VOICES_DIR)
+42:                 ?.filter { it.endsWith(".bin") || it.endsWith(".npy") }
+43:                 ?.map { it.removeSuffix(".bin").removeSuffix(".npy") }
+44:                 ?.distinct()
+45:                 ?.sorted()
+46:                 ?: emptyList()
+47:         } catch (e: Exception) {
+48:             Log.e(TAG, "Failed to list voices", e)
+49:             emptyList()
+50:         }
+51:         voiceNames = names
+52:         return names
+53:     }
+54: 
+55:     /**
+56:      * Load a voice style vector by name.
+57:      * Tries .bin first (Kokoro v1.0 raw float32), then .npy (legacy NumPy format).
+58:      * Returns a 2D array [1][N] suitable for ONNX tensor input.
+59:      */
+60:     fun loadVoice(name: String): Array<FloatArray> {
+61:         styleCache[name]?.let { return it }
+62: 
+63:         val floats = tryLoadBin(name) ?: tryLoadNpy(name)
+64:             ?: throw IllegalArgumentException("Voice '$name' not found in assets/$VOICES_DIR/")
+65: 
+66:         // Reshape flat float array to 2D [rows][STYLE_DIM]
+67:         // Kokoro v1.0 voices: 130560 floats = 510 rows × 256 dim
+68:         val rows = floats.size / STYLE_DIM
+69:         require(floats.size % STYLE_DIM == 0) {
+70:             "Voice '$name' has ${floats.size} floats, not divisible by $STYLE_DIM"
+71:         }
+72:         Log.i(TAG, "Loaded voice '$name': ${floats.size} floats -> [$rows][$STYLE_DIM]")
+73: 
+74:         val style = Array(rows) { row ->
+75:             floats.copyOfRange(row * STYLE_DIM, (row + 1) * STYLE_DIM)
+76:         }
+77:         styleCache[name] = style
+78:         return style
+79:     }
+80: 
+81:     /**
+82:      * Try to load a .bin file (raw little-endian float32 data, no header).
+83:      */
+84:     private fun tryLoadBin(name: String): FloatArray? {
+85:         val path = "$VOICES_DIR/$name.bin"
+86:         return try {
+87:             val bytes = context.assets.open(path).use { it.readBytes() }
+88:             if (bytes.size < 4 || bytes.size % 4 != 0) {
+89:                 Log.w(TAG, "Invalid .bin file for '$name': ${bytes.size} bytes (not aligned to float32)")
+90:                 return null
+91:             }
+92:             val buf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+93:             val numFloats = bytes.size / 4
+94:             val floats = FloatArray(numFloats)
+95:             buf.asFloatBuffer().get(floats)
+96:             floats
+97:         } catch (e: java.io.FileNotFoundException) {
+98:             null
+99:         } catch (e: Exception) {
+100:             Log.w(TAG, "Failed to load .bin for '$name'", e)
+101:             null
+102:         }
+103:     }
+104: 
+105:     /**
+106:      * Try to load a .npy file (NumPy format v1.0/v2.0 with float32 data).
+107:      */
+108:     private fun tryLoadNpy(name: String): FloatArray? {
+109:         val path = "$VOICES_DIR/$name.npy"
+110:         return try {
+111:             val bytes = context.assets.open(path).use { it.readBytes() }
+112:             parseNpy(bytes)
+113:         } catch (e: java.io.FileNotFoundException) {
+114:             null
+115:         } catch (e: Exception) {
+116:             Log.w(TAG, "Failed to load .npy for '$name'", e)
+117:             null
+118:         }
+119:     }
+120: 
+121:     /**
+122:      * Parse a .npy file containing a 1D float32 array.
+123:      * Handles NumPy format v1.0 and v2.0.
+124:      */
+125:     private fun parseNpy(data: ByteArray): FloatArray {
+126:         val buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
+127: 
+128:         // Magic: \x93NUMPY
+129:         val magic = ByteArray(6)
+130:         buf.get(magic)
+131:         require(magic[0] == 0x93.toByte() && String(magic, 1, 5) == "NUMPY") {
+132:             "Not a valid .npy file"
+133:         }
+134: 
+135:         val major = buf.get().toInt()
+136:         @Suppress("UNUSED_VARIABLE")
+137:         val minor = buf.get().toInt()
+138: 
+139:         val headerLen = if (major == 1) {
+140:             buf.short.toInt() and 0xFFFF
+141:         } else {
+142:             buf.int
+143:         }
+144: 
+145:         // Skip header (contains dtype, shape, order info - we assume float32 1D/2D)
+146:         val headerBytes = ByteArray(headerLen)
+147:         buf.get(headerBytes)
+148: 
+149:         // Remaining bytes are float32 data
+150:         val remaining = buf.remaining()
+151:         val numFloats = remaining / 4
+152:         val floats = FloatArray(numFloats)
+153:         buf.asFloatBuffer().get(floats)
+154:         return floats
+155:     }
+156: }
+
+(End of file - total 156 lines)
+</content>
+```
 
 **Tool: read**
 
@@ -4649,520 +6778,1591 @@ Let me check the PhonemeConverter to see if hyphens are touched there:
 136:         // --- Currency (eSpeak reads symbols in wrong order) ---
 137: 
 138:         // Currency with cents: $3.50 → 3 dollars and 50 cents
-139:         t = Regex("([\\$\u20AC\u00A3])\\s*(\\d+)\\.(\\d{2})\\b").replace(t) { match ->
-140:             val dollars = match.groupValues[2].toLongOrNull() ?: return@replace match.value
-141:             val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value
-142:             val currency = when (match.groupValues[1]) {
-143:                 "\$" -> "dollar" to "cent"
-144:                 "\u20AC" -> "euro" to "cent"
-145:                 "\u00A3" -> "pound" to "penny"
-146:                 else -> "dollar" to "cent"
-147:             }
-148:             val dollarUnit = if (dollars == 1L) currency.first else "${currency.first}s"
-149:             if (cents == 0) {
-150:                 "$dollars $dollarUnit"
-151:             } else {
-152:                 val centUnit = if (cents == 1) {
-153:                     currency.second
-154:                 } else if (currency.second == "penny") {
-155:                     "pence"
-156:                 } else {
-157:                     "${currency.second}s"
-158:                 }
-159:                 "$dollars $dollarUnit and $cents $centUnit"
-160:             }
-161:         }
-162: 
-163:         // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000
-164:         t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
-165:             .replace(t) { match ->
-166:                 val number = match.groupValues[2]
-167:                 val mag = match.groupValues[3].uppercase()
-168:                 val currency = when (match.groupValues[1]) {
-169:                     "\$" -> "dollars"; "\u20AC" -> "euros"
-170:                     "\u00A3" -> "pounds"; "\u00A5" -> "yen"
-171:                     else -> "dollars"
-172:                 }
-173:                 val magnitude = when (mag) {
-174:                     "T" -> " trillion"; "B" -> " billion"
-175:                     "M" -> " million"; "K" -> " thousand"
-176:                     else -> ""
-177:                 }
-178:                 "$number$magnitude $currency"
-179:             }
-180: 
-181:         // Clean up stray currency symbols not matched by patterns above
-182:         t = t.replace(Regex("[\\$\u20AC\u00A3\u00A5]"), " ")
-183: 
-184:         // Number ranges: 5-10 → 5 to 10 (eSpeak may read hyphen as "minus")
-185:         t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ")
-186: 
-187:         return t.trim()
-188:     }
-189: }
+139:         // Handles comma-grouped digits: $50,000.50 → 50000 dollars and 50 cents
+140:         t = Regex("([\\$\u20AC\u00A3])\\s*(\\d{1,3}(?:,\\d{3})*|\\d+)\\.(\\d{2})\\b").replace(t) { match ->
+141:             val dollars = match.groupValues[2].replace(",", "").toLongOrNull() ?: return@replace match.value
+142:             val cents = match.groupValues[3].toIntOrNull() ?: return@replace match.value
+143:             val currency = when (match.groupValues[1]) {
+144:                 "\$" -> "dollar" to "cent"
+145:                 "\u20AC" -> "euro" to "cent"
+146:                 "\u00A3" -> "pound" to "penny"
+147:                 else -> "dollar" to "cent"
+148:             }
+149:             val dollarUnit = if (dollars == 1L) currency.first else "${currency.first}s"
+150:             if (cents == 0) {
+151:                 "$dollars $dollarUnit"
+152:             } else {
+153:                 val centUnit = if (cents == 1) {
+154:                     currency.second
+155:                 } else if (currency.second == "penny") {
+156:                     "pence"
+157:                 } else {
+158:                     "${currency.second}s"
+159:                 }
+160:                 "$dollars $dollarUnit and $cents $centUnit"
+161:             }
+162:         }
+163: 
+164:         // Currency with optional magnitude suffix: $50B, €3.5M, £100K, ¥1000
+165:         // Handles comma-grouped digits: $50,000 → 50000 dollars
+166:         t = Regex("([\\$\u20AC\u00A3\u00A5])\\s*(\\d{1,3}(?:,\\d{3})*(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)\\s*([BMKTbmkt])?\\b")
+167:             .replace(t) { match ->
+168:                 val number = match.groupValues[2].replace(",", "")
+169:                 val mag = match.groupValues[3].uppercase()
+170:                 val currency = when (match.groupValues[1]) {
+171:                     "\$" -> "dollars"; "\u20AC" -> "euros"
+172:                     "\u00A3" -> "pounds"; "\u00A5" -> "yen"
+173:                     else -> "dollars"
+174:                 }
+175:                 val magnitude = when (mag) {
+176:                     "T" -> " trillion"; "B" -> " billion"
+177:                     "M" -> " million"; "K" -> " thousand"
+178:                     else -> ""
+179:                 }
+180:                 "$number$magnitude $currency"
+181:             }
+182: 
+183:         // Clean up stray currency symbols not matched by patterns above
+184:         t = t.replace(Regex("[\\$\u20AC\u00A3\u00A5]"), " ")
+185: 
+186:         // Number ranges: 5-10 → 5 to 10 (eSpeak may read hyphen as "minus")
+187:         t = t.replace(Regex("(?<=\\d)-(?=\\d)"), " to ")
+188: 
+189:         return t.trim()
+190:     }
+191: }
 
-(End of file - total 189 lines)
+(End of file - total 191 lines)
 </content>
 ```
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 49.7s)
-
-_Thinking:_
-
-Now let me think about this more carefully.
-
-The user is asking: when is TextChunker called? If the sentence is short enough (≤50 words), the hyphen in `CLAUSE_SEPARATORS` is never used as a split point. So "worst-case" in a normal-length sentence wouldn't be split.
-
-So the bug with the hyphen in `CLAUSE_SEPARATORS` only manifests when:
-1. A sentence has more than 50 words
-2. AND that sentence contains a hyphenated compound word
-
-In that specific case, the hyphen would be treated as a clause separator, and the word would be split across chunks. 
-
-For instance, "worst-case" could end up as "worst-" in one chunk and "case" in the next. But I'm wondering if there's a deeper issue here. Looking at the normalization step, there's logic that replaces hyphens between digits with "to", so "5-10" becomes "5 to 10", but that doesn't affect compound words like "worst-case". The real question is how eSpeak-ng handles these hyphenated words when they get split across chunks.
-
-Then there's the postProcess function—it doesn't explicitly handle hyphens, and I notice the hyphen isn't even in the VALID_CHARS set. But that might not matter since by the time we're in postProcess, we're working with IPA phonemes, not the original text. eSpeak would have already converted everything. So the issue is probably earlier in the pipeline, before the text reaches eSpeak.
-
-Looking at the flow: text goes through TextProcessor.processText(), gets chunked, and normalizeText() is applied per chunk without touching hyphens. So eSpeak receives compound words with hyphens intact and should handle them fine. The CLAUSE_SEPARATORS regex bug only kicks in for sentences over 50 words, which means in most real-world cases, this might not actually be causing problems.
-
-But the user is pushing back—they think the real issue is deeper than just the chunker. Looking at that long test sentence about AI labs and energy costs, it's clear they're pointing to something more fundamental about how compound hyphenated words are being processed or pronounced, possibly in eSpeak itself or in how we're handling the phoneme output. I'm realizing that sentence is actually 56 words when split by whitespace, which pushes it over the 50-word limit for a chunk. The hyphens in "worst-case," "multi-year," and "sky-high" would trigger additional splitting, fragmenting the thought even further. Wait, the user is pointing out that TextChunker only splits on long sentences — if the input is short enough, the hyphen never gets treated as a clause separator and "worst-case" stays intact. So the real problem might not be the regex at all, but something else entirely. Let me check if the example text actually exceeds that 50-word threshold... yes, it's 56 words, so the bug would trigger there. But the user seems to be questioning whether this fix is even necessary or if I'm missing the actual root cause.
-
-You're making an excellent point. Let me trace this precisely:
-
-**TextChunker flow:**
-1. `chunk()` splits text into sentences via ICU BreakIterator (line 39)
-2. For each sentence, counts words via whitespace split (line 45)
-3. **Only if wordCount > 50** does it call `splitKeepingDelimiters()` with `CLAUSE_SEPARATORS` (line 50)
-4. For sentences with <= 50 words, the hyphen regex is **never consulted**
-
-So the hyphen in `CLAUSE_SEPARATORS` is only a problem for sentences exceeding 50 words.
-
-Let me count the test sentence:
-> "We're hitting the worst-case scenarios for the big AI labs: energy, their biggest expense, is at multi-year highs, capital from the Gulf is not available for obvious reasons, there are serious concerns about a rate hike, and RAM prices are crashing because new models won't need as much, but labs already bought them at sky-high prices."
-
-That's roughly 56 words by whitespace split, so it **would** trigger clause splitting, and the hyphen would split `worst-case`, `multi-year`, and `sky-high` across chunk boundaries.
-
-But you're right — this only affects unusually long sentences. For typical sentences under 50 words, compound-hyphenated words go straight to eSpeak unmodified and presumably sound fine.
-
-So the question is: **are you hearing a problem with hyphenated compound words in normal-length sentences too?** If so, the issue would be somewhere else — possibly in eSpeak's handling of hyphens, or in how the phonemes come back. Or are you saying the fix is only needed for the >50-word edge case and that's fine, just wanted to make sure I understood the scope correctly?
-
----
-
-## User
-
-normal-length sentences are okay, no problem with hyphenated compound words, i'm thinking how to fix (or workaround) it. Increasing 50 looks not good, it doesn't fix root cause and may increase memory usage. What happens if there's no special char in a long sentence? just chunk at 50 words? If that's the case, I think we can simplify the approach just to chunk there, regardless what the char is, and don't add extra 300ms delay before next text block. note the next text block shall be treated as a new complete sentence, just no 300ms delay before it
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 61.1s)
-
-
-
-Good thinking. Let me trace through what happens currently and analyze your proposal.
-
-**Current behavior for sentences > 50 words:**
-1. Try to split at clause separators (commas, semicolons, colons, hyphens, dashes)
-2. If a clause is still > 50 words, fall through to `splitByWords()` 
-3. Each resulting chunk gets 300ms silence appended by `trimAndPadSilence()`
-
-**For sentences with NO special chars and > 50 words:** it already falls through to `splitByWords()` on line 58, which splits at exactly 50-word boundaries. So that path already exists.
-
-Let me check how the 300ms gap is applied:
-
-_Thinking:_
-
-The user wants to simplify the chunking approach. Let me understand what they're proposing:
-
-1. Remove the special clause separator logic entirely
-2. When a sentence exceeds 50 words, just split at the 50-word boundary (regardless of what character is there)
-3. Don't add the 300ms silence gap between these sub-chunks (since they're continuations of the same sentence)
-4. The next sub-chunk should be treated as a new complete sentence (for prosody/intonation purposes), just without the 300ms delay
-
-Let me think about this:
-
-**Current flow for long sentences:**
-1. TextChunker splits at clause separators (commas, semicolons, colons, hyphens, dashes)
-
-
-2. Each resulting chunk is a separate `TextChunk`
-3. In `AudioProducer.trimAndPadSilence()`, 300ms silence is appended between chunks
-
-**Proposed flow:**
-1. TextChunker splits at word boundaries every 50 words (no special separator logic)
-2. Each sub-chunk is still a separate `TextChunk` but marked somehow as "continuation" (no 300ms gap)
-3. Or alternatively, the 300ms gap is just removed for these sub-chunks
-
-So the key difference is that sub-chunks from splitting a long sentence don't get the inter-chunk silence, but they're still processed as separate chunks for prosody purposes.
-
-The challenge is that TextChunker produces `TextChunk` objects without distinguishing between sentence boundaries and word-boundary splits, while `AudioProducer.trimAndPadSilence()` blindly adds 300ms to every chunk. I need to either mark continuation chunks somehow or find a way to track which chunks should skip the gap.
-
-Actually, rereading the user's request, they want each sub-chunk treated as its own sentence (so the model handles prosody naturally) but without the artificial 300ms padding between them. This means I can simplify: just split at word boundaries without the clause separator logic, and either add a continuation flag to `TextChunk` or remove the 300ms gap entirely since the model already produces natural silence at sentence boundaries. I'm settling on a concrete plan: remove the `CLAUSE_SEPARATORS` regex and `splitKeepingDelimiters()` method entirely, then route long sentences directly to the existing `splitByWords()` function. I'll add an `isContinuation` flag to `TextChunk` to mark mid-sentence chunks, then check that flag in `AudioProducer` to skip the 300ms gap for continuations. Now I need to verify where exactly that gap gets applied. So the key insight is that continuation chunks should skip the 300ms gap entirely—they're synthesized as independent sentences for prosody purposes, but they flow directly into each other without the inter-chunk silence. I can implement this by adding an `isContinuation` flag to `TextChunk`, marking all chunks after the first as continuations in `splitByWords()`, then having `AudioProducer` conditionally skip the padding based on that flag.
-
-Now I'm thinking through the edge case where splitting at 50 words leaves a tiny remainder—if that 2-word chunk gets merged with the next sentence during the `mergeSmallChunks` step, it could distort the prosody and meaning of both sentences, which isn't ideal.
-
-The real issue is that the `isContinuation` flag would become inaccurate after merging—a chunk marked as a continuation might now span multiple sentences, which breaks the semantic intent. I think `mergeSmallChunks` needs to be smarter about the `isContinuation` flag when combining chunks, so it doesn't incorrectly label a merged chunk as a continuation when it actually contains a sentence boundary.
-
-Alternatively, I could prevent tiny tail chunks from being created in the first place by adjusting `splitByWords` to absorb any remainder that's below the minimum threshold back into the previous chunk, even if it slightly exceeds the word limit.
-
-Let me map out the concrete changes needed: I'd add an `isContinuation` flag to `TextChunk`, strip out the clause-based splitting logic, and when a sentence exceeds 50 words, split it directly by word count. The key refinement is in `splitByWords` itself — mark all chunks after the first as continuations, and if the final chunk falls short of the minimum, fold it back into the previous one rather than creating a runt chunk that `mergeSmallChunks` would have to handle later.
-
-For the audio side, I'd check that `isContinuation` flag in `AudioProducer` and skip the 300ms gap for continuation chunks. But I should actually look at how the gap gets inserted to make sure I'm patching the right spot. I'm also wondering if there's a cleaner path: what if I just strip out the clause separators entirely and let everything long fall through to word-based splitting, then remove the gap universally?
-
-Actually, the user was specific—they only want to skip the delay for continuations, not remove it everywhere. The natural silence from the model's output probably handles spacing between real sentences, but they want to preserve that 300ms for actual sentence boundaries. Let me check the AudioProducer code to see exactly where that gap gets added.
 
 **Tool: read**
 
 **Input:**
 ```json
 {
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt"
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/EspeakBridge.kt"
 }
 ```
 
 **Output:**
 ```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt</path>
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/EspeakBridge.kt</path>
 <type>file</type>
-<content>1: package com.example.mytts.audio
+<content>1: package com.example.mytts.engine
 2: 
-3: import android.os.Process
+3: import android.content.Context
 4: import android.util.Log
 5: import com.example.mytts.BuildConfig
-6: import com.example.mytts.engine.KokoroEngine
-7: import java.util.concurrent.atomic.AtomicBoolean
-8: 
-9: /**
-10:  * Producer thread that converts text chunks to audio using the Kokoro engine.
-11:  * Runs inference on a background thread and feeds PCM to the AudioPlayer.
-12:  */
-13: class AudioProducer(
-14:     private val engine: KokoroEngine,
-15:     private val player: AudioPlayer,
-16:     private val onChunkReady: (chunkIndex: Int) -> Unit = {},
-17:     private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }
-18: ) {
-19:     companion object {
-20:         private const val TAG = "AudioProducer"
-21:         // Max chunks to queue ahead of playback
-22:         private const val MAX_QUEUE_AHEAD = 4
-23:         // Silence threshold: samples below this absolute value are considered silent
-24:         private const val SILENCE_THRESHOLD = 0.01f
-25:         // Target silence gap between chunks in milliseconds
-26:         private const val GAP_BETWEEN_CHUNKS_MS = 300
-27:     }
-28: 
-29:     private val running = AtomicBoolean(false)
-30:     private var producerThread: Thread? = null
+6: import java.io.File
+7: 
+8: /**
+9:  * JNI bridge to eSpeak-ng for text-to-phoneme conversion.
+10:  * eSpeak-ng data files are extracted from assets to internal storage on first use.
+11:  */
+12: class EspeakBridge(private val context: Context) {
+13: 
+14:     companion object {
+15:         private const val TAG = "EspeakBridge"
+16:         private const val DATA_DIR = "espeak-ng-data"
+17: 
+18:         init {
+19:             System.loadLibrary("espeak_jni")
+20:         }
+21:     }
+22: 
+23:     private var initialized = false
+24: 
+25:     /**
+26:      * Initialize eSpeak-ng. Extracts data files from assets if needed.
+27:      * Must be called before textToPhonemes().
+28:      */
+29:     fun initialize(): Boolean {
+30:         if (initialized) return true
 31: 
-32:     private var chunks: List<PreparedChunk> = emptyList()
-33:     private var voiceName: String = ""
-34:     private var speed: Float = 1.0f
-35:     private var startIndex: Int = 0
+32:         try {
+33:             val dataDir = extractDataIfNeeded()
+34:             // eSpeak expects the parent of espeak-ng-data/, not the dir itself
+35:             val parentPath = dataDir.parentFile?.absolutePath ?: return false
 36: 
-37:     /**
-38:      * Start producing audio from the given prepared chunks.
-39:      *
-40:      * @param chunks list of pre-processed chunks (already normalized at paste time)
-41:      * @param voice voice name to use
-42:      * @param speed speed multiplier (model-level, not playback rate)
-43:      * @param fromIndex start from this chunk index
-44:      */
-45:     fun start(
-46:         chunks: List<PreparedChunk>,
-47:         voice: String,
-48:         speed: Float = 1.0f,
-49:         fromIndex: Int = 0
-50:     ) {
-51:         stop()
-52:         this.chunks = chunks
-53:         this.voiceName = voice
-54:         this.speed = speed
-55:         this.startIndex = fromIndex
-56: 
-57:         running.set(true)
-58:         producerThread = Thread({
-59:             // Run at default priority so Android doesn't throttle when screen is off
-60:             Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)
-61:             produceLoop()
-62:         }, "AudioProducer").also { it.start() }
+37:             val result = nativeInit(parentPath)
+38:             if (result != 0) {
+39:                 Log.e(TAG, "nativeInit failed with code $result")
+40:                 return false
+41:             }
+42: 
+43:             initialized = true
+44:             Log.i(TAG, "eSpeak-ng initialized successfully")
+45:             return true
+46:         } catch (e: Exception) {
+47:             Log.e(TAG, "Failed to initialize eSpeak-ng", e)
+48:             return false
+49:         }
+50:     }
+51: 
+52:     /**
+53:      * Convert text to IPA phonemes using eSpeak-ng.
+54:      * Returns IPA string with '^' tie characters between multi-letter phonemes
+55:      * (e.g., "d^ʒ" for the J sound, "t^ʃ" for CH).
+56:      */
+57:     fun textToPhonemes(text: String): String {
+58:         if (!initialized) {
+59:             Log.w(TAG, "eSpeak not initialized, returning empty")
+60:             return ""
+61:         }
+62:         return nativeTextToPhonemes(text)
 63:     }
 64: 
-65:     private fun produceLoop() {
-66:         // Dump all chunks for debugging — verify no stale chunks from previous text
-67:         if (BuildConfig.DEBUG) {
-68:             Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
-69:             for (i in chunks.indices) {
-70:                 val c = chunks[i]
-71:                 Log.d(TAG, "  chunk[$i] offset=${c.startOffset}-${c.endOffset}: '${c.normalizedText.take(80)}'")
-72:             }
-73:         }
+65:     /**
+66:      * Release eSpeak-ng resources.
+67:      */
+68:     fun terminate() {
+69:         if (initialized) {
+70:             nativeTerminate()
+71:             initialized = false
+72:         }
+73:     }
 74: 
-75:         try {
-76:             for (i in startIndex until chunks.size) {
-77:                 if (!running.get()) break
-78: 
-79:                 val chunk = chunks[i]
-80:                 val text = chunk.normalizedText.trim()
-81:                 if (text.isEmpty()) continue
-82: 
-83:                 // Wait if player queue is full (backpressure)
-84:                 while (running.get() && player.queueSize >= MAX_QUEUE_AHEAD) {
-85:                     try { Thread.sleep(100) } catch (_: InterruptedException) { return }
-86:                 }
-87:                 if (!running.get()) break
+75:     /**
+76:      * Extract espeak-ng-data from assets to internal storage.
+77:      * Uses a version marker file to avoid re-extracting on every launch.
+78:      */
+79:     private fun extractDataIfNeeded(): File {
+80:         val destDir = File(context.filesDir, DATA_DIR)
+81:         val versionFile = File(destDir, ".version")
+82:         val currentVersion = "f6fed6c-en-only"
+83: 
+84:         if (versionFile.exists() && versionFile.readText() == currentVersion) {
+85:             if (BuildConfig.DEBUG) Log.d(TAG, "eSpeak data already extracted")
+86:             return destDir
+87:         }
 88: 
-89:                 try {
-90:                     if (BuildConfig.DEBUG) Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
-91:                     val startTime = System.currentTimeMillis()
-92: 
-93:                     val pcm = engine.speakNormalized(text, voiceName, speed)
+89:         Log.i(TAG, "Extracting eSpeak-ng data to ${destDir.absolutePath}")
+90: 
+91:         // Clean and recreate
+92:         if (destDir.exists()) destDir.deleteRecursively()
+93:         destDir.mkdirs()
 94: 
-95:                     val elapsed = System.currentTimeMillis() - startTime
-96:                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
-97:                     if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsed}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsed.toFloat() / audioDuration))
-98: 
-99:                     if (pcm.isNotEmpty() && running.get()) {
-100:                         // Trim trailing silence and add a controlled gap
-101:                         val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE)
-102:                         player.enqueue(trimmed, i)
-103:                         onChunkReady(i)
-104:                     }
-105:                 } catch (e: Exception) {
-106:                     if (running.get()) {
-107:                         Log.e(TAG, "Failed to synthesize chunk $i", e)
-108:                         onError(i, e)
-109:                     }
-110:                 }
-111:             }
-112:         } catch (_: InterruptedException) {
-113:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer interrupted")
-114:             return
-115:         }
-116: 
-117:         // Signal end: let player drain its queue naturally then stop
-118:         if (running.get()) {
-119:             if (BuildConfig.DEBUG) Log.d(TAG, "Producer finished all chunks")
-120:             player.markProducerDone()
+95:         // Recursively copy from assets
+96:         copyAssetDir(DATA_DIR, destDir)
+97: 
+98:         // Write version marker
+99:         versionFile.writeText(currentVersion)
+100:         Log.i(TAG, "eSpeak-ng data extracted successfully")
+101: 
+102:         return destDir
+103:     }
+104: 
+105:     private fun copyAssetDir(assetPath: String, destDir: File) {
+106:         val assets = context.assets.list(assetPath) ?: return
+107: 
+108:         if (assets.isEmpty()) {
+109:             // It's a file, copy it
+110:             context.assets.open(assetPath).use { input ->
+111:                 File(destDir.parentFile, destDir.name).outputStream().use { output ->
+112:                     input.copyTo(output)
+113:                 }
+114:             }
+115:         } else {
+116:             // It's a directory, recurse
+117:             destDir.mkdirs()
+118:             for (child in assets) {
+119:                 copyAssetDir("$assetPath/$child", File(destDir, child))
+120:             }
 121:         }
 122:     }
 123: 
-124:     fun stop() {
-125:         running.set(false)
-126:         producerThread?.interrupt()
-127:         // Short timeout: ONNX inference can't be interrupted mid-call, but
-128:         // the next start() calls stop() anyway so orphaned threads self-exit.
-129:         producerThread?.join(500)
-130:         producerThread = null
-131:     }
-132: 
-133:     /**
-134:      * Trim trailing silence from PCM audio and append a controlled silence gap.
-135:      * This ensures consistent ~300ms gaps between chunks instead of variable
-136:      * silence durations from the model output.
-137:      *
-138:      * @param pcm raw PCM float samples
-139:      * @param sampleRate audio sample rate (e.g. 24000)
-140:      * @return trimmed PCM with controlled trailing silence
-141:      */
-142:     private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int): FloatArray {
-143:         if (pcm.isEmpty()) return pcm
-144: 
-145:         // Find last non-silent sample (scanning backwards)
-146:         var lastNonSilent = pcm.size - 1
-147:         while (lastNonSilent >= 0 && kotlin.math.abs(pcm[lastNonSilent]) < SILENCE_THRESHOLD) {
-148:             lastNonSilent--
-149:         }
-150: 
-151:         // Keep audio up to last non-silent sample (with small margin to avoid cutting off decay)
-152:         val margin = minOf(64, pcm.size - lastNonSilent - 1)
-153:         val trimEnd = (lastNonSilent + margin + 1).coerceIn(1, pcm.size)
-154: 
-155:         // Calculate desired gap in samples
-156:         val gapSamples = sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000
-157: 
-158:         // Create new array: trimmed audio + silence gap
-159:         val result = FloatArray(trimEnd + gapSamples)
-160:         System.arraycopy(pcm, 0, result, 0, trimEnd)
-161:         // Remaining samples are already 0.0f (silence gap)
-162: 
-163:         return result
-164:     }
-165: }
+124:     // Native methods
+125:     private external fun nativeInit(dataPath: String): Int
+126:     private external fun nativeTextToPhonemes(text: String): String
+127:     private external fun nativeTerminate()
+128: }
 
-(End of file - total 165 lines)
+(End of file - total 128 lines)
 </content>
 ```
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 13.4s)
-
-_Thinking:_
-
-Now I see the full picture. Let me analyze:
-
-1. `trimAndPadSilence()` on line 142 always appends 300ms silence to EVERY chunk, regardless of whether it's a continuation of a sentence or a new sentence.
-
-2. The `produceLoop()` iterates over `chunks` (which are `PreparedChunk` objects). Let me check what `PreparedChunk` is.
-
-3. The `chunks` are `List<PreparedChunk>` — let me check that type.
-
-Let me look at TextProcessor to see how PreparedChunk is defined and how it relates to TextChunk.
-
-Let me also check `PreparedChunk` and how chunks flow from TextProcessor to AudioProducer:
 
 **Tool: read**
 
 **Input:**
 ```json
 {
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextProcessor.kt"
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/MainScreen.kt"
 }
 ```
 
 **Output:**
 ```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextProcessor.kt</path>
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/MainScreen.kt</path>
 <type>file</type>
-<content>1: package com.example.mytts.audio
+<content>1: package com.example.mytts.ui
 2: 
-3: import com.example.mytts.engine.PhonemeConverter
-4: 
-5: /**
-6:  * A text chunk that has been pre-processed: chunked and normalized at paste time.
-7:  * Normalization is done eagerly so that play-time only needs phonemization + synthesis.
-8:  */
-9: data class PreparedChunk(
-10:     val originalText: String,     // raw text as user sees it
-11:     val normalizedText: String,   // after normalizeText() — ready for phonemization
-12:     val startOffset: Int,         // char position in the original full text
-13:     val endOffset: Int
-14: )
-15: 
-16: /**
-17:  * Pre-processes pasted text: splits into chunks and normalizes each chunk.
-18:  * This runs at paste time (on a background thread) so that play-time is faster.
-19:  */
-20: class TextProcessor(private val phonemeConverter: PhonemeConverter) {
-21: 
-22:     /**
-23:      * Split [text] into sentence-boundary chunks and normalize each one.
-24:      * Returns a list of [PreparedChunk] with both original and normalized text.
-25:      */
-26:     fun processText(text: String): List<PreparedChunk> {
-27:         val chunks = TextChunker.chunk(text)
-28:         return chunks.map { chunk ->
-29:             PreparedChunk(
-30:                 originalText = chunk.text,
-31:                 normalizedText = phonemeConverter.normalizeText(chunk.text),
-32:                 startOffset = chunk.startOffset,
-33:                 endOffset = chunk.endOffset
-34:             )
-35:         }
-36:     }
+3: import androidx.compose.foundation.background
+4: import androidx.compose.foundation.border
+5: import androidx.compose.foundation.clickable
+6: import androidx.compose.foundation.gestures.detectTapGestures
+7: import androidx.compose.foundation.layout.*
+8: import androidx.compose.foundation.rememberScrollState
+9: import androidx.compose.foundation.shape.RoundedCornerShape
+10: import androidx.compose.foundation.verticalScroll
+11: import androidx.compose.material3.*
+12: import androidx.compose.runtime.*
+13: import androidx.compose.ui.Alignment
+14: import androidx.compose.ui.Modifier
+15: import androidx.compose.ui.draw.clip
+16: import androidx.compose.ui.input.pointer.pointerInput
+17: import androidx.compose.ui.platform.LocalClipboardManager
+18: import androidx.compose.ui.text.SpanStyle
+19: import androidx.compose.ui.text.TextLayoutResult
+20: import androidx.compose.ui.text.TextStyle
+21: import androidx.compose.ui.text.buildAnnotatedString
+22: import androidx.compose.ui.text.withStyle
+23: import androidx.compose.ui.unit.dp
+24: import androidx.compose.ui.unit.sp
+25: import com.example.mytts.audio.PlaybackController
+26: import com.example.mytts.ui.theme.HighlightYellow
+27: import com.example.mytts.util.PreferencesManager
+28: import kotlinx.coroutines.delay
+29: import kotlinx.coroutines.launch
+30: 
+31: /**
+32:  * Main composable screen for MyTTS.
+33:  * Contains: text input, play/pause, stop, voice selector, slow mode toggle, status bar.
+34:  */
+35: @OptIn(ExperimentalMaterial3Api::class)
+36: @Composable
+37: fun MainScreen(
+38:     controller: PlaybackController,
+39:     prefs: PreferencesManager
+40: ) {
+41:     val playbackState by controller.state.collectAsState()
+42:     val currentChunkIndex by controller.currentChunkIndex.collectAsState()
+43:     val statusMessage by controller.statusMessage.collectAsState()
+44:     val stoppedAtOffset by controller.stoppedAtOffset.collectAsState()
+45:     val isProcessing by controller.isProcessing.collectAsState()
+46: 
+47:     val savedText by prefs.text.collectAsState()
+48:     val savedCursor by prefs.cursorPosition.collectAsState()
+49:     val savedVoice by prefs.voice.collectAsState()
+50:     val savedSlowMode by prefs.slowMode.collectAsState()
+51: 
+52:     // Local UI state
+53:     var currentText by remember(savedText) { mutableStateOf(savedText) }
+54:     var cursorPosition by remember(savedCursor) { mutableIntStateOf(savedCursor.coerceIn(0, savedText.length)) }
+55:     var voices by remember { mutableStateOf<List<String>>(emptyList()) }
+56:     var selectedVoice by remember(savedVoice) { mutableStateOf(savedVoice) }
+57:     var slowMode by remember(savedSlowMode) { mutableStateOf(savedSlowMode) }
+58:     var voiceDropdownExpanded by remember { mutableStateOf(false) }
+59: 
+60:     val isPlaying = playbackState == PlaybackController.State.PLAYING
+61:     val isPaused = playbackState == PlaybackController.State.PAUSED
+62:     val isLoading = playbackState == PlaybackController.State.LOADING
+63:     val isStopped = playbackState == PlaybackController.State.STOPPED
+64:     val isStopping = playbackState == PlaybackController.State.STOPPING
+65: 
+66:     val scrollState = rememberScrollState()
+67:     val clipboardManager = LocalClipboardManager.current
+68:     val coroutineScope = rememberCoroutineScope()
+69: 
+70:     // Stopped-state highlight range (computed from cursor position via binary search)
+71:     var stoppedHighlightRange by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+72: 
+73:     // TextLayoutResult for mapping tap coordinates to character offsets
+74:     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+75: 
+76:     // Flag to ensure auto-scroll on app open only happens once
+77:     var initialScrollDone by remember { mutableStateOf(false) }
+78: 
+79:     // Compute stopped highlight whenever cursor changes, text changes, or processing finishes
+80:     LaunchedEffect(cursorPosition, currentText, isStopped, isProcessing) {
+81:         if (isStopped && currentText.isNotEmpty() && !isProcessing) {
+82:             stoppedHighlightRange = controller.getChunkRangeAtOffset(
+83:                 cursorPosition.coerceIn(0, currentText.length)
+84:             )
+85:         }
+86:     }
+87: 
+88:     // Pre-initialize engine to get voice list
+89:     LaunchedEffect(Unit) {
+90:         controller.preInitialize { availableVoices ->
+91:             voices = availableVoices
+92:             if (selectedVoice.isEmpty() && availableVoices.isNotEmpty()) {
+93:                 selectedVoice = availableVoices.first()
+94:                 prefs.saveVoice(selectedVoice)
+95:             }
+96:             // Pre-process saved text after engine init
+97:             if (currentText.isNotBlank()) {
+98:                 controller.processText(currentText)
+99:             }
+100:         }
+101:     }
+102: 
+103:     // Helper: compute scroll target that centers the given char offset in the viewport.
+104:     // Uses TextLayoutResult for pixel-accurate positioning instead of linear ratio.
+105:     fun scrollTargetForOffset(charOffset: Int): Int? {
+106:         val layout = textLayoutResult ?: return null
+107:         if (charOffset < 0 || charOffset > currentText.length) return null
+108:         val safeOffset = charOffset.coerceIn(0, currentText.length)
+109:         val line = layout.getLineForOffset(safeOffset)
+110:         val lineTop = layout.getLineTop(line)
+111:         val lineBottom = layout.getLineBottom(line)
+112:         val highlightCenter = (lineTop + lineBottom) / 2f
+113:         val viewportHeight = scrollState.viewportSize
+114:         return (highlightCenter - viewportHeight / 2f)
+115:             .toInt()
+116:             .coerceIn(0, scrollState.maxValue)
+117:     }
+118: 
+119:     // Auto-scroll to saved cursor position on app open
+120:     // Wait until scrollState.maxValue > 0 (content has been laid out)
+121:     LaunchedEffect(scrollState.maxValue) {
+122:         if (!initialScrollDone && scrollState.maxValue > 0 && cursorPosition > 0 && currentText.isNotEmpty()) {
+123:             val target = scrollTargetForOffset(cursorPosition)
+124:             if (target != null) {
+125:                 scrollState.scrollTo(target)
+126:             }
+127:             initialScrollDone = true
+128:         }
+129:     }
+130: 
+131:     // Auto-scroll to highlighted chunk during playback
+132:     val chunkRange = controller.getCurrentChunkRange()
+133:     LaunchedEffect(currentChunkIndex) {
+134:         if (chunkRange != null && !isStopped) {
+135:             val target = scrollTargetForOffset(chunkRange.first)
+136:             if (target != null) {
+137:                 scrollState.animateScrollTo(target)
+138:             }
+139:         }
+140:     }
+141: 
+142:     // Restore cursor position when playback stops
+143:     LaunchedEffect(stoppedAtOffset) {
+144:         if (stoppedAtOffset >= 0 && isStopped) {
+145:             val pos = stoppedAtOffset.coerceIn(0, currentText.length)
+146:             cursorPosition = pos
+147:             prefs.saveCursorPosition(pos)
+148:             val target = scrollTargetForOffset(pos)
+149:             if (target != null) {
+150:                 scrollState.animateScrollTo(target)
+151:             }
+152:         }
+153:     }
+154: 
+155:     // Save text whenever it changes (debounced)
+156:     LaunchedEffect(currentText) {
+157:         delay(500) // debounce
+158:         prefs.saveText(currentText)
+159:     }
+160: 
+161:     Column(
+162:         modifier = Modifier
+163:             .fillMaxSize()
+164:             .padding(16.dp)
+165:     ) {
+166:         // Top row: Paste | Speaker dropdown | Slow checkbox
+167:         Row(
+168:             modifier = Modifier.fillMaxWidth(),
+169:             verticalAlignment = Alignment.CenterVertically,
+170:             horizontalArrangement = Arrangement.spacedBy(6.dp)
+171:         ) {
+172:             // Paste button — filled (highlighted) like Play, wider
+173:             Button(
+174:                 onClick = {
+175:                     val clip = clipboardManager.getText()?.text
+176:                     if (!clip.isNullOrBlank()) {
+177:                         currentText = clip
+178:                         cursorPosition = 0
+179:                         prefs.saveText(clip)
+180:                         prefs.saveCursorPosition(0)
+181:                         controller.resetPlaybackPosition()
+182:                         controller.processText(clip)
+183:                         // Scroll to top on paste
+184:                         coroutineScope.launch { scrollState.scrollTo(0) }
+185:                     }
+186:                 },
+187:                 enabled = isStopped && !isProcessing,
+188:                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+189:                 modifier = Modifier.weight(2f).height(36.dp)
+190:             ) {
+191:                 Text("Paste", style = MaterialTheme.typography.bodyMedium)
+192:             }
+193: 
+194:             // "Speaker" label
+195:             Text(
+196:                 text = "Speaker",
+197:                 style = MaterialTheme.typography.bodySmall,
+198:                 color = MaterialTheme.colorScheme.onSurfaceVariant
+199:             )
+200: 
+201:             // Compact voice dropdown
+202:             Box(modifier = Modifier.weight(3f)) {
+203:                 val borderColor = if (isStopped && voices.isNotEmpty())
+204:                     MaterialTheme.colorScheme.outline
+205:                 else
+206:                     MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+207:                 val textColor = if (isStopped && voices.isNotEmpty())
+208:                     MaterialTheme.colorScheme.onSurface
+209:                 else
+210:                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+211: 
+212:                 Row(
+213:                     modifier = Modifier
+214:                         .fillMaxWidth()
+215:                         .clip(RoundedCornerShape(6.dp))
+216:                         .border(1.dp, borderColor, RoundedCornerShape(6.dp))
+217:                         .clickable(enabled = isStopped && voices.isNotEmpty()) {
+218:                             voiceDropdownExpanded = true
+219:                         }
+220:                         .padding(horizontal = 10.dp, vertical = 6.dp),
+221:                     verticalAlignment = Alignment.CenterVertically
+222:                 ) {
+223:                     Text(
+224:                         text = selectedVoice.ifEmpty { "..." },
+225:                         style = MaterialTheme.typography.bodyMedium,
+226:                         color = textColor,
+227:                         modifier = Modifier.weight(1f)
+228:                     )
+229:                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = voiceDropdownExpanded)
+230:                 }
+231: 
+232:                 DropdownMenu(
+233:                     expanded = voiceDropdownExpanded,
+234:                     onDismissRequest = { voiceDropdownExpanded = false }
+235:                 ) {
+236:                     voices.forEach { voice ->
+237:                         DropdownMenuItem(
+238:                             text = { Text(voice) },
+239:                             onClick = {
+240:                                 selectedVoice = voice
+241:                                 prefs.saveVoice(voice)
+242:                                 voiceDropdownExpanded = false
+243:                             }
+244:                         )
+245:                     }
+246:                 }
+247:             }
+248: 
+249:             // Slow mode checkbox + label
+250:             Row(
+251:                 verticalAlignment = Alignment.CenterVertically
+252:             ) {
+253:                 Checkbox(
+254:                     checked = slowMode,
+255:                     onCheckedChange = { checked ->
+256:                         slowMode = checked
+257:                         prefs.saveSlowMode(checked)
+258:                     },
+259:                     enabled = isStopped,
+260:                     modifier = Modifier.size(32.dp)
+261:                 )
+262:                 Text(
+263:                     text = "Slow",
+264:                     style = MaterialTheme.typography.bodyMedium
+265:                 )
+266:             }
+267:         }
+268: 
+269:         Spacer(modifier = Modifier.height(8.dp))
+270: 
+271:         // Status bar
+272:         statusMessage?.let { msg ->
+273:             Text(
+274:                 text = msg,
+275:                 color = if (msg.startsWith("Error")) MaterialTheme.colorScheme.error
+276:                        else MaterialTheme.colorScheme.onSurfaceVariant,
+277:                 style = MaterialTheme.typography.bodySmall,
+278:                 modifier = Modifier.padding(bottom = 8.dp)
+279:             )
+280:         }
+281: 
+282:         // Text area (scrollable, highlighted in both stopped and playing states)
+283:         Box(
+284:             modifier = Modifier
+285:                 .weight(1f)
+286:                 .fillMaxWidth()
+287:                 .background(
+288:                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+289:                     MaterialTheme.shapes.medium
+290:                 )
+291:                 .padding(12.dp)
+292:         ) {
+293:             if (currentText.isEmpty()) {
+294:                 // Placeholder when no text
+295:                 Text(
+296:                     text = "Paste text to begin...",
+297:                     modifier = Modifier
+298:                         .fillMaxSize()
+299:                         .verticalScroll(scrollState),
+300:                     style = TextStyle(
+301:                         fontSize = 16.sp,
+302:                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+303:                         lineHeight = 24.sp
+304:                     )
+305:                 )
+306:             } else {
+307:                 // Determine which range to highlight: use playback chunk if available,
+308:                 // otherwise keep the stopped highlight (persists through LOADING state)
+309:                 val highlightRange = chunkRange ?: stoppedHighlightRange
+310: 
+311:                 val annotated = buildAnnotatedString {
+312:                     val text = currentText
+313:                     if (highlightRange != null) {
+314:                         val start = highlightRange.first.coerceIn(0, text.length)
+315:                         val end = highlightRange.second.coerceIn(0, text.length)
+316:                         append(text.substring(0, start))
+317:                         withStyle(SpanStyle(background = HighlightYellow)) {
+318:                             append(text.substring(start, end))
+319:                         }
+320:                         append(text.substring(end))
+321:                     } else {
+322:                         append(text)
+323:                     }
+324:                 }
+325: 
+326:                 Text(
+327:                     text = annotated,
+328:                     modifier = Modifier
+329:                         .fillMaxSize()
+330:                         .verticalScroll(scrollState)
+331:                         .then(
+332:                             if (isStopped) {
+333:                                 Modifier.pointerInput(Unit) {
+334:                                     detectTapGestures(
+335:                                         onDoubleTap = { tapOffset ->
+336:                                             // Map tap position to character offset
+337:                                             textLayoutResult?.let { layout ->
+338:                                                 val charOffset = layout.getOffsetForPosition(tapOffset)
+339:                                                 // Find the chunk at this position and highlight it
+340:                                                 val range = controller.getChunkRangeAtOffset(charOffset)
+341:                                                 if (range != null) {
+342:                                                     cursorPosition = range.first
+343:                                                     prefs.saveCursorPosition(range.first)
+344:                                                     stoppedHighlightRange = range
+345:                                                 }
+346:                                             }
+347:                                         },
+348:                                         onTap = {
+349:                                             // Consume single taps — do nothing
+350:                                         }
+351:                                     )
+352:                                 }
+353:                             } else {
+354:                                 Modifier
+355:                             }
+356:                         ),
+357:                     style = TextStyle(
+358:                         fontSize = 16.sp,
+359:                         color = MaterialTheme.colorScheme.onSurface,
+360:                         lineHeight = 24.sp
+361:                     ),
+362:                     onTextLayout = { result ->
+363:                         textLayoutResult = result
+364:                     }
+365:                 )
+366:             }
+367:         }
+368: 
+369:         Spacer(modifier = Modifier.height(12.dp))
+370: 
+371:         // Playback controls: << (1/6) | Play (1/3) | Stop (1/3) | >> (1/6)
+372:         Row(
+373:             modifier = Modifier.fillMaxWidth(),
+374:             horizontalArrangement = Arrangement.spacedBy(8.dp)
+375:         ) {
+376:             // << Scroll to top
+377:             OutlinedButton(
+378:                 onClick = {
+379:                     coroutineScope.launch { scrollState.animateScrollTo(0) }
+380:                 },
+381:                 enabled = isStopped,
+382:                 modifier = Modifier.weight(1f),
+383:                 contentPadding = PaddingValues(horizontal = 4.dp)
+384:             ) {
+385:                 Text("<<")
+386:             }
+387: 
+388:             // Play/Pause button
+389:             Button(
+390:                 onClick = {
+391:                     controller.togglePlayPause(
+392:                         text = currentText,
+393:                         cursorPosition = cursorPosition,
+394:                         voiceName = selectedVoice,
+395:                         slowMode = slowMode
+396:                     )
+397:                 },
+398:                 enabled = currentText.isNotBlank() && selectedVoice.isNotEmpty() && !isLoading && !isStopping && !isProcessing,
+399:                 modifier = Modifier.weight(2f)
+400:             ) {
+401:                 Text(
+402:                     text = when {
+403:                         isLoading -> "Loading..."
+404:                         isPlaying -> "Pause"
+405:                         isPaused -> "Resume"
+406:                         else -> "Play"
+407:                     }
+408:                 )
+409:             }
+410: 
+411:             // Stop button
+412:             OutlinedButton(
+413:                 onClick = { controller.stop() },
+414:                 enabled = !isStopped && !isStopping,
+415:                 modifier = Modifier.weight(2f)
+416:             ) {
+417:                 Text(if (isStopping) "Stopping..." else "Stop")
+418:             }
+419: 
+420:             // >> Scroll to bottom
+421:             OutlinedButton(
+422:                 onClick = {
+423:                     coroutineScope.launch { scrollState.animateScrollTo(scrollState.maxValue) }
+424:                 },
+425:                 enabled = isStopped,
+426:                 modifier = Modifier.weight(1f),
+427:                 contentPadding = PaddingValues(horizontal = 4.dp)
+428:             ) {
+429:                 Text(">>")
+430:             }
+431:         }
+432:     }
+433: }
+
+(End of file - total 433 lines)
+</content>
+```
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 9.4s)
+
+_Thinking:_
+
+Now let me check the JNI code and also the Tokenizer to understand the full picture:
+
+Now let me check the JNI code and the ONNX Runtime model loading more carefully:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp</path>
+<type>file</type>
+<content>1: #include <jni.h>
+2: #include <string>
+3: #include <cstring>
+4: #include <android/log.h>
+5: #include <espeak-ng/speak_lib.h>
+6: 
+7: #define TAG "EspeakJNI"
+8: #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
+9: #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+10: 
+11: static bool g_initialized = false;
+12: 
+13: extern "C" {
+14: 
+15: JNIEXPORT jint JNICALL
+16: Java_com_example_mytts_engine_EspeakBridge_nativeInit(
+17:         JNIEnv *env, jobject /* this */, jstring dataPath) {
+18:     if (g_initialized) {
+19:         LOGI("eSpeak already initialized, skipping");
+20:         return 0;
+21:     }
+22: 
+23:     const char *path = env->GetStringUTFChars(dataPath, nullptr);
+24:     if (!path) {
+25:         LOGE("Failed to get data path string");
+26:         return -1;
+27:     }
+28: 
+29:     LOGI("Initializing eSpeak with data path: %s", path);
+30: 
+31:     // AUDIO_OUTPUT_SYNCHRONOUS = no audio, just text processing
+32:     // buflength = 0 (default, not used for synchronous)
+33:     // options = 0 (no phoneme events needed)
+34:     int sampleRate = espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 0, path, 0);
+35: 
+36:     env->ReleaseStringUTFChars(dataPath, path);
+37: 
+38:     if (sampleRate == -1) {
+39:         LOGE("espeak_Initialize failed");
+40:         return -1;
+41:     }
+42: 
+43:     LOGI("eSpeak initialized, sample rate: %d", sampleRate);
+44: 
+45:     // Set American English voice
+46:     espeak_ERROR err = espeak_SetVoiceByName("en-us");
+47:     if (err != EE_OK) {
+48:         LOGE("espeak_SetVoiceByName(en-us) failed: %d", err);
+49:         return -2;
+50:     }
+51: 
+52:     g_initialized = true;
+53:     LOGI("eSpeak ready (en-us)");
+54:     return 0;
+55: }
+56: 
+57: JNIEXPORT jstring JNICALL
+58: Java_com_example_mytts_engine_EspeakBridge_nativeTextToPhonemes(
+59:         JNIEnv *env, jobject /* this */, jstring text) {
+60:     if (!g_initialized) {
+61:         LOGE("eSpeak not initialized");
+62:         return env->NewStringUTF("");
+63:     }
+64: 
+65:     const char *inputText = env->GetStringUTFChars(text, nullptr);
+66:     if (!inputText) {
+67:         return env->NewStringUTF("");
+68:     }
+69: 
+70:     // phonememode bits:
+71:     //   bit 1 (0x02): IPA output (UTF-8)
+72:     //   bit 7 (0x80): use bits 8-23 as tie character for multi-letter phonemes
+73:     //   bits 8-23: tie character ('^' = 0x5E)
+74:     // Result: 0x02 | 0x80 | (0x5E << 8) = 0x5E82
+75:     int phonememode = 0x02 | 0x80 | ('^' << 8);
+76: 
+77:     std::string input(inputText);
+78:     env->ReleaseStringUTFChars(text, inputText);
+79: 
+80:     // Phonemize a text fragment via eSpeak's clause-by-clause processing.
+81:     auto phonemizeFragment = [phonememode](const char *frag) -> std::string {
+82:         std::string fragResult;
+83:         const void *ptr = frag;
+84:         while (ptr != nullptr) {
+85:             const char *ph = espeak_TextToPhonemes(&ptr, espeakCHARS_UTF8, phonememode);
+86:             if (ph && *ph) {
+87:                 if (!fragResult.empty()) fragResult += ' ';
+88:                 fragResult += ph;
+89:             }
+90:         }
+91:         return fragResult;
+92:     };
+93: 
+94:     // Split at clause-boundary punctuation (, ; :) followed by whitespace.
+95:     // Phonemize each fragment separately and rejoin with the punctuation,
+96:     // so the Kokoro model sees commas/semicolons/colons and produces
+97:     // natural pauses at clause boundaries.
+98:     //
+99:     // We cannot rely on eSpeak's internal clause splitting to preserve
+100:     // these characters — it consumes them as delimiters and they never
+101:     // appear in the phoneme output.
+102:     std::string result;
+103:     size_t start = 0;
+104: 
+105:     for (size_t i = 0; i < input.size(); i++) {
+106:         char c = input[i];
+107:         if ((c == ',' || c == ';' || c == ':') &&
+108:             i + 1 < input.size() && input[i + 1] == ' ') {
+109:             // Phonemize the fragment before this delimiter
+110:             if (i > start) {
+111:                 std::string frag = input.substr(start, i - start);
+112:                 std::string ph = phonemizeFragment(frag.c_str());
+113:                 if (!ph.empty()) {
+114:                     if (!result.empty()) result += ' ';
+115:                     result += ph;
+116:                 }
+117:             }
+118:             // Insert the clause-boundary punctuation
+119:             result += c;
+120:             // Advance past the delimiter and trailing whitespace
+121:             i++; // skip past the punctuation (now on the space)
+122:             while (i + 1 < input.size() && input[i + 1] == ' ') {
+123:                 i++;
+124:             }
+125:             start = i + 1;
+126:         }
+127:     }
+128: 
+129:     // Phonemize any remaining text after the last delimiter
+130:     if (start < input.size()) {
+131:         std::string frag = input.substr(start);
+132:         std::string ph = phonemizeFragment(frag.c_str());
+133:         if (!ph.empty()) {
+134:             if (!result.empty()) result += ' ';
+135:             result += ph;
+136:         }
+137:     }
+138: 
+139:     return env->NewStringUTF(result.c_str());
+140: }
+141: 
+142: JNIEXPORT void JNICALL
+143: Java_com_example_mytts_engine_EspeakBridge_nativeTerminate(
+144:         JNIEnv * /* env */, jobject /* this */) {
+145:     if (g_initialized) {
+146:         espeak_Terminate();
+147:         g_initialized = false;
+148:         LOGI("eSpeak terminated");
+149:     }
+150: }
+151: 
+152: } // extern "C"
+
+(End of file - total 152 lines)
+</content>
+```
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/Tokenizer.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/engine/Tokenizer.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.engine
+2: 
+3: /**
+4:  * Character-level tokenizer for Kokoro TTS.
+5:  * Maps IPA phoneme characters to integer token IDs using the model's vocabulary.
+6:  */
+7: object Tokenizer {
+8:     private val VOCAB: Map<Char, Int> by lazy {
+9:         val pad = '$'
+10:         val punctuation = ";:,.!?¡¿—…\"«»\"\" "
+11:         val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+12:         val lettersIpa =
+13:             "ɑɐɒæɓʙβɔɕçɗɖðʤəɘɚɛɜɝɞɟʄɡɠɢʛɦɧħɥʜɨɪʝɭɬɫɮʟɱɯɰŋɳɲɴøɵɸθœɶʘɹɺɾɻʀʁɽʂʃʈʧʉʊʋⱱʌɣɤʍχʎʏʑʐʒʔʡʕʢǀǁǂǃˈˌːˑʼʴʰʱʲʷˠˤ˞↓↑→↗↘'̩'ᵻ"
+14: 
+15:         val symbols = listOf(pad) + punctuation.toList() + letters.toList() + lettersIpa.toList()
+16:         symbols.withIndex().associate { (index, char) -> char to index }
+17:     }
+18: 
+19:     /**
+20:      * Convert a phoneme string to a list of token IDs.
+21:      * Unknown characters are silently skipped.
+22:      */
+23:     fun tokenize(phonemes: String): LongArray {
+24:         return phonemes.mapNotNull { ch -> VOCAB[ch]?.toLong() }.toLongArray()
+25:     }
+26: 
+27:     /**
+28:      * Return token IDs padded with 0 at start and end (required by the model).
+29:      */
+30:     fun tokenizeWithPadding(phonemes: String): LongArray {
+31:         val tokens = tokenize(phonemes)
+32:         return longArrayOf(0L) + tokens + longArrayOf(0L)
+33:     }
+34: 
+35:     /** Maximum tokens per inference call (model limit). */
+36:     const val MAX_PHONEME_LENGTH = 400
 37: }
 
 (End of file - total 37 lines)
 </content>
 ```
 
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/service/PlaybackService.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/service/PlaybackService.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.service
+2: 
+3: import android.app.Notification
+4: import android.app.NotificationChannel
+5: import android.app.NotificationManager
+6: import android.app.PendingIntent
+7: import android.app.Service
+8: import android.content.Context
+9: import android.content.Intent
+10: import android.os.Binder
+11: import android.os.Build
+12: import android.os.IBinder
+13: import android.os.PowerManager
+14: import android.util.Log
+15: import androidx.core.app.NotificationCompat
+16: import com.example.mytts.BuildConfig
+17: import com.example.mytts.audio.PlaybackController
+18: 
+19: /**
+20:  * Foreground service that keeps TTS playback alive when the screen is off.
+21:  * Binds to the activity so it can share the PlaybackController.
+22:  */
+23: class PlaybackService : Service() {
+24: 
+25:     companion object {
+26:         private const val TAG = "PlaybackService"
+27:         private const val CHANNEL_ID = "mytts_playback"
+28:         private const val NOTIFICATION_ID = 1
+29:         private const val ACTION_STOP = "com.example.mytts.STOP"
+30: 
+31:         fun start(context: Context) {
+32:             val intent = Intent(context, PlaybackService::class.java)
+33:             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+34:                 context.startForegroundService(intent)
+35:             } else {
+36:                 context.startService(intent)
+37:             }
+38:         }
+39: 
+40:         fun stop(context: Context) {
+41:             context.stopService(Intent(context, PlaybackService::class.java))
+42:         }
+43:     }
+44: 
+45:     inner class LocalBinder : Binder() {
+46:         val service: PlaybackService get() = this@PlaybackService
+47:     }
+48: 
+49:     private val binder = LocalBinder()
+50:     private var wakeLock: PowerManager.WakeLock? = null
+51: 
+52:     /** The PlaybackController is owned by the service so it survives config changes. */
+53:     var playbackController: PlaybackController? = null
+54:         private set
+55: 
+56:     override fun onCreate() {
+57:         super.onCreate()
+58:         if (BuildConfig.DEBUG) Log.d(TAG, "Service created")
+59:         createNotificationChannel()
+60:         playbackController = PlaybackController(applicationContext)
+61:     }
+62: 
+63:     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+64:         when (intent?.action) {
+65:             ACTION_STOP -> {
+66:                 playbackController?.stop()
+67:                 stopSelf()
+68:                 return START_NOT_STICKY
+69:             }
+70:         }
+71: 
+72:         startForeground(NOTIFICATION_ID, buildNotification())
+73:         acquireWakeLock()
+74:         return START_STICKY
+75:     }
+76: 
+77:     override fun onBind(intent: Intent?): IBinder = binder
+78: 
+79:     override fun onDestroy() {
+80:         if (BuildConfig.DEBUG) Log.d(TAG, "Service destroyed")
+81:         releaseWakeLock()
+82:         playbackController?.release()
+83:         playbackController = null
+84:         super.onDestroy()
+85:     }
+86: 
+87:     fun updateNotification(isPlaying: Boolean) {
+88:         val nm = getSystemService(NotificationManager::class.java)
+89:         nm.notify(NOTIFICATION_ID, buildNotification(isPlaying))
+90:     }
+91: 
+92:     private fun buildNotification(isPlaying: Boolean = false): Notification {
+93:         // Intent to open the app when notification is tapped
+94:         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+95:             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+96:         }
+97:         val pendingLaunch = PendingIntent.getActivity(
+98:             this, 0, launchIntent,
+99:             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+100:         )
+101: 
+102:         // Stop action
+103:         val stopIntent = Intent(this, PlaybackService::class.java).apply {
+104:             action = ACTION_STOP
+105:         }
+106:         val pendingStop = PendingIntent.getService(
+107:             this, 1, stopIntent,
+108:             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+109:         )
+110: 
+111:         val statusText = if (isPlaying) "Playing..." else "Ready"
+112: 
+113:         return NotificationCompat.Builder(this, CHANNEL_ID)
+114:             .setContentTitle("MyTTS")
+115:             .setContentText(statusText)
+116:             .setSmallIcon(android.R.drawable.ic_media_play)
+117:             .setContentIntent(pendingLaunch)
+118:             .addAction(android.R.drawable.ic_media_pause, "Stop", pendingStop)
+119:             .setOngoing(true)
+120:             .setSilent(true)
+121:             .build()
+122:     }
+123: 
+124:     private fun createNotificationChannel() {
+125:         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+126:             val channel = NotificationChannel(
+127:                 CHANNEL_ID,
+128:                 "TTS Playback",
+129:                 NotificationManager.IMPORTANCE_LOW
+130:             ).apply {
+131:                 description = "Shows when text-to-speech is active"
+132:                 setShowBadge(false)
+133:             }
+134:             val nm = getSystemService(NotificationManager::class.java)
+135:             nm.createNotificationChannel(channel)
+136:         }
+137:     }
+138: 
+139:     private fun acquireWakeLock() {
+140:         if (wakeLock == null) {
+141:             val pm = getSystemService(PowerManager::class.java)
+142:             wakeLock = pm.newWakeLock(
+143:                 PowerManager.PARTIAL_WAKE_LOCK,
+144:                 "MyTTS::PlaybackWakeLock"
+145:             ).apply {
+146:                 acquire(60 * 60 * 1000L) // 1 hour max
+147:             }
+148:         }
+149:     }
+150: 
+151:     private fun releaseWakeLock() {
+152:         wakeLock?.let {
+153:             if (it.isHeld) it.release()
+154:             wakeLock = null
+155:         }
+156:     }
+157: }
+
+(End of file - total 157 lines)
+</content>
+```
+
 ---
 
-## Assistant (Plan · claude-opus-4.6 · 132.4s)
+## Assistant (Plan · Claude Opus 4.6 · 11.1s)
 
-_Thinking:_
+**Tool: todowrite**
 
-Now I have the full picture. Let me summarize the plan:
-
-**Current flow:**
-1. `TextProcessor.processText()` calls `TextChunker.chunk()` which returns `List<TextChunk>`
-2. Each `TextChunk` becomes a `PreparedChunk`
-3. `AudioProducer.produceLoop()` iterates over chunks, synthesizes each, and calls `trimAndPadSilence()` which always appends 300ms
-
-**User's proposal:**
-1. Remove `CLAUSE_SEPARATORS` entirely
-2. For sentences > 50 words, just split at word boundaries every 50 words
-
-
-3. Don't add 300ms delay between sub-chunks of the same sentence
-4. Each sub-chunk is treated as a complete sentence for synthesis (independent inference)
-
-**Implementation plan:**
-
-### Option A: Add `isContinuation` flag
-I'll add an `isContinuation` boolean to both `TextChunk` and `PreparedChunk` to track whether a chunk is a continuation of a longer sentence. Then I'll remove the clause separator logic and replace it with a simple word-boundary splitter that marks all chunks after the first as continuations. When synthesizing, I'll check this flag to skip the 300ms padding for continuation chunks.
-
-### Option B: Even simpler - just remove the gap entirely
-The model naturally produces trailing silence at sentence boundaries, so maybe the 300ms gap isn't necessary at all. But that would change behavior globally rather than just for continuations.
-
-Option A feels cleaner. Though I need to handle an edge case: if `splitByWords()` creates a tiny tail chunk, the existing `mergeSmallChunks` logic gets messy with the continuation flag. I should modify the splitter to avoid creating those tiny tail chunks in the first place.
-
-Examining the current splitByWords implementation...
-
-Reviewing the word-splitting logic...
-
-The function splits text into chunks of exactly 50 words, and I'm checking how it handles edge cases. For 56 words, it creates a 50-word chunk and a 6-word remainder, which stays above the minimum threshold so no merging happens. Testing the boundary at 52 words...
-
-Actually, I'm wondering if the merging logic is even necessary here. Let me reconsider whether a small tail really causes problems, or if I should just modify the splitting function to absorb remainders below the minimum directly into the last chunk. I'm realizing the padding logic needs to account for continuation chunks — if chunk N is followed by a continuation, I shouldn't pad chunk N with that 300ms silence. The cleanest approach would be to have the producer look ahead and only pad chunks that aren't followed by continuations, rather than trying to strip padding from continuation chunks themselves. The gap should only be added between chunks when the next chunk isn't a continuation—so if chunk i+1 is a continuation, chunk i shouldn't have trailing silence. I'm thinking the simplest approach is to add an `isContinuation` flag to the chunk data structure, then in the producer, skip the gap when the next chunk is marked as a continuation. Let me outline the implementation plan. I need to reconsider the gap logic more carefully. The 300ms gap should only appear between different sentences, not within a split sentence. So if chunk i+1 is a continuation of the same sentence, I shouldn't add a gap after chunk i. The cleaner approach is to add a gap only when the current chunk is NOT a continuation—that way, each new sentence gets a gap before it starts. I'm realizing the key issue is timing—whether to add silence before or after each chunk. The prepend approach would work just as well from a listener's perspective, but it complicates the trimming logic. I think the cleaner solution is to stick with appending silence but use look-ahead in the production loop to check if the next chunk is a continuation, and only add the gap if it's not. Deciding whether the final chunk needs trailing silence — it probably should since there's no continuation after it, and a bit of padding at the end won't cause any issues. I think I'm ready to walk through this approach.
-
-Now I have the full picture. Here's my analysis of your proposal:
-
-### Current flow
-
+**Input:**
+```json
+{
+  "todos": [
+    {
+      "content": "Read and analyze AudioBufferQueue memory behavior",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze AudioProducer memory allocation",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze AudioPlayer memory behavior (consumer side)",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze PlaybackController lifecycle and chunk retention",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze KokoroEngine ONNX inference memory",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Read and analyze TextProcessor / TextChunker chunk storage",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "content": "Check for FloatArray copies in trimAndPadSilence and crossfade",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "content": "Check VoiceStyleLoader caching behavior",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "content": "Check PhonemeConverter / EspeakBridge native memory",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "content": "Synthesize findings and present analysis",
+      "priority": "high",
+      "status": "in_progress"
+    }
+  ]
+}
 ```
-TextChunker.chunk() → TextChunk → TextProcessor.processText() → PreparedChunk → AudioProducer.produceLoop()
-                                                                                   ↓
-                                                                            trimAndPadSilence() adds 300ms to EVERY chunk
+
+**Output:**
+```
+[
+  {
+    "content": "Read and analyze AudioBufferQueue memory behavior",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze AudioProducer memory allocation",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze AudioPlayer memory behavior (consumer side)",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze PlaybackController lifecycle and chunk retention",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze KokoroEngine ONNX inference memory",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Read and analyze TextProcessor / TextChunker chunk storage",
+    "priority": "high",
+    "status": "completed"
+  },
+  {
+    "content": "Check for FloatArray copies in trimAndPadSilence and crossfade",
+    "priority": "medium",
+    "status": "completed"
+  },
+  {
+    "content": "Check VoiceStyleLoader caching behavior",
+    "priority": "medium",
+    "status": "completed"
+  },
+  {
+    "content": "Check PhonemeConverter / EspeakBridge native memory",
+    "priority": "medium",
+    "status": "completed"
+  },
+  {
+    "content": "Synthesize findings and present analysis",
+    "priority": "high",
+    "status": "in_progress"
+  }
+]
 ```
 
-### What you're proposing
+---
 
-Remove clause-separator logic entirely. For sentences > 50 words, just split at word boundaries. No 300ms gap between sub-chunks.
+## Assistant (Plan · Claude Opus 4.6 · 62.8s)
 
-### Proposed changes
+Here is my analysis of the memory profile. I'll break it into the three phases you observed.
 
-**1. `TextChunk`** — add `isContinuation: Boolean = false`  
-**2. `PreparedChunk`** — add `isContinuation: Boolean = false`, passed through from TextChunk  
+---
 
-**3. `TextChunker`:**
-- Remove `CLAUSE_SEPARATORS` regex and `splitKeepingDelimiters()` entirely
-- In `chunk()` line 48-59: when sentence > 50 words, go straight to `splitByWords()` (skip clause splitting)
-- `splitByWords()` marks all chunks after the first as `isContinuation = true`
-- If the tail sub-chunk would be tiny (< 3 words), absorb it into the previous sub-chunk rather than creating a separate chunk
+## Phase 1: App start → 341 MB (baseline)
 
-**4. `AudioProducer.produceLoop()`:**
-- Look ahead: if `chunks[i+1].isContinuation`, call `trimAndPadSilence(pcm, rate, addGap = false)` — trim trailing silence but don't append the 300ms gap
-- Otherwise, keep the 300ms gap as today
+This is expected and not a leak. Main contributors:
+- **ONNX model loaded into memory**: `KokoroEngine.initialize()` at line 58 reads `model_quantized.onnx` (92.4 MB) into a `ByteArray` via `it.readBytes()`, then passes it to `createSession(modelBytes, options)`. ONNX Runtime copies this into its own native heap. The JVM `modelBytes` array is GC-eligible after `createSession()` returns, but the ORT session holds ~92 MB natively. With ORT's internal graph structures/optimizations, the native footprint is likely **~120-150 MB**.
+- **Compose UI, framework**, etc: typical ~100-150 MB for an Android app.
+- **Voice style cache**: `VoiceStyleLoader.styleCache` caches loaded voice data. One voice = 510 x 256 floats = 130,560 floats = **~0.5 MB** (negligible).
 
-### One question on edge case
+341 MB at rest is reasonable.
 
-For `mergeSmallChunks()`: currently it merges any chunk < 3 words with the next chunk. If `splitByWords` absorbs tiny tails internally, the only sub-chunks that reach `mergeSmallChunks` would already be >= 3 words — so no conflict. Does that sound right, or do you want to handle it differently?
+---
+
+## Phase 2: Play starts → rapid jump to 630 MB (+289 MB)
+
+This is the **ONNX Runtime inference working set** warming up. Several factors:
+
+### 2a. ONNX Runtime internal allocations (~200-250 MB)
+When `session.run()` is called for the first time, ORT's `BFCArena` allocator pre-allocates memory pools for intermediate tensors. The Kokoro-82M model has many layers of attention/convolution whose intermediate results need temporary buffers. These are allocated on the **native heap** (not Java heap), so they show up in RES but not in Java heap profilers. Crucially, **ORT's arena allocator does not return memory to the OS** — it keeps it for reuse on subsequent inferences. This is by design (avoids `malloc`/`free` overhead).
+
+### 2b. Model `readBytes()` duplication — temporary but large
+At `KokoroEngine.kt:58`:
+```kotlin
+val modelBytes = context.assets.open(MODEL_FILE).use { it.readBytes() }
+session = environment!!.createSession(modelBytes, options)
+```
+`readBytes()` loads the entire 92 MB model into a JVM `ByteArray`. Then `createSession` copies it into native memory. The JVM array becomes garbage but may not be immediately collected. However, since this happens during `preInitialize()` before play, it's already accounted for in the 341 MB baseline.
+
+### 2c. AudioTrack buffer
+`AudioPlayer.kt:50-71` creates an AudioTrack with buffer size `max(minBufSize, sampleRate) * 4` bytes = at least `24000 * 4 = 96 KB`. Negligible.
+
+### 2d. AudioBufferQueue
+With the deadlock fix, the queue can hold a single oversized chunk. A long sentence (50 words) could produce ~15-20 seconds of audio = 360K-480K floats = **1.4-1.9 MB**. With the 15-second cap, steady state is at most ~1.4 MB. Not the cause of the jump.
+
+**Verdict for Phase 2**: The 341→630 MB jump (~289 MB) is almost entirely **ONNX Runtime's arena allocator warming up** on the first inference call. This is not a leak — it's a one-time allocation that ORT reuses for all subsequent inferences. It's expected behavior for a model this size.
+
+---
+
+## Phase 3: Gradual climb 630 → 900 MB (+270 MB) — THIS IS THE PROBLEM
+
+This is the suspicious part. A gradual climb during playback that never recedes suggests **accumulated allocations that aren't being freed**. Here's what I found:
+
+### Finding 1 (MAJOR): `KokoroEngine.synthesizeTokens()` — model output `FloatArray` escapes ORT but is never explicitly released
+
+At `KokoroEngine.kt:168-183`:
+```kotlin
+val results = sess.run(inputs)
+val output = results[0].value
+val audio = if (output is FloatArray) {
+    output
+} else {
+    (output as Array<FloatArray>)[0]
+}
+results.close()
+audio
+```
+
+When `results[0].value` returns `Array<FloatArray>`, `audio` is `[0]` — a reference into the ORT result's inner array. After `results.close()`, the native OnnxValue is freed, but **the Java `FloatArray` that was exposed remains alive** as long as something references it. This is fine — but the problem is what happens downstream.
+
+### Finding 2 (MAJOR): Cascading `FloatArray` copies — 3-4 copies of each chunk's audio exist simultaneously
+
+Trace the lifecycle of one chunk's PCM data:
+
+1. **`KokoroEngine.synthesizeTokens()`** returns a `FloatArray` (call it A). Size: ~120K-480K floats (5-20 sec audio).
+
+2. **`KokoroEngine.synthesize()` / `crossfadeConcat()`** — if the phonemes were split (>400 tokens), `crossfadeConcat()` at line 130 creates a **new** `FloatArray(a.size + b.size - fadeLen)` (call it B). The inputs A1 and A2 become garbage.
+
+3. **`AudioProducer.trimAndPadSilence()`** at line 225 creates **another** `FloatArray(trimEnd + gapSamples)` (call it C) and copies via `System.arraycopy`. The input (A or B) becomes garbage.
+
+4. **`AudioBufferQueue.put()`** stores C in the queue.
+
+5. **`AudioPlayer.playLoop()`** at line 163 calls `pcm.sliceArray()` to save `previousTail` — creates a **128-float** `FloatArray` copy per chunk. Negligible size.
+
+So at any moment, for each in-flight chunk, there are 1-2 temporary `FloatArray` copies (the ORT output + the trimmed copy) alive until GC collects them. For a typical sentence of ~10 seconds of audio = 240K floats = **~960 KB per copy**. With the producer running ahead filling the 15-second buffer while the consumer processes another chunk, there could be 3-5 of these floating around = **~3-5 MB**. This is not enough to explain 270 MB.
+
+### Finding 3 (MAJOR — LIKELY ROOT CAUSE): ONNX Runtime arena fragmentation / growth
+
+ONNX Runtime's `BFCArena` allocator (the default CPU allocator) **does not return memory to the OS**. It grows monotonically. Here's why 270 MB of gradual growth can happen:
+
+- Each inference call allocates intermediate tensors of varying sizes (depending on input token count, which varies per sentence: 20-400 tokens).
+- The arena allocator tries to reuse freed chunks, but **different-sized inputs cause fragmentation**: a 30-token sentence uses different intermediate tensor sizes than a 100-token sentence.
+- Over dozens of inference calls with varying input sizes, the arena grows to accommodate the **high-water mark for each distinct allocation size bucket**.
+- For a 1500-word text (~80-150 chunks), this accumulation can easily reach 200-300 MB.
+
+**This matches your observation perfectly**: gradual climb that stabilizes. Once ORT has seen the full range of input sizes (short and long sentences), the arena has allocated enough to cover all bucket sizes and stops growing.
+
+### Finding 4 (MINOR): `preparedChunks` list retained for entire playback
+
+`PlaybackController.kt:58`: `preparedChunks: List<PreparedChunk>` holds all chunks for the entire text. For 1500 words split into ~80 chunks, each `PreparedChunk` contains `originalText` + `normalizedText` strings. Total: maybe **~50-100 KB**. Negligible.
+
+### Finding 5 (MINOR): `AudioProducer.chunks` also retains the full list
+
+`AudioProducer.kt:43`: `private var chunks: List<PreparedChunk>` is set to the same list reference. No duplication, same negligible cost.
+
+### Finding 6 (NOT A LEAK): Voice style cache
+
+`VoiceStyleLoader.styleCache` caches `Array<FloatArray>` per voice. One voice = 510 rows x 256 floats = ~0.5 MB. Only one voice is used. Not growing.
+
+---
+
+## Summary
+
+| Phase | Delta | Cause | Leak? |
+|-------|-------|-------|-------|
+| Start: 341 MB | — | ONNX model + framework | No |
+| Play start: +289 MB | 341→630 | ORT arena first-inference warmup | No (one-time) |
+| Gradual: +270 MB | 630→900 | **ORT arena fragmentation from varying input sizes** | No (ORT design), but **addressable** |
+| Stabilizes at 900 | — | Arena has covered all allocation bucket sizes | Expected |
+
+**There is no classical memory leak** (objects referenced indefinitely). The dominant factor is ONNX Runtime's arena allocator growing to accommodate varying intermediate tensor sizes across inference calls with different input lengths.
+
+---
+
+## Possible mitigations
+
+1. **Uniform input padding** — Pad all token arrays to a fixed length (e.g., 402 = MAX_PHONEME_LENGTH + 2) before calling `session.run()`. This makes every inference use the same intermediate tensor sizes, so the arena allocates once and perfectly reuses. **Expected savings: most of the 270 MB gradual growth.** Tradeoff: slightly slower inference for short sentences (model processes padding tokens).
+
+2. **Use `OrtSession.SessionOptions.addConfigEntry("arena_extend_strategy", "1")`** — This switches ORT from `kNextPowerOfTwo` to `kSameAsRequested` arena growth, reducing over-allocation. Smaller effect but easy to try.
+
+3. **Stream model from file instead of `readBytes()`** — Use `createSession(path, options)` with a file path instead of a byte array. This avoids the 92 MB JVM `ByteArray` copy entirely and lets ORT mmap the model. The model would need to be in `filesDir` (extract from assets once), similar to how eSpeak data is handled.
+
+4. **Explicitly call `System.gc()` after first inference** — Won't help with ORT native memory, but would reclaim any lingering JVM-side temp arrays.
+
+Would you like me to implement any of these mitigations? Option 1 (uniform padding) would likely have the biggest impact on the gradual growth, and option 3 (file-based model loading) would reduce the baseline by ~92 MB.
 
 ---
 
 ## User
 
-sound good, go build it
+my biggest concern is unbounded growth of memory for very long text (or linear memory per text length), "1. input padding" is no-go as it costs more power budge, "3. stream model from file" is not necessary as it's const size (correct me if I'm wrong),  "4. call gc" is no-go. the only left is "2. same as requested arena growth".  I'm wondering if my conern of unbounded memory growth can be fixed
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 13.3s)
-
-
+## Assistant (Plan · Claude Opus 4.6 · 63.6s)
 
 _Thinking:_
 
-Let me implement the plan step by step:
+The user's concern is about unbounded memory growth — specifically whether ORT's arena allocator grows linearly with the number of chunks processed (i.e., proportional to text length). Let me think about this more carefully.
 
-1. Add `isContinuation` to `TextChunk`
-2. Add `isContinuation` to `PreparedChunk`
-3. Modify `TextChunker` - remove clause separators, simplify splitting, mark continuations
-4. Modify `TextProcessor` to pass through `isContinuation`
-5. Modify `AudioProducer` to skip 300ms gap before continuations
+My analysis said the arena grows due to "fragmentation from varying input sizes" and then stabilizes. If that's true, then it's bounded — once ORT has seen all the different input sizes it'll encounter, the arena stops growing. For a 1500-word text, it stabilized at 900 MB.
 
-Let me start.
+But the user is asking: what if the text is 15,000 words? Would it grow to 9 GB? Or would it still stabilize at 900 MB?
+
+
+The real issue is whether ORT's BFCArena reuses freed memory from previous inferences or keeps allocating new chunks. If the arena properly recycles those freed allocations, then growth should cap out at the maximum single-inference footprint rather than scaling with the total number of inferences.
+
+Looking at how `synthesizeTokens()` handles the output—it extracts the audio data into a Java `FloatArray` before calling `results.close()`, which frees the native memory back to the arena for reuse on the next call. So the arena should be recycling properly, but I need to verify whether something else is causing unbounded growth.
+
+The memory pattern the user is seeing—jumping to 630 MB when playback starts, then gradually climbing to 900 MB and stabilizing—suggests the arena is expanding to accommodate the range of allocation sizes needed for different token batches. Since sentence length distributions are similar regardless of total text length, the arena should stabilize at roughly the same peak across different input sizes.
+
+But I should trace through the Java/Kotlin code more carefully to see if there's any per-chunk accumulation I'm missing, because that gradual growth during playback is the key thing to understand.
+
+Actually, the gradual growth is likely just ORT's arena expanding as it encounters new allocation patterns during inference. Once it's seen the full range of tensor sizes needed for tokens 1-402, it stabilizes—which matches what the user observes at 900 MB. The real question is whether this is truly bounded or if a much longer text would push it higher.
+
+The answer is that memory growth *is* bounded, constrained by the variety of intermediate tensor sizes the model produces across the token range, not by total text length. A 15,000 word text would plateau at roughly the same 900 MB as a 1,500 word text because the underlying allocation patterns don't change.
+
+Now I'm tracing through the playback code to confirm there's no hidden linear accumulation. The prepared chunks are created once at paste time, the audio queue has a fixed 15-second capacity with entries consumed and discarded, and the produce loop just cycles through creating and queuing PCM arrays without keeping a growing history. The only potential concern is what's happening on ORT's native side.
+
+For ORT's memory arena, it grows as it encounters new allocation sizes but eventually stabilizes once it's seen the full range of sizes from varying token counts. The `kNextPowerOfTwo` strategy rounds allocations up to powers of two for better reuse, while `kSameAsRequested` allocates exactly what's needed but could actually fragment more by creating too many distinct chunk sizes. The arena extension strategy controls how the overall memory pool expands, not individual allocation sizing.
+
+With `kNextPowerOfTwo`, the arena doubles its memory requests from the OS (64MB → 128MB → 256MB), whereas `kSameAsRequested` only requests what's immediately needed, resulting in slower growth but potentially the same final size. The key insight is that growth is bounded by the variety of input sizes (limited by the model's 402-token maximum), not by the number of inferences, so the arena will eventually stabilize rather than grow unbounded.
+
+I need to be straightforward with the user: while option 2 might reduce peak memory by avoiding power-of-two over-allocation, the fundamental pattern of growth followed by stabilization remains unchanged regardless of which strategy is used.
+
+Good question. Let me address the core concern directly.
+
+## Is the growth actually unbounded / linear in text length?
+
+**No, it should not be.** Let me explain why, and also honestly re-examine whether my initial analysis fully holds.
+
+The ORT arena allocator works like a memory pool: it allocates native memory for intermediate tensors during `session.run()`, and when `results.close()` is called, those allocations are **freed back to the arena** (not to the OS). On the next `session.run()`, the arena **reuses** those freed chunks. It only grows when a new call needs a chunk size that can't be satisfied by any existing freed chunk.
+
+The variety of chunk sizes is determined by the **variety of input token counts** (1-402), which is bounded by the model architecture — not by how many sentences you process. A 15,000-word text has roughly the same distribution of sentence lengths as a 1,500-word text (English is English). So:
+
+- After ~20-30 inferences covering a range of short and long sentences, the arena has seen all the allocation patterns it will ever see
+- Every subsequent inference reuses existing arena memory
+- The memory **plateaus and stays flat** regardless of whether you process 100 or 10,000 more chunks
+
+Your observation that it **stabilized at 900 MB and stayed there** through the rest of playback is consistent with this. It's bounded.
+
+## But I want to verify this more rigorously
+
+My analysis above is based on understanding ORT's allocator design. I could be wrong about a subtle detail. To actually confirm there's no linear growth, the most reliable approach would be to:
+
+1. Test with a **much longer text** (e.g., 10,000+ words) and observe whether RES stabilizes at the same ~900 MB or keeps climbing.
+2. Check if there's any per-inference native allocation that **doesn't** go through the arena (e.g., ORT could use `malloc` directly for some things).
+
+Without being able to run on the device, I can't verify (1) empirically. But I can do a more careful code audit.
+
+## Re-examining for any linear accumulation I might have missed
+
+Let me double-check one thing that bothered me:
+
+At `KokoroEngine.kt:169-178`:
+```kotlin
+val results = sess.run(inputs)
+val output = results[0].value   // ← this copies native→JVM
+val audio = ...
+results.close()                  // ← frees native side
+return audio                     // ← JVM FloatArray lives on
+```
+
+The `.value` property in ORT's Java binding **copies** the native tensor data into a JVM `FloatArray`. Then `results.close()` frees the native tensor. So the native side is properly cleaned up per-inference. The JVM `FloatArray` flows downstream to `trimAndPadSilence()` (which copies it again), then the original becomes GC-eligible. The trimmed copy goes into the queue (bounded at 15 seconds), gets consumed, becomes garbage. **No linear accumulation on the Java side.**
+
+On the native side, `OnnxTensor.createTensor()` for inputs (tokens, style, speed) allocates via the arena, and these are freed in the `finally` block via `.close()`. The arena reuses them.
+
+## About option 2: `arena_extend_strategy = kSameAsRequested`
+
+To be honest, this controls **how the arena requests memory from the OS** (doubling vs exact), not the allocation pattern within the arena. With the default `kNextPowerOfTwo`, the arena might over-provision — e.g., needing 170 MB but allocating 256 MB from the OS. Switching to `kSameAsRequested` could reduce the peak by avoiding that rounding, but:
+
+- It won't change the stabilization behavior (still bounded)
+- The savings might be modest (maybe 50-100 MB less peak)
+- It could slightly increase allocation frequency (more `mmap` calls)
+
+It's a reasonable thing to try, but it won't fundamentally change the memory profile.
+
+## My honest assessment
+
+Your concern about unbounded growth for very long text is **not substantiated** by the code. The 630→900 MB growth is a bounded warmup of ORT's arena, not a per-chunk leak. A 10x longer text should stabilize at approximately the same ~900 MB.
+
+The only way to be 100% certain is to test with a much longer text on the device. If it does keep climbing past 900 MB linearly, then there's something I've missed (possibly an ORT bug or a native allocation outside the arena), and we'd need to instrument further.
+
+Do you want me to:
+- **(A)** Add the `arena_extend_strategy` option (small, low-risk change that might trim 50-100 MB off peak)
+- **(B)** Skip code changes, and you test with a longer text first to confirm the growth actually stabilizes
+
+---
+
+## User
+
+B
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 11.0s)
+
+
+
+Understood. No code changes needed — you'll test with a longer text on the device first to confirm whether the memory actually stabilizes or keeps climbing past 900 MB.
+
+If it stabilizes at ~900 MB regardless of text length, the current behavior is acceptable (bounded ORT arena warmup, not a leak). If it keeps climbing, we'll need to dig deeper — possibly instrumenting ORT's allocator or checking for native-side accumulation outside the arena.
+
+---
+
+## User
+
+Tested a long text, after playing about half an hour, RES climbs to 1G, looks it's keep growing, though not fast. It doesn't seem a big issue in practice, but I want to know the root cause. I don't want to do instrumentation. Try your best to give me a convincing theory.
+
+---
+
+## Assistant (Plan · Claude Opus 4.6 · 147.0s)
+
+_Thinking:_
+
+The user tested with a long text and found that RES climbs to 1GB after 30 minutes of playback, suggesting a slow but real memory growth. They want me to theorize about the root cause without instrumentation.
+
+Let me think deeply about what could cause a slow, continuous memory growth that's not obviously a classical leak.
+
+Let me re-examine all the code paths that execute per-chunk during playback:
+
+1. **ONNX Runtime inference** — `session.run()` per chunk
+2. **eSpeak phonemization** — JNI call per chunk
+3. **FloatArray allocations** — model output, trimAndPadSilence copy, crossfade copies
+
+
+4. **String allocations** — phoneme strings from eSpeak
+5. **AudioTrack.write()** — writes PCM data
+6. **OnnxTensor.createTensor()** — per-inference input tensor creation
+
+Now I'm focusing on the ORT arena allocator and how it manages memory. The BFCArena uses a best-fit strategy with size-bucketed free lists, so when allocations come in, it finds the smallest free chunk that fits, and if nothing works, it extends the arena. When chunks are freed, they return to the free list. But there's something subtle happening here with how fragmentation could accumulate over time.
+
+Since the app runs with single-threaded inference (`setIntraOpNumThreads(1)` and `setInterOpNumThreads(1)`), each `session.run()` call is sequential, and intermediate tensors should be fully freed between runs. The real constraint is the peak memory during a single run — that's when all the intermediate tensors from different ops are live simultaneously as data flows through the graph. The arena needs to accommodate this peak, but between runs everything should be deallocated and available for reuse.
+
+The tricky part is that the BFC allocator uses power-of-2 bins, and depending on the allocation and deallocation patterns during graph execution, fragmentation could prevent reuse even if there's technically enough free space. However, since the same input size always produces the same allocation sequence, the arena should eventually stabilize after seeing each token count once. The real question is whether the BFC binning strategy is causing the arena to grow beyond what's strictly necessary for the peak live set.
+
+Now I'm thinking through the JNI layer with eSpeak — each call to `espeak_TextToPhonemes()` creates temporary C++ string objects that get freed when the function returns, and the result is converted to a JVM string that persists. The C++ side cleans up properly, but I need to trace what happens to that JVM string and whether eSpeak's internal buffers are being reused across calls.
+
+On the JVM side, I'm looking at the memory pressure from temporary FloatArrays created during chunk processing — the ORT output and audio trimming operations each generate multi-megabyte arrays that should be garbage collected quickly, but on Android the GC behavior might be delayed or inefficient under sustained load.
+
+The key insight is that the user is measuring resident set size, not just the Java heap — so the leak could be coming from the native heap (ORT's memory arena, eSpeak buffers, or JNI allocations) rather than Java garbage collection issues.
+
+Now I'm reconsidering the JNI path in the native code. Each call to `nativeTextToPhonemes` creates temporary native strings that should be freed when the function returns, but I need to look more carefully at what's actually happening with the string allocations and whether they're being properly cleaned up.
+
+Looking at the tensor creation in `synthesizeTokens()`, I'm seeing that OnnxTensor objects are being created and closed in a finally block, which should handle cleanup. But if the close method isn't actually freeing the underlying native memory that ORT allocated, that could be where the leak is coming from. — so the real question is whether ORT's arena holds onto dequantized weights after `run()` completes. With a 92 MB int8 model expanding to ~370 MB in float32 during inference, that's a significant amount of memory. The dequantization happens as intermediate tensors during execution, but if ORT pre-computes and caches those at session creation time with `OPT_ALL`, they'd be part of the baseline memory footprint rather than temporary allocations.
+
+I'm also considering whether thread-local scratch buffers in ONNX Runtime could be contributing — operators like GEMM and convolution use these for temporary computation, and while they should be bounded once the largest input is processed, they might still account for some growth. But the real culprit could be Android's heap fragmentation or the large object space, especially if memory is being allocated and freed in a way that leaves gaps. The ~70 MB growth over 30 minutes suggests something is accumulating gradually rather than spiking all at once.
+
+Looking at the actual allocation pattern: each chunk produces a couple of megabytes of FloatArrays that should be garbage collected after processing, but on Android's ART runtime, large arrays get placed in a separate Large Object Space that isn't compacted. When these objects are freed, the memory might not be efficiently reclaimed due to how the LOS handles deallocation.
+
+The real culprit is probably ONNX Runtime's arena allocator—when it extends via malloc or mmap to grab new pages from the OS, those pages are never returned even after internal freeing, since the arena manages reuse internally. The slow creep from 630→900→1000 MB suggests initial warmup allocating space for typical input sizes, then occasional rare allocation patterns (like unusually long sentences or specific operator intermediate combinations) that don't fit existing free chunks, forcing the arena to extend again.
+
+This growth is logarithmic rather than linear—each extension covers a wider range of patterns, so future extensions become less likely, which matches the observed slowdown from +270 MB early on to +100 MB over the next 30 minutes.
+
+Now I'm reconsidering the Java side—when `OnnxTensor.createTensor()` is called with a Java array, it flattens the data and calls into the native layer to create the actual tensor on the native heap.
+
+The native allocation goes through ORT's allocator, and when the tensor is closed, it gets freed back to ORT's allocator pool rather than the system. The arena reuses these freed tensors, so they stay allocated.
+
+I'm wondering if the issue is actually fragmentation in ORT's BFCArena—when you allocate varying sizes from larger chunks, you end up with small fragments scattered across different bins that are hard to recombine.
+
+With the Kokoro model taking inputs of 20-400 tokens, each inference run creates different intermediate tensor sizes depending on the input length and execution order. Even though the total memory in use stays bounded, the fragmentation pattern shifts with each new input size combination. Over hundreds of calls, the arena occasionally can't find a contiguous chunk large enough for a new allocation, even though there's technically enough free space scattered around, so it extends the arena. This would explain the initial fast growth that gradually slows as fewer new fragmentation patterns emerge.
+
+Looking at the 30-minute window with roughly 900 inferences, the first 100 calls drive about 270 MB of growth as new patterns appear, then the next 800 calls add only 100 MB as the arena becomes more stable. This suggests sublinear, roughly logarithmic growth rather than linear—practically bounded for real-world use. Now I'm wondering whether ONNX Runtime actually defaults to BFCArena or uses a different allocator entirely. When you call `results.close()`, it properly releases each output tensor back to the arena through `OrtReleaseValue()`, so the native memory should be freed correctly. The real culprit for the slow growth might be something else entirely—maybe the arena itself isn't returning memory to the system, or there's fragmentation happening over time.
+
+Actually, I think the simpler explanation is that Android's allocator (scudo or jemalloc) retains virtual memory pages even after freeing them. They use `madvise(MADV_DONTNEED)` to tell the kernel physical pages can be reclaimed, but the virtual address space stays mapped, so RSS doesn't shrink immediately. Combined with ORT's arena fragmentation from repeated allocations and deallocations, this could explain the gradual memory creep without any actual leak. but old pages aren't unmapped. This is the classic high-water mark behavior you see with arena allocators sitting on top of system allocators—not a leak, just how the design works. The growth rate follows a logarithmic curve because each arena extension handles more fragmentation patterns, so extensions become rarer over time, though they never fully stop. For a 30-minute playback with around 900 inference calls, I'd expect roughly 270 MB during warmup, then another 100 MB from fragmentation-driven growth as the rate drops from about 2.7 MB per call down to 0.12 MB per call, and extrapolating to a 3-hour session would show diminishing returns on additional memory.
+
+Now I'm wondering if there's actually a JVM-side issue at play—specifically whether the garbage collector is freeing those large FloatArrays quickly enough. On ART, objects over a certain size threshold typically end up in the Large Object Space where they're individually tracked and can be freed without triggering a full GC, but the allocation and deallocation use mmap and munmap calls.
+
+The problem is that if GC gets delayed—say ART waits for the heap to grow to 2x the live set before collecting—then dead FloatArrays pile up in the LOS. With ~900 chunks being created every 30 minutes and each spawning ~2 temporary 1 MB arrays, if collection only happens every 30 seconds, you could have 20-40 MB of dead objects just sitting around waiting to be freed, which inflates RSS even though it's technically bounded.
+
+But here's where it gets tricky: if the live set is slowly creeping up over time—maybe because the ORT arena is growing—then ART might keep pushing back its GC triggers, allowing even more dead objects to accumulate before collection kicks in.
+
+Actually, wait—ART's GC threshold is tied to Java heap size, not total RSS, so the feedback loop I was imagining probably doesn't hold. ART doesn't really track native memory allocations unless they're registered through NativeAllocationRegistry, which ORT doesn't use anyway.
+
+So I'm back to thinking the ORT arena fragmentation explanation is the most plausible one.
+
+Good data. Let me reason through this more carefully.
+
+## Revisiting the numbers
+
+- 0 to ~5 min: 630 → 900 MB (+270 MB, fast — ~54 MB/min)
+- 5 to ~30 min: 900 → 1000 MB (+100 MB, slow — ~4 MB/min)
+
+The growth rate is **sharply decreasing** — it's not linear. If it were linear in text length, 6x more playback time should have produced ~6x more growth. Instead, the second phase grew 2.7x slower per minute. This is sublinear (roughly logarithmic) growth, not unbounded linear growth.
+
+## The theory: ORT BFCArena chunk-splitting fragmentation
+
+ORT's default CPU memory arena (BFCArena) works like a buddy allocator on top of the system allocator:
+
+1. It requests large memory regions from `malloc`/`mmap` (the "extends")
+2. It carves them into smaller chunks for intermediate tensors during `session.run()`
+3. After `results.close()`, chunks are freed **back to the arena** (not to the OS)
+4. On the next `session.run()`, the arena tries to reuse freed chunks
+
+The key detail: **chunk splitting creates permanent fragmentation**. When the arena needs 100KB but only has a 256KB free chunk, it splits into 100KB + 156KB. The 156KB remainder goes into a different size bin. Over hundreds of inferences with varying token counts (20 to 400), each producing different-sized intermediate tensors:
+
+- The allocation patterns within a single `run()` depend on the specific tensor dimensions, which depend on input length
+- Different input lengths produce different **interleaving patterns** of allocate/free during graph execution
+- Splitting creates many fragments in various size bins
+- Occasionally, no existing free fragment fits a particular allocation, despite there being enough **total** free space. The arena extends (requests more from OS)
+- Extended memory is **never returned to the OS** — that's by design
+
+This explains both behaviors:
+- **Fast initial growth (270 MB)**: Many distinct input lengths encountered for the first time, creating many new fragment patterns. The arena extends frequently.
+- **Slow continued growth (100 MB over 25 min)**: Most allocation patterns are now covered by existing fragments. But rare combinations (e.g., an unusually short sentence immediately followed by a long one, producing a particular sequence of intermediate tensor sizes the arena hasn't seen in this exact combination) still occasionally trigger small extensions.
+
+## Why it's sublinear, not linear
+
+Each arena extension **permanently increases reuse capacity**. Extension N makes extension N+1 less likely because there's more free space in more size bins. The probability of needing a new extension decreases with each extension — classic diminishing returns.
+
+Rough extrapolation:
+- 0-5 min: +270 MB (arena warmup)
+- 5-30 min: +100 MB (occasional fragmentation-driven extensions)
+- 30-60 min: likely +30-50 MB more
+- 1-3 hours: likely +20-30 MB more
+- Practical ceiling: probably ~1.1-1.2 GB for any text length
+
+## Why `arena_extend_strategy = kSameAsRequested` might help
+
+The default strategy (`kNextPowerOfTwo`) doubles the arena region size on each extension. So if the arena needs just 5 MB more, it might allocate 64 MB or 128 MB. Switching to `kSameAsRequested` would allocate only what's needed per extension, reducing the over-provisioning. This wouldn't eliminate extensions, but each one would waste less.
+
+However, there's a tradeoff: more frequent, smaller extensions mean more `mmap` calls, which could cause slightly more page table overhead.
+
+## Bottom line
+
+This is **not a leak**. It's the well-known behavior of arena allocators that never return memory to the OS and fragment internally over time with varying allocation patterns. The growth is logarithmic in the number of inferences, not linear in text length, and practically caps out. A text 10x longer would not use 10x more memory — it would converge to roughly the same ceiling because the *variety* of sentence lengths (and thus intermediate tensor sizes) saturates quickly.
+
+---
+
+## User
+
+okay, let's finish this memory leak investigation. fix an issue: if I close the app when it's playing, the current highlight text block is not preserved, next time app opens, it will start from previous block. looks current text block is only updateed when I click "stop", or double click at stopped status. can we save the active position when app closes, if not possible, i think we can save it everytime a new block is activated (but it may introduce many file writes)
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 25.0s)
+
+_Thinking:_
+
+The user wants to save the current playback position when the app closes. Let me understand the issue:
+
+1. When playing, `currentChunkIndex` updates as each chunk starts playing
+2. But `cursorPosition` (saved to SharedPreferences) is only updated when:
+   - Stop is clicked (via `stoppedAtOffset` flow)
+   - Double-click at stopped status
+3. If the app is killed during playback, the cursor position saved in prefs is stale
+
+The best approach: save the cursor position every time a new chunk starts playing. This happens via `onChunkStarted` callback in AudioPlayer, which updates `_currentChunkIndex` in PlaybackController. 
+
+
+SharedPreferences `apply()` is async and batches writes, so frequent updates aren't a concern—each chunk is only a few seconds of audio anyway. Now I need to trace where `onChunkStarted` gets called and hook into that to persist the cursor position. In `PlaybackController.play()`, the callback sets `_currentChunkIndex`, but currently nothing triggers a prefs save from there. The fix is to update the cursor position in SharedPreferences whenever `_currentChunkIndex` changes.
+
+The challenge is that `PlaybackController` doesn't have access to `PreferencesManager`. I could either pass it a reference, or handle the persistence at the UI layer by observing `currentChunkIndex` changes in `MainScreen` and saving from there. Actually, the cleanest approach is to expose the current playback offset from `PlaybackController` and let the UI layer save it—that keeps the separation of concerns clean.
+
+Looking at the existing code flow, `MainScreen` already has a `LaunchedEffect` watching `currentChunkIndex` that handles scroll animation. I can extend that same effect to also save the cursor position to preferences whenever a new chunk starts playing, which would only write every few seconds at most. Writing the effect logic...
 
 **Tool: todowrite**
 
@@ -5171,132 +8371,12 @@ Let me start.
 {
   "todos": [
     {
-      "content": "Add isContinuation flag to TextChunk",
-      "status": "in_progress",
-      "priority": "high"
-    },
-    {
-      "content": "Add isContinuation flag to PreparedChunk",
-      "status": "pending",
-      "priority": "high"
-    },
-    {
-      "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-      "status": "pending",
-      "priority": "high"
-    },
-    {
-      "content": "Pass isContinuation through TextProcessor",
-      "status": "pending",
-      "priority": "high"
-    },
-    {
-      "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-      "status": "pending",
-      "priority": "high"
-    },
-    {
-      "content": "Build and verify compilation",
-      "status": "pending",
-      "priority": "high"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Add isContinuation flag to TextChunk",
-    "status": "in_progress",
-    "priority": "high"
-  },
-  {
-    "content": "Add isContinuation flag to PreparedChunk",
-    "status": "pending",
-    "priority": "high"
-  },
-  {
-    "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-    "status": "pending",
-    "priority": "high"
-  },
-  {
-    "content": "Pass isContinuation through TextProcessor",
-    "status": "pending",
-    "priority": "high"
-  },
-  {
-    "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-    "status": "pending",
-    "priority": "high"
-  },
-  {
-    "content": "Build and verify compilation",
-    "status": "pending",
-    "priority": "high"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.3s)
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt",
-  "oldString": "data class TextChunk(\n    val text: String,\n    val startOffset: Int,\n    val endOffset: Int\n)",
-  "newString": "data class TextChunk(\n    val text: String,\n    val startOffset: Int,\n    val endOffset: Int,\n    val isContinuation: Boolean = false\n)"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.5s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Add isContinuation flag to TextChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Add isContinuation flag to PreparedChunk",
+      "content": "Fix: save cursor position when each new chunk starts playing",
       "priority": "high",
       "status": "in_progress"
     },
     {
-      "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-      "priority": "high",
-      "status": "pending"
-    },
-    {
-      "content": "Pass isContinuation through TextProcessor",
-      "priority": "high",
-      "status": "pending"
-    },
-    {
-      "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-      "priority": "high",
-      "status": "pending"
-    },
-    {
-      "content": "Build and verify compilation",
+      "content": "Build and commit",
       "priority": "high",
       "status": "pending"
     }
@@ -5308,32 +8388,12 @@ Edit applied successfully.
 ```
 [
   {
-    "content": "Add isContinuation flag to TextChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Add isContinuation flag to PreparedChunk",
+    "content": "Fix: save cursor position when each new chunk starts playing",
     "priority": "high",
     "status": "in_progress"
   },
   {
-    "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-    "priority": "high",
-    "status": "pending"
-  },
-  {
-    "content": "Pass isContinuation through TextProcessor",
-    "priority": "high",
-    "status": "pending"
-  },
-  {
-    "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-    "priority": "high",
-    "status": "pending"
-  },
-  {
-    "content": "Build and verify compilation",
+    "content": "Build and commit",
     "priority": "high",
     "status": "pending"
   }
@@ -5342,16 +8402,163 @@ Edit applied successfully.
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 13.6s)
+## Assistant (Build · Claude Opus 4.6 · 8.2s)
+
+Let me check how `saveCursorPosition` works to confirm it uses async `apply()`:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/util/PreferencesManager.kt"
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/util/PreferencesManager.kt</path>
+<type>file</type>
+<content>1: package com.example.mytts.util
+2: 
+3: import android.content.Context
+4: import android.content.SharedPreferences
+5: import kotlinx.coroutines.flow.MutableStateFlow
+6: import kotlinx.coroutines.flow.StateFlow
+7: import kotlinx.coroutines.flow.asStateFlow
+8: 
+9: /**
+10:  * Persists user settings and playback state via SharedPreferences.
+11:  * Restores everything on next startup so the user can continue where they left off.
+12:  */
+13: class PreferencesManager(context: Context) {
+14: 
+15:     companion object {
+16:         private const val PREFS_NAME = "mytts_prefs"
+17:         private const val KEY_TEXT = "text"
+18:         private const val KEY_CURSOR_POSITION = "cursor_position"
+19:         private const val KEY_VOICE = "voice"
+20:         private const val KEY_SLOW_MODE = "slow_mode"
+21:     }
+22: 
+23:     private val prefs: SharedPreferences =
+24:         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+25: 
+26:     // Expose saved values as StateFlows for Compose observation
+27:     private val _text = MutableStateFlow(prefs.getString(KEY_TEXT, "") ?: "")
+28:     val text: StateFlow<String> = _text.asStateFlow()
+29: 
+30:     private val _cursorPosition = MutableStateFlow(prefs.getInt(KEY_CURSOR_POSITION, 0))
+31:     val cursorPosition: StateFlow<Int> = _cursorPosition.asStateFlow()
+32: 
+33:     private val _voice = MutableStateFlow(prefs.getString(KEY_VOICE, "") ?: "")
+34:     val voice: StateFlow<String> = _voice.asStateFlow()
+35: 
+36:     private val _slowMode = MutableStateFlow(prefs.getBoolean(KEY_SLOW_MODE, false))
+37:     val slowMode: StateFlow<Boolean> = _slowMode.asStateFlow()
+38: 
+39:     fun saveText(value: String) {
+40:         _text.value = value
+41:         prefs.edit().putString(KEY_TEXT, value).apply()
+42:     }
+43: 
+44:     fun saveCursorPosition(value: Int) {
+45:         _cursorPosition.value = value
+46:         prefs.edit().putInt(KEY_CURSOR_POSITION, value).apply()
+47:     }
+48: 
+49:     fun saveVoice(value: String) {
+50:         _voice.value = value
+51:         prefs.edit().putString(KEY_VOICE, value).apply()
+52:     }
+53: 
+54:     fun saveSlowMode(value: Boolean) {
+55:         _slowMode.value = value
+56:         prefs.edit().putBoolean(KEY_SLOW_MODE, value).apply()
+57:     }
+58: }
+
+(End of file - total 58 lines)
+</content>
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 9.8s)
+
+Good — `saveCursorPosition` uses `.apply()` (async). Writing once per chunk (every few seconds) is fine.
+
+The fix is simple: in the existing `LaunchedEffect(currentChunkIndex)` in `MainScreen.kt`, save the cursor position whenever a new chunk starts playing.
 
 **Tool: edit**
 
 **Input:**
 ```json
 {
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextProcessor.kt",
-  "newString": "data class PreparedChunk(\n    val originalText: String,     // raw text as user sees it\n    val normalizedText: String,   // after normalizeText() — ready for phonemization\n    val startOffset: Int,         // char position in the original full text\n    val endOffset: Int,\n    val isContinuation: Boolean = false  // true = sub-chunk of a split sentence, no gap before it\n)",
-  "oldString": "data class PreparedChunk(\n    val originalText: String,     // raw text as user sees it\n    val normalizedText: String,   // after normalizeText() — ready for phonemization\n    val startOffset: Int,         // char position in the original full text\n    val endOffset: Int\n)"
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/MainScreen.kt",
+  "oldString": "    // Auto-scroll to highlighted chunk during playback\n    val chunkRange = controller.getCurrentChunkRange()\n    LaunchedEffect(currentChunkIndex) {\n        if (chunkRange != null && !isStopped) {\n            val target = scrollTargetForOffset(chunkRange.first)\n            if (target != null) {\n                scrollState.animateScrollTo(target)\n            }\n        }\n    }",
+  "newString": "    // Auto-scroll to highlighted chunk during playback and save position\n    val chunkRange = controller.getCurrentChunkRange()\n    LaunchedEffect(currentChunkIndex) {\n        if (chunkRange != null && !isStopped) {\n            val pos = chunkRange.first\n            cursorPosition = pos\n            prefs.saveCursorPosition(pos)\n            val target = scrollTargetForOffset(pos)\n            if (target != null) {\n                scrollState.animateScrollTo(target)\n            }\n        }\n    }"
+}
+```
+
+**Error:**
+```
+You must read file /Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/MainScreen.kt before overwriting it. Use the Read tool first
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 7.4s)
+
+I already read it earlier — let me re-read to satisfy the tool requirement:
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/MainScreen.kt",
+  "offset": 131,
+  "limit": 15
+}
+```
+
+**Output:**
+```
+<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/MainScreen.kt</path>
+<type>file</type>
+<content>131:     // Auto-scroll to highlighted chunk during playback
+132:     val chunkRange = controller.getCurrentChunkRange()
+133:     LaunchedEffect(currentChunkIndex) {
+134:         if (chunkRange != null && !isStopped) {
+135:             val target = scrollTargetForOffset(chunkRange.first)
+136:             if (target != null) {
+137:                 scrollState.animateScrollTo(target)
+138:             }
+139:         }
+140:     }
+141: 
+142:     // Restore cursor position when playback stops
+143:     LaunchedEffect(stoppedAtOffset) {
+144:         if (stoppedAtOffset >= 0 && isStopped) {
+145:             val pos = stoppedAtOffset.coerceIn(0, currentText.length)
+
+(Showing lines 131-145 of 433. Use offset=146 to continue.)
+</content>
+```
+
+---
+
+## Assistant (Build · Claude Opus 4.6 · 14.0s)
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/ui/MainScreen.kt",
+  "oldString": "    // Auto-scroll to highlighted chunk during playback\n    val chunkRange = controller.getCurrentChunkRange()\n    LaunchedEffect(currentChunkIndex) {\n        if (chunkRange != null && !isStopped) {\n            val target = scrollTargetForOffset(chunkRange.first)\n            if (target != null) {\n                scrollState.animateScrollTo(target)\n            }\n        }\n    }",
+  "newString": "    // Auto-scroll to highlighted chunk during playback and save position\n    // so that if the app is killed mid-playback, the next launch resumes\n    // from the last active chunk (SharedPreferences.apply() is async/batched,\n    // so one write per chunk every few seconds is negligible).\n    val chunkRange = controller.getCurrentChunkRange()\n    LaunchedEffect(currentChunkIndex) {\n        if (chunkRange != null && !isStopped) {\n            val pos = chunkRange.first\n            cursorPosition = pos\n            prefs.saveCursorPosition(pos)\n            val target = scrollTargetForOffset(pos)\n            if (target != null) {\n                scrollState.animateScrollTo(target)\n            }\n        }\n    }"
 }
 ```
 
@@ -5362,515 +8569,22 @@ Edit applied successfully.
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 13.5s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Add isContinuation flag to TextChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Add isContinuation flag to PreparedChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-      "priority": "high",
-      "status": "in_progress"
-    },
-    {
-      "content": "Pass isContinuation through TextProcessor",
-      "priority": "high",
-      "status": "pending"
-    },
-    {
-      "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-      "priority": "high",
-      "status": "pending"
-    },
-    {
-      "content": "Build and verify compilation",
-      "priority": "high",
-      "status": "pending"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Add isContinuation flag to TextChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Add isContinuation flag to PreparedChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-    "priority": "high",
-    "status": "in_progress"
-  },
-  {
-    "content": "Pass isContinuation through TextProcessor",
-    "priority": "high",
-    "status": "pending"
-  },
-  {
-    "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-    "priority": "high",
-    "status": "pending"
-  },
-  {
-    "content": "Build and verify compilation",
-    "priority": "high",
-    "status": "pending"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 22.8s)
-
-Now the big change — simplify TextChunker:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt",
-  "oldString": "    // Minimum chunk size to avoid tiny fragments\n    private const val MIN_WORDS_PER_CHUNK = 3\n\n    private val CLAUSE_SEPARATORS = Regex(\"[,;:\\\\-–—]+\\\\s*\")\n\n    /**\n     * Split text into chunks with offset tracking.\n     * Empty text returns an empty list.\n     */\n    fun chunk(text: String): List<TextChunk> {\n        if (text.isBlank()) return emptyList()\n\n        // First split into sentences using ICU4J BreakIterator\n        val sentences = splitIntoSentences(text)\n        val chunks = mutableListOf<TextChunk>()\n\n        for (sentence in sentences) {\n            if (sentence.text.isBlank()) continue\n\n            val wordCount = sentence.text.trim().split(Regex(\"\\\\s+\")).size\n            if (wordCount <= MAX_WORDS_PER_CHUNK) {\n                chunks.add(sentence)\n            } else {\n                // Sentence too long - split at clause boundaries\n                val clauses = splitKeepingDelimiters(sentence.text, CLAUSE_SEPARATORS, sentence.startOffset)\n                for (clause in clauses) {\n                    if (clause.text.isBlank()) continue\n                    val clauseWordCount = clause.text.trim().split(Regex(\"\\\\s+\")).size\n                    if (clauseWordCount <= MAX_WORDS_PER_CHUNK) {\n                        chunks.add(clause)\n                    } else {\n                        // Still too long - split at word boundaries\n                        chunks.addAll(splitByWords(clause.text, clause.startOffset))\n                    }\n                }\n            }\n        }\n\n        // Merge tiny chunks with their neighbors\n        return mergeSmallChunks(chunks)\n    }",
-  "newString": "    // Minimum chunk size to avoid tiny fragments\n    private const val MIN_WORDS_PER_CHUNK = 3\n\n    /**\n     * Split text into chunks with offset tracking.\n     * Empty text returns an empty list.\n     *\n     * Sentences within the word limit become one chunk each.\n     * Longer sentences are split at word boundaries every ~50 words;\n     * sub-chunks after the first are marked [isContinuation]=true\n     * so the audio layer can skip the inter-sentence silence gap.\n     */\n    fun chunk(text: String): List<TextChunk> {\n        if (text.isBlank()) return emptyList()\n\n        // First split into sentences using ICU4J BreakIterator\n        val sentences = splitIntoSentences(text)\n        val chunks = mutableListOf<TextChunk>()\n\n        for (sentence in sentences) {\n            if (sentence.text.isBlank()) continue\n\n            val wordCount = sentence.text.trim().split(Regex(\"\\\\s+\")).size\n            if (wordCount <= MAX_WORDS_PER_CHUNK) {\n                chunks.add(sentence)\n            } else {\n                // Sentence too long - split at word boundaries\n                chunks.addAll(splitByWords(sentence.text, sentence.startOffset))\n            }\n        }\n\n        // Merge tiny chunks with their neighbors (only non-continuation chunks)\n        return mergeSmallChunks(chunks)\n    }"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 24.5s)
-
-Now remove `splitKeepingDelimiters` and update `splitByWords` to mark continuations and absorb tiny tails:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt",
-  "newString": "    /**\n     * Split by word boundaries when a sentence exceeds [MAX_WORDS_PER_CHUNK].\n     * The first sub-chunk keeps [isContinuation]=false; subsequent ones are\n     * marked true so the audio layer omits the inter-sentence silence gap.\n     * Tiny tails (< [MIN_WORDS_PER_CHUNK] words) are absorbed into the\n     * previous sub-chunk to avoid sentence-final fragments.\n     */\n    private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {\n        val words = text.split(Regex(\"(?<=\\\\s)\"))\n        val chunks = mutableListOf<TextChunk>()\n        var currentWords = mutableListOf<String>()\n        var chunkStart = 0\n        var pos = 0\n\n        for ((index, word) in words.withIndex()) {\n            currentWords.add(word)\n            pos += word.length\n\n            if (currentWords.size >= MAX_WORDS_PER_CHUNK) {\n                // Check if remaining words would form a tiny tail\n                val remaining = words.size - (index + 1)\n                if (remaining in 1 until MIN_WORDS_PER_CHUNK) {\n                    // Don't split yet — absorb the tail into this chunk\n                    continue\n                }\n\n                val chunkText = currentWords.joinToString(\"\")\n                chunks.add(TextChunk(\n                    chunkText,\n                    baseOffset + chunkStart,\n                    baseOffset + pos,\n                    isContinuation = chunks.isNotEmpty()\n                ))\n                chunkStart = pos\n                currentWords = mutableListOf()\n            }\n        }\n\n        if (currentWords.isNotEmpty()) {\n            val chunkText = currentWords.joinToString(\"\")\n            chunks.add(TextChunk(\n                chunkText,\n                baseOffset + chunkStart,\n                baseOffset + pos,\n                isContinuation = chunks.isNotEmpty()\n            ))\n        }\n\n        return chunks\n    }",
-  "oldString": "    /**\n     * Split text while keeping delimiters attached to the preceding segment.\n     * Tracks offsets relative to the original text.\n     */\n    private fun splitKeepingDelimiters(\n        text: String,\n        pattern: Regex,\n        baseOffset: Int = 0\n    ): List<TextChunk> {\n        val result = mutableListOf<TextChunk>()\n        var lastEnd = 0\n\n        val matches = pattern.findAll(text)\n        for (match in matches) {\n            val segEnd = match.range.last + 1\n            if (segEnd > lastEnd) {\n                val segText = text.substring(lastEnd, segEnd)\n                if (segText.isNotBlank()) {\n                    result.add(TextChunk(segText, baseOffset + lastEnd, baseOffset + segEnd))\n                }\n                lastEnd = segEnd\n            }\n        }\n\n        // Remaining text after last delimiter\n        if (lastEnd < text.length) {\n            val remaining = text.substring(lastEnd)\n            if (remaining.isNotBlank()) {\n                result.add(TextChunk(remaining, baseOffset + lastEnd, baseOffset + text.length))\n            }\n        }\n\n        if (result.isEmpty() && text.isNotBlank()) {\n            result.add(TextChunk(text, baseOffset, baseOffset + text.length))\n        }\n\n        return result\n    }\n\n    /**\n     * Split by word boundaries when clause splitting isn't enough.\n     */\n    private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {\n        val words = text.split(Regex(\"(?<=\\\\s)\"))\n        val chunks = mutableListOf<TextChunk>()\n        var currentWords = mutableListOf<String>()\n        var chunkStart = 0\n        var pos = 0\n\n        for (word in words) {\n            currentWords.add(word)\n            pos += word.length\n            if (currentWords.size >= MAX_WORDS_PER_CHUNK) {\n                val chunkText = currentWords.joinToString(\"\")\n                chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))\n                chunkStart = pos\n                currentWords = mutableListOf()\n            }\n        }\n\n        if (currentWords.isNotEmpty()) {\n            val chunkText = currentWords.joinToString(\"\")\n            chunks.add(TextChunk(chunkText, baseOffset + chunkStart, baseOffset + pos))\n        }\n\n        return chunks\n    }"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.6s)
-
-Now update `mergeSmallChunks` to skip continuation chunks (they already have proper size from `splitByWords`):
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt",
-  "newString": "    /**\n     * Merge chunks that are too small with their next neighbor.\n     * Continuation chunks (from word-boundary splits) are left as-is since\n     * [splitByWords] already absorbs tiny tails.\n     */\n    private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {",
-  "oldString": "    /**\n     * Merge chunks that are too small with their next neighbor.\n     */\n    private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.5s)
-
-Now pass `isContinuation` through in TextProcessor:
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Add isContinuation flag to TextChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Add isContinuation flag to PreparedChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Pass isContinuation through TextProcessor",
-      "priority": "high",
-      "status": "in_progress"
-    },
-    {
-      "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-      "priority": "high",
-      "status": "pending"
-    },
-    {
-      "content": "Build and verify compilation",
-      "priority": "high",
-      "status": "pending"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Add isContinuation flag to TextChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Add isContinuation flag to PreparedChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Pass isContinuation through TextProcessor",
-    "priority": "high",
-    "status": "in_progress"
-  },
-  {
-    "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-    "priority": "high",
-    "status": "pending"
-  },
-  {
-    "content": "Build and verify compilation",
-    "priority": "high",
-    "status": "pending"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 22.1s)
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextProcessor.kt",
-  "newString": "        return chunks.map { chunk ->\n            PreparedChunk(\n                originalText = chunk.text,\n                normalizedText = phonemeConverter.normalizeText(chunk.text),\n                startOffset = chunk.startOffset,\n                endOffset = chunk.endOffset,\n                isContinuation = chunk.isContinuation\n            )\n        }",
-  "oldString": "        return chunks.map { chunk ->\n            PreparedChunk(\n                originalText = chunk.text,\n                normalizedText = phonemeConverter.normalizeText(chunk.text),\n                startOffset = chunk.startOffset,\n                endOffset = chunk.endOffset\n            )\n        }"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 15.9s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Add isContinuation flag to TextChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Add isContinuation flag to PreparedChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Pass isContinuation through TextProcessor",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-      "priority": "high",
-      "status": "in_progress"
-    },
-    {
-      "content": "Build and verify compilation",
-      "priority": "high",
-      "status": "pending"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Add isContinuation flag to TextChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Add isContinuation flag to PreparedChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Pass isContinuation through TextProcessor",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-    "priority": "high",
-    "status": "in_progress"
-  },
-  {
-    "content": "Build and verify compilation",
-    "priority": "high",
-    "status": "pending"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.8s)
-
-Now update AudioProducer — add `addGap` parameter to `trimAndPadSilence` and use look-ahead in `produceLoop`:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
-  "newString": "                    if (pcm.isNotEmpty() && running.get()) {\n                        // Trim trailing silence and add a controlled gap\n                        // (skip gap if next chunk continues the same sentence)\n                        val nextIsContinuation = (i + 1 < chunks.size) && chunks[i + 1].isContinuation\n                        val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)\n                        player.enqueue(trimmed, i)\n                        onChunkReady(i)\n                    }",
-  "oldString": "                    if (pcm.isNotEmpty() && running.get()) {\n                        // Trim trailing silence and add a controlled gap\n                        val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE)\n                        player.enqueue(trimmed, i)\n                        onChunkReady(i)\n                    }"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 15.4s)
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
-  "newString": "    /**\n     * Trim trailing silence from PCM audio and optionally append a silence gap.\n     * When [addGap] is true (default), appends ~300ms silence for natural\n     * inter-sentence pauses. When false (continuation chunks of the same\n     * sentence), only trims without adding extra silence.\n     *\n     * @param pcm raw PCM float samples\n     * @param sampleRate audio sample rate (e.g. 24000)\n     * @param addGap whether to append the inter-chunk silence gap\n     * @return trimmed PCM with optional trailing silence\n     */\n    private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int, addGap: Boolean = true): FloatArray {",
-  "oldString": "    /**\n     * Trim trailing silence from PCM audio and append a controlled silence gap.\n     * This ensures consistent ~300ms gaps between chunks instead of variable\n     * silence durations from the model output.\n     *\n     * @param pcm raw PCM float samples\n     * @param sampleRate audio sample rate (e.g. 24000)\n     * @return trimmed PCM with controlled trailing silence\n     */\n    private fun trimAndPadSilence(pcm: FloatArray, sampleRate: Int): FloatArray {"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-Now update the gap calculation inside `trimAndPadSilence`:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
-  "newString": "        // Calculate desired gap in samples (0 for continuation chunks)\n        val gapSamples = if (addGap) sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000 else 0",
-  "oldString": "        // Calculate desired gap in samples\n        val gapSamples = sampleRate * GAP_BETWEEN_CHUNKS_MS / 1000"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.0s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Add isContinuation flag to TextChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Add isContinuation flag to PreparedChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Pass isContinuation through TextProcessor",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Build and verify compilation",
-      "priority": "high",
-      "status": "in_progress"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Add isContinuation flag to TextChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Add isContinuation flag to PreparedChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Pass isContinuation through TextProcessor",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Build and verify compilation",
-    "priority": "high",
-    "status": "in_progress"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 17.0s)
-
-Now let me build to verify compilation:
+## Assistant (Build · Claude Opus 4.6 · 13.3s)
 
 **Tool: bash**
 
 **Input:**
 ```json
 {
-  "command": "cd /Users/cyb/works/mytts && JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew assembleDebug 2>&1 | tail -30",
-  "description": "Build debug APK to verify compilation",
-  "timeout": 180000
+  "command": "ANDROID_HOME=$HOME/Library/Android/sdk JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ./gradlew assembleDebug 2>&1 | tail -10",
+  "description": "Build debug APK to verify",
+  "timeout": 300000,
+  "workdir": "/Users/cyb/works/mytts"
 }
 ```
 
 **Output:**
 ```
-> Task :app:mergeDebugShaders UP-TO-DATE
-> Task :app:compileDebugShaders NO-SOURCE
-> Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets UP-TO-DATE
-> Task :app:compressDebugAssets UP-TO-DATE
-> Task :app:desugarDebugFileDependencies UP-TO-DATE
-> Task :app:checkDebugDuplicateClasses UP-TO-DATE
-> Task :app:mergeExtDexDebug UP-TO-DATE
-> Task :app:mergeLibDexDebug UP-TO-DATE
-> Task :app:configureCMakeDebug[arm64-v8a]
-> Task :app:buildCMakeDebug[arm64-v8a]
-> Task :app:mergeDebugJniLibFolders UP-TO-DATE
-> Task :app:mergeDebugNativeLibs UP-TO-DATE
-> Task :app:stripDebugDebugSymbols UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
-> Task :app:writeDebugAppMetadata UP-TO-DATE
-> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:compileDebugKotlin
-> Task :app:compileDebugJavaWithJavac UP-TO-DATE
-> Task :app:dexBuilderDebug
 > Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
 > Task :app:processDebugJavaRes UP-TO-DATE
 > Task :app:mergeDebugJavaResource UP-TO-DATE
@@ -5879,243 +8593,36 @@ Now let me build to verify compilation:
 > Task :app:createDebugApkListingFileRedirect UP-TO-DATE
 > Task :app:assembleDebug
 
-BUILD SUCCESSFUL in 2s
+BUILD SUCCESSFUL in 4s
 39 actionable tasks: 6 executed, 33 up-to-date
 
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 18.1s)
+## Assistant (Build · Claude Opus 4.6 · 10.1s)
 
-Build successful. Let me verify the final state of the changed files:
-
-**Tool: read**
+**Tool: bash**
 
 **Input:**
 ```json
 {
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt"
+  "command": "git add app/src/main/java/com/example/mytts/ui/MainScreen.kt && git commit -m \"Save cursor position on each chunk start during playback\n\nWhen the app is killed mid-playback, the saved cursor position was\nstale (only updated on stop or double-tap). Now save it every time\na new chunk starts playing, so the next launch resumes from the\nlast active chunk. SharedPreferences.apply() is async and batched,\nso one write per chunk (every few seconds) is negligible.\"",
+  "description": "Commit cursor position save fix",
+  "workdir": "/Users/cyb/works/mytts"
 }
 ```
 
 **Output:**
 ```
-<path>/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt</path>
-<type>file</type>
-<content>1: package com.example.mytts.audio
-2: 
-3: import android.icu.text.BreakIterator
-4: import java.util.Locale
-5: 
-6: /**
-7:  * A chunk of text with its position in the original input.
-8:  */
-9: data class TextChunk(
-10:     val text: String,
-11:     val startOffset: Int,
-12:     val endOffset: Int,
-13:     val isContinuation: Boolean = false
-14: )
-15: 
-16: /**
-17:  * Splits text into chunks suitable for TTS inference.
-18:  * Each chunk should produce phonemes within the model's token limit (~400).
-19:  * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
-20:  * abbreviation/decimal handling), then clause boundaries, then word boundaries.
-21:  */
-22: object TextChunker {
-23: 
-24:     // Approximate: 1 word ≈ 5-8 phoneme tokens. 400 tokens ≈ 50-80 words.
-25:     // Use conservative limit of ~50 words per chunk for safety.
-26:     private const val MAX_WORDS_PER_CHUNK = 50
-27:     // Minimum chunk size to avoid tiny fragments
-28:     private const val MIN_WORDS_PER_CHUNK = 3
-29: 
-30:     /**
-31:      * Split text into chunks with offset tracking.
-32:      * Empty text returns an empty list.
-33:      *
-34:      * Sentences within the word limit become one chunk each.
-35:      * Longer sentences are split at word boundaries every ~50 words;
-36:      * sub-chunks after the first are marked [isContinuation]=true
-37:      * so the audio layer can skip the inter-sentence silence gap.
-38:      */
-39:     fun chunk(text: String): List<TextChunk> {
-40:         if (text.isBlank()) return emptyList()
-41: 
-42:         // First split into sentences using ICU4J BreakIterator
-43:         val sentences = splitIntoSentences(text)
-44:         val chunks = mutableListOf<TextChunk>()
-45: 
-46:         for (sentence in sentences) {
-47:             if (sentence.text.isBlank()) continue
-48: 
-49:             val wordCount = sentence.text.trim().split(Regex("\\s+")).size
-50:             if (wordCount <= MAX_WORDS_PER_CHUNK) {
-51:                 chunks.add(sentence)
-52:             } else {
-53:                 // Sentence too long - split at word boundaries
-54:                 chunks.addAll(splitByWords(sentence.text, sentence.startOffset))
-55:             }
-56:         }
-57: 
-58:         // Merge tiny chunks with their neighbors (only non-continuation chunks)
-59:         return mergeSmallChunks(chunks)
-60:     }
-61: 
-62:     /**
-63:      * Split text into sentences using ICU4J BreakIterator.
-64:      * Handles abbreviations (Dr., Mr., U.S.A.), decimal numbers (3.14),
-65:      * ellipses (...), and other edge cases automatically.
-66:      */
-67:     private fun splitIntoSentences(text: String): List<TextChunk> {
-68:         val result = mutableListOf<TextChunk>()
-69:         val bi = BreakIterator.getSentenceInstance(Locale.US)
-70:         bi.setText(text)
-71: 
-72:         var start = bi.first()
-73:         var end = bi.next()
-74:         while (end != BreakIterator.DONE) {
-75:             val segment = text.substring(start, end)
-76:             if (segment.isNotBlank()) {
-77:                 result.add(TextChunk(segment, start, end))
-78:             }
-79:             start = end
-80:             end = bi.next()
-81:         }
-82: 
-83:         // Handle any remaining text (shouldn't happen with BreakIterator, but be safe)
-84:         if (start < text.length) {
-85:             val remaining = text.substring(start)
-86:             if (remaining.isNotBlank()) {
-87:                 result.add(TextChunk(remaining, start, text.length))
-88:             }
-89:         }
-90: 
-91:         if (result.isEmpty() && text.isNotBlank()) {
-92:             result.add(TextChunk(text, 0, text.length))
-93:         }
-94: 
-95:         return result
-96:     }
-97: 
-98:     /**
-99:      * Split by word boundaries when a sentence exceeds [MAX_WORDS_PER_CHUNK].
-100:      * The first sub-chunk keeps [isContinuation]=false; subsequent ones are
-101:      * marked true so the audio layer omits the inter-sentence silence gap.
-102:      * Tiny tails (< [MIN_WORDS_PER_CHUNK] words) are absorbed into the
-103:      * previous sub-chunk to avoid sentence-final fragments.
-104:      */
-105:     private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
-106:         val words = text.split(Regex("(?<=\\s)"))
-107:         val chunks = mutableListOf<TextChunk>()
-108:         var currentWords = mutableListOf<String>()
-109:         var chunkStart = 0
-110:         var pos = 0
-111: 
-112:         for ((index, word) in words.withIndex()) {
-113:             currentWords.add(word)
-114:             pos += word.length
-115: 
-116:             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
-117:                 // Check if remaining words would form a tiny tail
-118:                 val remaining = words.size - (index + 1)
-119:                 if (remaining in 1 until MIN_WORDS_PER_CHUNK) {
-120:                     // Don't split yet — absorb the tail into this chunk
-121:                     continue
-122:                 }
-123: 
-124:                 val chunkText = currentWords.joinToString("")
-125:                 chunks.add(TextChunk(
-126:                     chunkText,
-127:                     baseOffset + chunkStart,
-128:                     baseOffset + pos,
-129:                     isContinuation = chunks.isNotEmpty()
-130:                 ))
-131:                 chunkStart = pos
-132:                 currentWords = mutableListOf()
-133:             }
-134:         }
-135: 
-136:         if (currentWords.isNotEmpty()) {
-137:             val chunkText = currentWords.joinToString("")
-138:             chunks.add(TextChunk(
-139:                 chunkText,
-140:                 baseOffset + chunkStart,
-141:                 baseOffset + pos,
-142:                 isContinuation = chunks.isNotEmpty()
-143:             ))
-144:         }
-145: 
-146:         return chunks
-147:     }
-148: 
-149:     /**
-150:      * Merge chunks that are too small with their next neighbor.
-151:      * Continuation chunks (from word-boundary splits) are left as-is since
-152:      * [splitByWords] already absorbs tiny tails.
-153:      */
-154:     private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {
-155:         if (chunks.size <= 1) return chunks
-156: 
-157:         val merged = mutableListOf<TextChunk>()
-158:         var i = 0
-159:         while (i < chunks.size) {
-160:             var current = chunks[i]
-161:             val wordCount = current.text.trim().split(Regex("\\s+")).size
-162: 
-163:             // If tiny and there's a next chunk, merge with next
-164:             if (wordCount < MIN_WORDS_PER_CHUNK && i + 1 < chunks.size) {
-165:                 val next = chunks[i + 1]
-166:                 current = TextChunk(
-167:                     current.text + next.text,
-168:                     current.startOffset,
-169:                     next.endOffset
-170:                 )
-171:                 i += 2
-172:             } else {
-173:                 i++
-174:             }
-175:             merged.add(current)
-176:         }
-177:         return merged
-178:     }
-179: }
+[master a475df3] Save cursor position on each chunk start during playback
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
-(End of file - total 179 lines)
-</content>
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 14.4s)
-
-_Thinking:_
-
-Let me also update the class-level KDoc comment which still mentions clause boundaries:
-
-I notice the class-level KDoc still mentions "clause boundaries". Let me fix that:
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/java/com/example/mytts/audio/TextChunker.kt",
-  "newString": "/**\n * Splits text into chunks suitable for TTS inference.\n * Each chunk should produce phonemes within the model's token limit (~400).\n * Splits at sentence boundaries first (using ICU4J BreakIterator for robust\n * abbreviation/decimal handling), then word boundaries for oversized sentences.\n * Sub-chunks of a split sentence are marked as continuations so the audio\n * layer can omit the inter-sentence silence gap between them.\n */",
-  "oldString": "/**\n * Splits text into chunks suitable for TTS inference.\n * Each chunk should produce phonemes within the model's token limit (~400).\n * Splits at sentence boundaries first (using ICU4J BreakIterator for robust\n * abbreviation/decimal handling), then clause boundaries, then word boundaries.\n */"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.3s)
+## Assistant (Build · Claude Opus 4.6 · 7.0s)
 
 **Tool: todowrite**
 
@@ -6124,32 +8631,12 @@ Edit applied successfully.
 {
   "todos": [
     {
-      "content": "Add isContinuation flag to TextChunk",
+      "content": "Fix: save cursor position when each new chunk starts playing",
       "priority": "high",
       "status": "completed"
     },
     {
-      "content": "Add isContinuation flag to PreparedChunk",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Pass isContinuation through TextProcessor",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Build and verify compilation",
+      "content": "Build and commit",
       "priority": "high",
       "status": "completed"
     }
@@ -6161,32 +8648,12 @@ Edit applied successfully.
 ```
 [
   {
-    "content": "Add isContinuation flag to TextChunk",
+    "content": "Fix: save cursor position when each new chunk starts playing",
     "priority": "high",
     "status": "completed"
   },
   {
-    "content": "Add isContinuation flag to PreparedChunk",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Simplify TextChunker: remove CLAUSE_SEPARATORS, use splitByWords directly, mark continuations, absorb tiny tails",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Pass isContinuation through TextProcessor",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Skip 300ms gap before continuation chunks in AudioProducer",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Build and verify compilation",
+    "content": "Build and commit",
     "priority": "high",
     "status": "completed"
   }
@@ -6195,1451 +8662,819 @@ Edit applied successfully.
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 16.9s)
+## Assistant (Build · Claude Opus 4.6 · 6.6s)
 
-All done. Build passes. Here's a summary of the changes:
-
-### Changes made
-
-**`TextChunker.kt`** — Simplified long-sentence splitting:
-- Removed `CLAUSE_SEPARATORS` regex and `splitKeepingDelimiters()` entirely
-- Sentences > 50 words now split directly at word boundaries (no more hyphen/comma/colon splitting)
-- `TextChunk` gains `isContinuation: Boolean` — true for sub-chunks after the first
-- `splitByWords()` absorbs tiny tails (< 3 words) into the previous sub-chunk
-
-**`TextProcessor.kt`** — `PreparedChunk` gains `isContinuation`, passed through from `TextChunk`
-
-**`AudioProducer.kt`** — Gap-aware trimming:
-- `trimAndPadSilence()` takes `addGap: Boolean` parameter
-- `produceLoop()` looks ahead: if next chunk is a continuation, skips the 300ms gap on the current chunk
-
-### Net effect
-- Compound words like `worst-case`, `multi-year`, `sky-high` are never split across chunks
-- Long sentences split cleanly at ~50-word boundaries with seamless audio (no artificial 300ms gap between sub-chunks)
-- Each sub-chunk is synthesized independently (model treats it as a complete utterance)
-- Normal sentences (≤ 50 words) and inter-sentence gaps are unchanged
-
-Ready for you to test. Want me to commit?
+Committed as `a475df3`. The fix saves the cursor position to SharedPreferences every time a new chunk starts playing (in the existing `LaunchedEffect(currentChunkIndex)`). If the app is killed mid-playback, the next launch will resume from the last active chunk instead of the stale position.
 
 ---
 
 ## User
 
-test okay, commit it
+add license file, since it references three oss project: kokoro (apache 2.0),  eSpeak-ng (gpl 3.0), kokoro-82m-android (gpl 3.0), I suppose we should inherit the gpl 3.0 licence,  please also mention these project licenses in our license file.  i want the license file as simple as possible, but should follow common oss practice, please help.
 
 ---
 
-## Assistant (Build · claude-haiku-4.5 · 15.8s)
+## Assistant (Build · Claude Sonnet 4.6 · 26.3s)
 
 _Thinking:_
 
-The user wants me to commit the changes. I need to:
-1. Check git status to see all the changed files
-2. Add the changes to staging
-3. Create a commit with an appropriate message
-4. Verify the commit succeeded
+The user wants to add a LICENSE file. Let me think about what's needed:
 
-Let me follow the git commit protocol.
+1. The app uses:
+   - Kokoro (Apache 2.0) - the TTS model
+   - eSpeak-ng (GPL 3.0) - the phonemizer
+   - kokoro-82m-android (GPL 3.0) - likely the ONNX model port
 
-**Tool: bash**
+2. Since the app links against GPL 3.0 licensed code (eSpeak-ng), the whole app must be licensed under GPL 3.0 (or a compatible license). Apache 2.0 is compatible with GPL 3.0 (Apache 2.0 code can be incorporated into GPL 3.0 projects).
+
+
+3. For a simple approach, I'll put the GPL 3.0 full text in the main LICENSE file with a header identifying the project, then add a NOTICE file or section listing the third-party dependencies and their licenses. so the simplest approach that aligns with common OSS practice is to consolidate everything into a single LICENSE file: a brief copyright notice for MyTTS at the top, followed by the GPL 3.0 declaration, then a section acknowledging the third-party dependencies with their respective licenses (Kokoro under Apache 2.0, eSpeak-ng and kokoro-82m-android both under GPL 3.0), and finally the full GPL 3.0 text. Though I realize I should clarify who the copyright holder is before finalizing this structure.
+
+**Tool: glob**
 
 **Input:**
 ```json
 {
-  "command": "cd /Users/cyb/works/mytts && git status",
-  "description": "Check git status for modified files"
+  "pattern": "LICENSE*"
 }
 ```
 
 **Output:**
 ```
-On branch master
-Your branch is ahead of 'origin/master' by 2 commits.
-  (use "git push" to publish your local commits)
-
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-	modified:   app/src/main/java/com/example/mytts/audio/AudioProducer.kt
-	modified:   app/src/main/java/com/example/mytts/audio/TextChunker.kt
-	modified:   app/src/main/java/com/example/mytts/audio/TextProcessor.kt
-
-no changes added to commit (use "git add" and/or "git commit -a")
-
+No files found
 ```
 
 ---
 
-## Assistant (Build · claude-haiku-4.5 · 14.1s)
+## Assistant (Build · Claude Sonnet 4.6 · 9.7s)
 
-**Tool: bash**
+No license file yet. Since eSpeak-ng and kokoro-82m-android are GPL 3.0, the app inherits GPL 3.0 (Apache 2.0 from Kokoro is compatible and can be incorporated). GPL 3.0 requires the full license text to be included — that's unavoidable, but we can keep our own header minimal.
+
+**Tool: webfetch**
 
 **Input:**
 ```json
 {
-  "command": "cd /Users/cyb/works/mytts && git diff app/src/main/java/com/example/mytts/audio/TextChunker.kt | head -80",
-  "description": "Preview first part of TextChunker changes"
+  "url": "https://www.gnu.org/licenses/gpl-3.0.txt",
+  "format": "text"
 }
 ```
 
 **Output:**
 ```
-diff --git a/app/src/main/java/com/example/mytts/audio/TextChunker.kt b/app/src/main/java/com/example/mytts/audio/TextChunker.kt
-index ebfe76b..b66d36d 100644
---- a/app/src/main/java/com/example/mytts/audio/TextChunker.kt
-+++ b/app/src/main/java/com/example/mytts/audio/TextChunker.kt
-@@ -9,14 +9,17 @@ import java.util.Locale
- data class TextChunk(
-     val text: String,
-     val startOffset: Int,
--    val endOffset: Int
-+    val endOffset: Int,
-+    val isContinuation: Boolean = false
- )
- 
- /**
-  * Splits text into chunks suitable for TTS inference.
-  * Each chunk should produce phonemes within the model's token limit (~400).
-  * Splits at sentence boundaries first (using ICU4J BreakIterator for robust
-- * abbreviation/decimal handling), then clause boundaries, then word boundaries.
-+ * abbreviation/decimal handling), then word boundaries for oversized sentences.
-+ * Sub-chunks of a split sentence are marked as continuations so the audio
-+ * layer can omit the inter-sentence silence gap between them.
-  */
- object TextChunker {
- 
-@@ -26,11 +29,14 @@ object TextChunker {
-     // Minimum chunk size to avoid tiny fragments
-     private const val MIN_WORDS_PER_CHUNK = 3
- 
--    private val CLAUSE_SEPARATORS = Regex("[,;:\\-–—]+\\s*")
--
-     /**
-      * Split text into chunks with offset tracking.
-      * Empty text returns an empty list.
-+     *
-+     * Sentences within the word limit become one chunk each.
-+     * Longer sentences are split at word boundaries every ~50 words;
-+     * sub-chunks after the first are marked [isContinuation]=true
-+     * so the audio layer can skip the inter-sentence silence gap.
-      */
-     fun chunk(text: String): List<TextChunk> {
-         if (text.isBlank()) return emptyList()
-@@ -46,22 +52,12 @@ object TextChunker {
-             if (wordCount <= MAX_WORDS_PER_CHUNK) {
-                 chunks.add(sentence)
-             } else {
--                // Sentence too long - split at clause boundaries
--                val clauses = splitKeepingDelimiters(sentence.text, CLAUSE_SEPARATORS, sentence.startOffset)
--                for (clause in clauses) {
--                    if (clause.text.isBlank()) continue
--                    val clauseWordCount = clause.text.trim().split(Regex("\\s+")).size
--                    if (clauseWordCount <= MAX_WORDS_PER_CHUNK) {
--                        chunks.add(clause)
--                    } else {
--                        // Still too long - split at word boundaries
--                        chunks.addAll(splitByWords(clause.text, clause.startOffset))
--                    }
--                }
-+                // Sentence too long - split at word boundaries
-+                chunks.addAll(splitByWords(sentence.text, sentence.startOffset))
-             }
-         }
- 
--        // Merge tiny chunks with their neighbors
-+        // Merge tiny chunks with their neighbors (only non-continuation chunks)
-         return mergeSmallChunks(chunks)
-     }
- 
-@@ -102,46 +98,11 @@ object TextChunker {
-     }
- 
-     /**
--     * Split text while keeping delimiters attached to the preceding segment.
--     * Tracks offsets relative to the original text.
--     */
--    private fun splitKeepingDelimiters(
--        text: String,
--        pattern: Regex,
--        baseOffset: Int = 0
--    ): List<TextChunk> {
--        val result = mutableListOf<TextChunk>()
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+                            Preamble
+
+  The GNU General Public License is a free, copyleft license for
+software and other kinds of works.
+
+  The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+the GNU General Public License is intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.  We, the Free Software Foundation, use the
+GNU General Public License for most of our software; it applies also to
+any other work released this way by its authors.  You can apply it to
+your programs, too.
+
+  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+  To protect your rights, we need to prevent others from denying you
+these rights or asking you to surrender the rights.  Therefore, you have
+certain responsibilities if you distribute copies of the software, or if
+you modify it: responsibilities to respect the freedom of others.
+
+  For example, if you distribute copies of such a program, whether
+gratis or for a fee, you must pass on to the recipients the same
+freedoms that you received.  You must make sure that they, too, receive
+or can get the source code.  And you must show them these terms so they
+know their rights.
+
+  Developers that use the GNU GPL protect your rights with two steps:
+(1) assert copyright on the software, and (2) offer you this License
+giving you legal permission to copy, distribute and/or modify it.
+
+  For the developers' and authors' protection, the GPL clearly explains
+that there is no warranty for this free software.  For both users' and
+authors' sake, the GPL requires that modified versions be marked as
+changed, so that their problems will not be attributed erroneously to
+authors of previous versions.
+
+  Some devices are designed to deny users access to install or run
+modified versions of the software inside them, although the manufacturer
+can do so.  This is fundamentally incompatible with the aim of
+protecting users' freedom to change the software.  The systematic
+pattern of such abuse occurs in the area of products for individuals to
+use, which is precisely where it is most unacceptable.  Therefore, we
+have designed this version of the GPL to prohibit the practice for those
+products.  If such problems arise substantially in other domains, we
+stand ready to extend this provision to those domains in future versions
+of the GPL, as needed to protect the freedom of users.
+
+  Finally, every program is threatened constantly by software patents.
+States should not allow patents to restrict development and use of
+software on general-purpose computers, but in those that do, we wish to
+avoid the special danger that patents applied to a free program could
+make it effectively proprietary.  To prevent this, the GPL assures that
+patents cannot be used to render the program non-free.
+
+  The precise terms and conditions for copying, distribution and
+modification follow.
+
+                       TERMS AND CONDITIONS
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU General Public License.
+
+  "Copyright" also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
+
+  "The Program" refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as "you".  "Licensees" and
+"recipients" may be individuals or organizations.
+
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
+
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
+
+  To "propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+  To "convey" a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
+
+  An interactive user interface displays "Appropriate Legal Notices"
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+  1. Source Code.
+
+  The "source code" for a work means the preferred form of the work
+for making modifications to it.  "Object code" means any non-source
+form of a work.
+
+  A "Standard Interface" means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+  The "System Libraries" of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+"Major Component", in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+  The "Corresponding Source" for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+  The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
+
+  The Corresponding Source for a work in source code form is that
+same work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+  You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those thus making or running the covered works
+for you must do so exclusively on your behalf, under your direction
+and control, on terms that prohibit them from making any copies of
+your copyrighted material outside their relationship with you.
+
+  Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+  When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
+
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+  You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+
+    a) The work must carry prominent notices stating that you modified
+    it, and giving a relevant date.
+
+    b) The work must carry prominent notices stating that it is
+    released under this License and any conditions added under section
+    7.  This requirement modifies the requirement in section 4 to
+    "keep intact all notices".
+
+    c) You must license the entire work, as a whole, under this
+    License to anyone who comes into possession of a copy.  This
+    License will therefore apply, along with any applicable section 7
+    additional terms, to the whole of the work, and all its parts,
+    regardless of how they are packaged.  This License gives no
+    permission to license the work in any other way, but it does not
+    invalidate such permission if you have separately received it.
+
+    d) If the work has interactive user interfaces, each must display
+    Appropriate Legal Notices; however, if the Program has interactive
+    interfaces that do not display Appropriate Legal Notices, your
+    work need not make them do so.
+
+  A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+"aggregate" if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+
+    a) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by the
+    Corresponding Source fixed on a durable physical medium
+    customarily used for software interchange.
+
+    b) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by a
+    written offer, valid for at least three years and valid for as
+    long as you offer spare parts or customer support for that product
+    model, to give anyone who possesses the object code either (1) a
+    copy of the Corresponding Source for all the software in the
+    product that is covered by this License, on a durable physical
+    medium customarily used for software interchange, for a price no
+    more than your reasonable cost of physically performing this
+    conveying of source, or (2) access to copy the
+    Corresponding Source from a network server at no charge.
+
+    c) Convey individual copies of the object code with a copy of the
+    written offer to provide the Corresponding Source.  This
+    alternative is allowed only occasionally and noncommercially, and
+    only if you received the object code with such an offer, in accord
+    with subsection 6b.
+
+    d) Convey the object code by offering access from a designated
+    place (gratis or for a charge), and offer equivalent access to the
+    Corresponding Source in the same way through the same place at no
+    further charge.  You need not require recipients to copy the
+    Corresponding Source along with the object code.  If the place to
+    copy the object code is a network server, the Corresponding Source
+    may be on a different server (operated by you or a third party)
+    that supports equivalent copying facilities, provided you maintain
+    clear directions next to the object code saying where to find the
+    Corresponding Source.  Regardless of what server hosts the
+    Corresponding Source, you remain obligated to ensure that it is
+    available for as long as needed to satisfy these requirements.
+
+    e) Convey the object code using peer-to-peer transmission, provided
+    you inform other peers where the object code and Corresponding
+    Source of the work are being offered to the general public at no
+    charge under subsection 6d.
+
+  A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+  A "User Product" is either (1) a "consumer product", which means any
+tangible personal property which is normally used for personal, family,
+or household purposes, or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product,
+doubtful cases shall be resolved in favor of coverage.  For a particular
+product received by a particular user, "normally used" refers to a
+typical or common use of that class of product, regardless of the status
+of the particular user or of the way in which the particular user
+actually uses, or expects or is expected to use, the product.  A product
+is a consumer product regardless of whether the product has substantial
+commercial, industrial or non-consumer uses, unless such uses represent
+the only significant mode of use of the product.
+
+  "Installation Information" for a User Product means any methods,
+procedures, authorization keys, or other information required to install
+and execute modified versions of a covered work in that User Product from
+a modified version of its Corresponding Source.  The information must
+suffice to ensure that the continued functioning of the modified object
+code is in no case prevented or interfered with solely because
+modification has been made.
+
+  If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+  The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or updates
+for a work that has been modified or installed by the recipient, or for
+the User Product in which it has been modified or installed.  Access to a
+network may be denied when the modification itself materially and
+adversely affects the operation of the network or violates the rules and
+protocols for communication across the network.
+
+  Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+  7. Additional Terms.
+
+  "Additional permissions" are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+  When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+  Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders of
+that material) supplement the terms of this License with terms:
+
+    a) Disclaiming warranty or limiting liability differently from the
+    terms of sections 15 and 16 of this License; or
+
+    b) Requiring preservation of specified reasonable legal notices or
+    author attributions in that material or in the Appropriate Legal
+    Notices displayed by works containing it; or
+
+    c) Prohibiting misrepresentation of the origin of that material, or
+    requiring that modified versions of such material be marked in
+    reasonable ways as different from the original version; or
+
+    d) Limiting the use for publicity purposes of names of licensors or
+    authors of the material; or
+
+    e) Declining to grant rights under trademark law for use of some
+    trade names, trademarks, or service marks; or
+
+    f) Requiring indemnification of licensors and authors of that
+    material by anyone who conveys the material (or modified versions of
+    it) with contractual assumptions of liability to the recipient, for
+    any liability that these contractual assumptions directly impose on
+    those licensors and authors.
+
+  All other non-permissive additional terms are considered "further
+restrictions" within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+  If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+  Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions;
+the above requirements apply either way.
+
+  8. Termination.
+
+  You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+  However, if you cease all violation of this License, then your
+license from a particular copyright holder is reinstated (a)
+provisionally, unless and until the copyright holder explicitly and
+finally terminates your license, and (b) permanently, if the copyright
+holder fails to notify you of the violation by some reasonable means
+prior to 60 days after the cessation.
+
+  Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+  Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+  9. Acceptance Not Required for Having Copies.
+
+  You are not required to accept this License in order to receive or
+run a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+  10. Automatic Licensing of Downstream Recipients.
+
+  Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+  An "entity transaction" is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+  You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+  11. Patents.
+
+  A "contributor" is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's "contributor version".
+
+  A contributor's "essential patent claims" are all patent claims
+owned or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, "control" includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+  Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+  In the following three paragraphs, a "patent license" is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To "grant" such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+  If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  "Knowingly relying" means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+  If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+  A patent license is "discriminatory" if it does not include within
+the scope of its coverage, prohibits the exercise of, or is
+conditioned on the non-exercise of one or more of the rights that are
+specifically granted under this License.  You may not convey a covered
+work if you are a party to an arrangement with a third party that is
+in the business of distributing software, under which you make payment
+to the third party based on the extent of your activity of conveying
+the work, and under which the third party grants, to any of the
+parties who would receive the covered work from you, a discriminatory
+patent license (a) in connection with copies of the covered work
+conveyed by you (or copies made from those copies), or (b) primarily
+for and in connection with specific products or compilations that
+contain the covered work, unless you entered into that arrangement,
+or that patent license was granted, prior to 28 March 2007.
+
+  Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+  12. No Surrender of Others' Freedom.
+
+  If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey a
+covered work so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you may
+not convey it at all.  For example, if you agree to terms that obligate you
+to collect a royalty for further conveying from those to whom you convey
+the Program, the only way you could satisfy both those terms and this
+License would be to refrain entirely from conveying the Program.
+
+  13. Use with the GNU Affero General Public License.
+
+  Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU Affero General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the special requirements of the GNU Affero General Public License,
+section 13, concerning interaction through a network will apply to the
+combination as such.
+
+  14. Revised Versions of this License.
+
+  The Free Software Foundation may publish revised and/or new versions of
+the GNU General Public License from time to time.  Such new versions will
+be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+  Each version is given a distinguishing version number.  If the
+Program specifies that a certain numbered version of the GNU General
+Public License "or any later version" applies to it, you have the
+option of following the terms and conditions either of that numbered
+version or of any later version published by the Free Software
+Foundation.  If the Program does not specify a version number of the
+GNU General Public License, you may choose any version ever published
+by the Free Software Foundation.
+
+  If the Program specifies that a proxy can decide which future
+versions of the GNU General Public License can be used, that proxy's
+public statement of acceptance of a version permanently authorizes you
+to choose that version for the Program.
+
+  Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+  15. Disclaimer of Warranty.
+
+  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+  16. Limitation of Liability.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+  17. Interpretation of Sections 15 and 16.
+
+  If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+                     END OF TERMS AND CONDITIONS
+
+            How to Apply These Terms to Your New Programs
+
+  If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these terms.
+
+  To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the "copyright" line and a pointer to where the full notice is found.
+
+    <one line to give the program's name and a brief idea of what it does.>
+    Copyright (C) <year>  <name of author>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Also add information on how to contact you by electronic and paper mail.
+
+  If the program does terminal interaction, make it output a short
+notice like this when it starts in an interactive mode:
+
+    <program>  Copyright (C) <year>  <name of author>
+    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; type `show c' for details.
+
+The hypothetical commands `show w' and `show c' should show the appropriate
+parts of the General Public License.  Of course, your program's commands
+might be different; for a GUI interface, you would use an "about box".
+
+  You should also get your employer (if you work as a programmer) or school,
+if any, to sign a "copyright disclaimer" for the program, if necessary.
+For more information on this, and how to apply and follow the GNU GPL, see
+<https://www.gnu.org/licenses/>.
+
+  The GNU General Public License does not permit incorporating your program
+into proprietary programs.  If your program is a subroutine library, you
+may consider it more useful to permit linking proprietary applications with
+the library.  If this is what you want to do, use the GNU Lesser General
+Public License instead of this License.  But first, please read
+<https://www.gnu.org/licenses/why-not-lgpl.html>.
 
 ```
 
 ---
 
-## Assistant (Build · claude-haiku-4.5 · 14.4s)
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git add app/src/main/java/com/example/mytts/audio/TextChunker.kt app/src/main/java/com/example/mytts/audio/TextProcessor.kt app/src/main/java/com/example/mytts/audio/AudioProducer.kt",
-  "description": "Stage the modified files"
-}
-```
-
----
-
-## Assistant (Build · claude-haiku-4.5 · 14.4s)
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git commit -m \"Simplify long-sentence chunking: remove clause splitting, add continuation markers\n\nReplace clause-boundary splitting (which incorrectly split hyphenated compounds\nlike 'worst-case') with direct word-boundary splitting for sentences > 50 words.\n\nSub-chunks are marked as continuations so audio layer omits the 300ms gap\nbetween them, providing seamless playback within a split sentence.\n\nChanges:\n- TextChunk and PreparedChunk gain isContinuation flag\n- Remove CLAUSE_SEPARATORS regex and splitKeepingDelimiters()\n- splitByWords() absorbs tiny tails (< 3 words) to avoid fragments\n- AudioProducer skips gap before continuation chunks\"",
-  "description": "Create commit with detailed message"
-}
-```
-
-**Output:**
-```
-[master 3b5dbc3] Simplify long-sentence chunking: remove clause splitting, add continuation markers
- 3 files changed, 57 insertions(+), 70 deletions(-)
-
-```
-
----
-
-## Assistant (Build · claude-haiku-4.5 · 14.1s)
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git log --oneline -1",
-  "description": "Verify commit was created"
-}
-```
-
-**Output:**
-```
-3b5dbc3 Simplify long-sentence chunking: remove clause splitting, add continuation markers
-
-```
-
----
-
-## Assistant (Build · claude-haiku-4.5 · 14.3s)
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git status",
-  "description": "Verify working tree is clean"
-}
-```
-
-**Output:**
-```
-On branch master
-Your branch is ahead of 'origin/master' by 3 commits.
-  (use "git push" to publish your local commits)
-
-nothing to commit, working tree clean
-
-```
-
----
-
-## Assistant (Build · claude-haiku-4.5 · 14.8s)
-
-✓ Committed as `3b5dbc3`. All changes staged and committed successfully. The implementation is complete and tested.
-
----
-
-## User
-
-What's the principal to cut sub-sentences for a sentence. I mean normally we will pause after "," or similar,  but looks it's not handled in our app. e.g., for below sentence, I hear an abvious pause after "do", but "that" is continously spoken with "they", the middle "," between "that" and "they" is ignored: "They may not even do that, they are now hinting at charging models for being available on Siri."   Looks to me our app cut sub-sentences at semantic level, and ignore punctuation, is that so? can we tune this?
-
----
-
-## Assistant (Plan · claude-opus-4.6 · 28.5s)
-
-
-
-Great question. The pause behavior is determined by **what characters appear in the phoneme stream** that reaches the Kokoro model. Let me trace the pipeline to see where commas might be getting lost.
+## Assistant (Build · Claude Sonnet 4.6 · 182.1s)
 
 _Thinking:_
 
-The user is asking about how sub-sentence pauses work in their TTS pipeline. They're observing that the Kokoro model pauses at semantically meaningful places (like after "do" in "They may not even do that,") but ignores the comma between "that" and "they". They want to understand the mechanism and whether it can be tuned.
+Now I have the full GPL 3.0 text. Let me write the LICENSE file. The structure will be:
 
-Let me think about the pipeline:
+1. A short copyright/notice header for MyTTS
+2. GPL 3.0 declaration
+3. Third-party notices section
+4. The full GPL 3.0 text
 
-1. Text goes to eSpeak-ng for phonemization
-2. eSpeak produces IPA with stress markers, pauses, etc.
-3. The IPA goes through `postProcess()` which filters to VALID_CHARS
-4. The phonemes go to the Kokoro model which generates audio
+For the copyright year, I'll use 2025 (the project seems to have been developed in 2025-2026 based on the context). Actually, looking at git commit timestamps, they say "Sun Apr 5 2026" - but the versionName is "0.1". I'll use 2025-2026 or just 2026.
 
 
-5. The real question is whether eSpeak's pause markers survive the filtering step—commas are in VALID_CHARS, so they should pass through, but I need to verify if that's actually what's controlling the pauses or if Kokoro is making its own decisions based on semantic content. the phoneme stream would be preserved. But does eSpeak actually output commas in its phoneme format? When using IPA mode with the `0x80` flag, eSpeak processes text clause by clause — the comma acts as a boundary marker between clauses rather than being converted to a phoneme character itself. So the flow is: eSpeak reads "They may not even do that, they are now hinting..." and outputs the IPA for the first clause, then the second clause, with the comma consumed as a delimiter but not appearing in the phoneme stream. This means Kokoro has no way to know a pause should occur there, though the pause after "do" might come from the model's own prosody inference based on semantic structure.
+I need to pick a copyright holder name since the user didn't specify one. Given this is a personal project based on the package name, I'll go with "MyTTS Contributors" as a sensible default that follows open source conventions.
 
-I should examine the JNI code to see exactly how clauses are concatenated and whether punctuation information could be preserved in the phoneme stream to signal pause locations to the model.
+For the actual license header, I'll use a standard GPL 3.0 format that includes the basic program description, copyright notice, and the core license text, then list out the third-party components like the Kokoro model and its Android integration with their respective licenses. I'm trying to verify the exact URLs and licenses for these three projects. Kokoro is on HuggingFace under Apache 2.0, eSpeak-ng is the GPL 3.0 project on GitHub, and kokoro-82m-android appears to be a separate ONNX conversion for Android compatibility—likely also GPL 3.0 based on what the user mentioned, though I'm not entirely certain of its exact repository location. I'm trying to track down the exact source for kokoro-82m-android since I want to provide accurate URLs, but I'm not confident enough to guess. The safest approach is to list the project names and licenses the user provided without speculating on URLs I'm unsure about—they can fill in the details if needed. Generating LICENSE file...
 
-**Tool: read**
+Good. The structure will be: a short header (copyright + GPL notice), a third-party section, then the full GPL 3.0 text (which GPL requires to be included). That's the minimal compliant form.
+
+**Tool: write**
 
 **Input:**
 ```json
 {
-  "filePath": "/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp"
+  "filePath": "/Users/cyb/works/mytts/LICENSE",
+  "content": "MyTTS — Android text-to-speech app powered by the Kokoro TTS model.\nCopyright (C) 2026 MyTTS Contributors\n\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nThird-Party Components\n----------------------\n\nThis project incorporates the following open-source components:\n\n  Kokoro TTS model weights\n  https://huggingface.co/hexgrad/Kokoro-82M\n  Licensed under the Apache License 2.0\n\n  kokoro-82m-android (ONNX model for Android)\n  Licensed under the GNU General Public License v3.0\n\n  eSpeak NG (text-to-phoneme engine)\n  https://github.com/espeak-ng/espeak-ng\n  Licensed under the GNU General Public License v3.0\n\n------------------------------------------------------------------------------\n\n                    GNU GENERAL PUBLIC LICENSE\n                       Version 3, 29 June 2007\n\n Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>\n Everyone is permitted to copy and distribute verbatim copies\n of this license document, but changing it is not allowed.\n\n                            Preamble\n\n  The GNU General Public License is a free, copyleft license for\nsoftware and other kinds of works.\n\n  The licenses for most software and other practical works are designed\nto take away your freedom to share and change the works.  By contrast,\nthe GNU General Public License is intended to guarantee your freedom to\nshare and change all versions of a program--to make sure it remains free\nsoftware for all its users.  We, the Free Software Foundation, use the\nGNU General Public License for most of our software; it applies also to\nany other work released this way by its authors.  You can apply it to\nyour programs, too.\n\n  When we speak of free software, we are referring to freedom, not\nprice.  Our General Public Licenses are designed to make sure that you\nhave the freedom to distribute copies of free software (and charge for\nthem if you wish), that you receive source code or can get it if you\nwant it, that you can change the software or use pieces of it in new\nfree programs, and that you know you can do these things.\n\n  To protect your rights, we need to prevent others from denying you\nthese rights or asking you to surrender the rights.  Therefore, you have\ncertain responsibilities if you distribute copies of the software, or if\nyou modify it: responsibilities to respect the freedom of others.\n\n  For example, if you distribute copies of such a program, whether\ngratis or for a fee, you must pass on to the recipients the same\nfreedoms that you received.  You must make sure that they, too, receive\nor can get the source code.  And you must make sure they know their rights.\n\n  Developers that use the GNU GPL protect your rights with two steps:\n(1) assert copyright on the software, and (2) offer you this License\ngiving you legal permission to copy, distribute and/or modify it.\n\n  For the developers' and authors' protection, the GPL clearly explains\nthat there is no warranty for this free software.  For both users' and\nauthors' sake, the GPL requires that modified versions be marked as\nchanged, so that their problems will not be attributed erroneously to\nauthors of previous versions.\n\n  Some devices are designed to deny users access to install or run\nmodified versions of the software inside them, although the manufacturer\ncan do so.  This is fundamentally incompatible with the aim of\nprotecting users' freedom to change the software.  The systematic\npattern of such abuse occurs in the area of products for individuals to\nuse, which is precisely where it is most unacceptable.  Therefore, we\nhave designed this version of the GPL to prohibit the practice for those\nproducts.  If such problems arise substantially in other domains, we\nstand ready to extend this provision to those domains in future versions\nof the GPL, as needed to protect the freedom of users.\n\n  Finally, every program is threatened constantly by software patents.\nStates should not allow patents to restrict development and use of\nsoftware on general-purpose computers, but in those that do, we wish to\navoid the special danger that patents applied to a free program could\nmake it effectively proprietary.  To prevent this, the GPL assures that\npatents cannot be used to render the program non-free.\n\n  The precise terms and conditions for copying, distribution and\nmodification follow.\n\n                       TERMS AND CONDITIONS\n\n  0. Definitions.\n\n  \"This License\" refers to version 3 of the GNU General Public License.\n\n  \"Copyright\" also means copyright-like laws that apply to other kinds of\nworks, such as semiconductor masks.\n\n  \"The Program\" refers to any copyrightable work licensed under this\nLicense.  Each licensee is addressed as \"you\".  \"Licensees\" and\n\"recipients\" may be individuals or organizations.\n\n  To \"modify\" a work means to copy from or adapt all or part of the work\nin a fashion requiring copyright permission, other than the making of an\nexact copy.  The resulting work is called a \"modified version\" of the\nearlier work or a work \"based on\" the earlier work.\n\n  A \"covered work\" means either the unmodified Program or a work based\non the Program.\n\n  To \"propagate\" a work means to do anything with it that, without\npermission, would make you directly or secondarily liable for\ninfringement under applicable copyright law, except executing it on a\ncomputer or modifying a private copy.  Propagation includes copying,\ndistribution (with or without modification), making available to the\npublic, and in some countries other activities as well.\n\n  To \"convey\" a work means any kind of propagation that enables other\nparties to make or receive copies.  Mere interaction with a user through\na computer network, with no transfer of a copy, is not conveying.\n\n  An interactive user interface displays \"Appropriate Legal Notices\"\nto the extent that it includes a convenient and prominently visible\nfeature that (1) displays an appropriate copyright notice, and (2)\ntells the user that there is no warranty for the work (except to the\nextent that warranties are provided), that licensees may convey the\nwork under this License, and how to view a copy of this License.  If\nthe interface presents a list of user commands or options, such as a\nmenu, a prominent item in the list meets this criterion.\n\n  1. Source Code.\n\n  The \"source code\" for a work means the preferred form of the work\nfor making modifications to it.  \"Object code\" means any non-source\nform of a work.\n\n  A \"Standard Interface\" means an interface that either is an official\nstandard defined by a recognized standards body, or, in the case of\ninterfaces specified for a particular programming language, one that\nis widely used among developers working in that language.\n\n  The \"System Libraries\" of an executable work include anything, other\nthan the work as a whole, that (a) is included in the normal form of\npackaging a Major Component, but which is not part of that Major\nComponent, and (b) serves only to enable use of the work with that\nMajor Component, or to implement a Standard Interface for which an\nimplementation is available to the public in source code form.  A\n\"Major Component\", in this context, means a major essential component\n(kernel, window system, and so on) of the specific operating system\n(if any) on which the executable work runs, or a compiler used to\nproduce the work, or an object code interpreter used to run it.\n\n  The \"Corresponding Source\" for a work in object code form means all\nthe source code needed to generate, install, and (for an executable\nwork) run the object code and to modify the work, including scripts to\ncontrol those activities.  However, it does not include the work's\nSystem Libraries, or general-purpose tools or generally available free\nprograms which are used unmodified in performing those activities but\nwhich are not part of the work.  For example, Corresponding Source\nincludes interface definition files associated with source files for\nthe work, and the source code for shared libraries and dynamically\nlinked subprograms that the work is specifically designed to require,\nsuch as by intimate data communication or control flow between those\nsubprograms and other parts of the work.\n\n  The Corresponding Source need not include anything that users\ncan regenerate automatically from other parts of the Corresponding\nSource.\n\n  The Corresponding Source for a work in source code form is that\nsame work.\n\n  2. Basic Permissions.\n\n  All rights granted under this License are granted for the term of\ncopyright on the Program, and are irrevocable provided the stated\nconditions are met.  This License explicitly affirms your unlimited\npermission to run the unmodified Program.  The output from running a\ncovered work is covered by this License only if the output, given its\ncontent, constitutes a covered work.  This License acknowledges your\nrights of fair use or other equivalent, as provided by copyright law.\n\n  You may make, run and propagate covered works that you do not\nconvey, without conditions so long as your license otherwise remains\nin force.  You may convey covered works to others for the sole purpose\nof having them make modifications exclusively for you, or provide you\nwith facilities for running those works, provided that you comply with\nthe terms of this License in conveying all material for which you do\nnot control copyright.  Those thus making or running the covered works\nfor you must do so exclusively on your behalf, under your direction\nand control, on terms that prohibit them from making any copies of\nyour copyrighted material outside their relationship with you.\n\n  Conveying under any other circumstances is permitted solely under\nthe conditions stated below.  Sublicensing is not allowed; section 10\nmakes it unnecessary.\n\n  3. Protecting Users' Legal Rights From Anti-Circumvention Law.\n\n  No covered work shall be deemed part of an effective technological\nmeasure under any applicable law fulfilling obligations under article\n11 of the WIPO copyright treaty adopted on 20 December 1996, or\nsimilar laws prohibiting or restricting circumvention of such\nmeasures.\n\n  When you convey a covered work, you waive any legal power to forbid\ncircumvention of technological measures to the extent such circumvention\nis effected by exercising rights under this License with respect to\nthe covered work, and you disclaim any intention to limit operation or\nmodification of the work as a means of enforcing, against the work's\nusers, your or third parties' legal rights to forbid circumvention of\ntechnological measures.\n\n  4. Conveying Verbatim Copies.\n\n  You may convey verbatim copies of the Program's source code as you\nreceive it, in any medium, provided that you conspicuously and\nappropriately publish on each copy an appropriate copyright notice;\nkeep intact all notices stating that this License and any\nnon-permissive terms added in accord with section 7 apply to the code;\nkeep intact all notices of the absence of any warranty; and give all\nrecipients a copy of this License along with the Program.\n\n  You may charge any price or no price for each copy that you convey,\nand you may offer support or warranty protection for a fee.\n\n  5. Conveying Modified Source Versions.\n\n  You may convey a work based on the Program, or the modifications to\nproduce it from the Program, in the form of source code under the\nterms of section 4, provided that you also meet all of these conditions:\n\n    a) The work must carry prominent notices stating that you modified\n    it, and giving a relevant date.\n\n    b) The work must carry prominent notices stating that it is\n    released under this License and any conditions added under section\n    7.  This requirement modifies the requirement in section 4 to\n    \"keep intact all notices\".\n\n    c) You must license the entire work, as a whole, under this\n    License to anyone who comes into possession of a copy.  This\n    License will therefore apply, along with any applicable section 7\n    additional terms, to the whole of the work, and all its parts,\n    regardless of how they are packaged.  This License gives no\n    permission to license the work in any other way, but it does not\n    invalidate such permission if you have separately received it.\n\n    d) If the work has interactive user interfaces, each must display\n    Appropriate Legal Notices; however, if the Program has interactive\n    interfaces that do not display Appropriate Legal Notices, your\n    work need not make them do so.\n\n  A compilation of a covered work with other separate and independent\nworks, which are not by their nature extensions of the covered work,\nand which are not combined with it such as to form a larger program,\nin or on a volume of a storage or distribution medium, is called an\n\"aggregate\" if the compilation and its resulting copyright are not\nused to limit the access or legal rights of the compilation's users\nbeyond what the individual works permit.  Inclusion of a covered work\nin an aggregate does not cause this License to apply to the other\nparts of the aggregate.\n\n  6. Conveying Non-Source Forms.\n\n  You may convey a covered work in object code form under the terms\nof sections 4 and 5, provided that you also convey the\nmachine-readable Corresponding Source under the terms of this License,\nin one of these ways:\n\n    a) Convey the object code in, or embodied in, a physical product\n    (including a physical distribution medium), accompanied by the\n    Corresponding Source fixed on a durable physical medium\n    customarily used for software interchange.\n\n    b) Convey the object code in, or embodied in, a physical product\n    (including a physical distribution medium), accompanied by a\n    written offer, valid for at least three years and valid for\n    as long as you offer spare parts or customer support for that product\n    model, to give anyone who possesses the object code either (1) a\n    copy of the Corresponding Source for all the software in the\n    product that is covered by this License, on a durable physical\n    medium customarily used for software interchange, for a price no\n    more than your reasonable cost of physically performing this\n    conveying of source, or (2) access to copy the\n    Corresponding Source from a network server at no charge.\n\n    c) Convey individual copies of the object code with a copy of the\n    written offer to provide the Corresponding Source.  This\n    alternative is allowed only occasionally and noncommercially, and\n    only if you received the object code with such an offer, in accord\n    with subsection 6b.\n\n    d) Convey the object code by offering access from a designated\n    place (gratis or for a charge), and offer equivalent access to the\n    Corresponding Source in the same way through the same place at no\n    further charge.  You need not require recipients to copy the\n    Corresponding Source along with the object code.  If the place to\n    copy the object code is a network server, the Corresponding Source\n    may be on a different server (operated by you or a third party)\n    that supports equivalent copying facilities, provided you maintain\n    clear directions next to the object code saying where to find the\n    Corresponding Source.  Regardless of what server hosts the\n    Corresponding Source, you remain obligated to ensure that it is\n    available for as long as needed to satisfy these requirements.\n\n    e) Convey the object code using peer-to-peer transmission, provided\n    you inform other peers where the object code and Corresponding\n    Source of the work are being offered to the general public at no\n    charge under subsection 6d.\n\n  A separable portion of the object code, whose source code is excluded\nfrom the Corresponding Source as a System Library, need not be\nincluded in conveying the object code work.\n\n  A \"User Product\" is either (1) a \"consumer product\", which means any\ntangible personal property which is normally used for personal, family,\nor household purposes, or (2) anything designed or sold for incorporation\ninto a dwelling.  In determining whether a product is a consumer product,\ndoubtful cases shall be resolved in favor of coverage.  For a particular\nproduct received by a particular user, \"normally used\" refers to a\ntypical or common use of that class of product, regardless of the status\nof the particular user or is of the way in which the particular user\nactually uses, or expects or is expected to use, the product.  A product\nis a consumer product regardless of whether the product has substantial\ncommercial, industrial or non-consumer uses, unless such uses represent\nthe only significant mode of use of the product.\n\n  \"Installation Information\" for a User Product means any methods,\nprocedures, authorization keys, or other information required to install\nand execute modified versions of a covered work in that User Product from\na modified version of its Corresponding Source.  The information must\nsuffice to ensure that the continued functioning of the modified object\ncode is in no case prevented or interfered with solely because\nmodification has been made.\n\n  If you convey an object code work under this section in, or with, or\nspecifically for use in, a User Product, and the conveying occurs as\npart of a transaction in which the right of possession and use of the\nUser Product is transferred to the recipient in perpetuity or for a\nfixed term (regardless of how the transaction is characterized), the\nCorresponding Source conveyed under this section must be accompanied\nby the Installation Information.  But this requirement does not apply\nif neither you nor any third party retains the ability to install\nmodified object code on the User Product (for example, the work has\nbeen installed in ROM).\n\n  The requirement to provide Installation Information does not include a\nrequirement to continue to provide support service, warranty, or updates\nfor a work that has been modified or installed by the recipient, or for\nthe User Product in which it has been modified or installed.  Access to a\nnetwork may be denied when the modification itself materially and\nadversely affects the operation of the network or violates the rules and\nprotocols for communication across the network.\n\n  Corresponding Source conveyed, and Installation Information provided,\nin accord with this section must be in a format that is publicly\ndocumented (and with an implementation available to the public in\nsource code form), and must require no special password or key for\nunpacking, reading or copying.\n\n  7. Additional Terms.\n\n  \"Additional permissions\" are terms that supplement the terms of this\nLicense by making exceptions from one or more of its conditions.\nAdditional permissions that are applicable to the entire Program shall\nbe treated as though they were included in this License, to the extent\nthat they are valid under applicable law.  If additional permissions\napply only to part of the Program, that part may be used separately\nunder those permissions, but the entire Program remains governed by\nthis License without regard to the additional permissions.\n\n  When you convey a copy of a covered work, you may at your option\nremove any additional permissions from that copy, or from any part of\nit.  (Additional permissions may be written to require their own\nremoval in certain cases when you modify the work.)  You may place\nadditional permissions on material, added by you to a covered work,\nfor which you have or can give appropriate copyright permission.\n\n  Notwithstanding any other provision of this License, for material you\nadd to a covered work, you may (if authorized by the copyright holders of\nthat material) supplement the terms of this License with terms:\n\n    a) Disclaiming warranty or limiting liability differently from the\n    terms of sections 15 and 16 of this License; or\n\n    b) Requiring preservation of specified reasonable legal notices or\n    author attributions in that material or in the Appropriate Legal\n    Notices displayed by works containing it; or\n\n    c) Prohibiting misrepresentation of the origin of that material, or\n    requiring that modified versions of such material be marked in\n    reasonable ways as different from the original version; or\n\n    d) Limiting the use for publicity purposes of names of licensors or\n    authors of the material; or\n\n    e) Declining to grant rights under trademark law for use of some\n    trade names, trademarks, or service marks; or\n\n    f) Requiring indemnification of licensors and authors of that\n    material by anyone who conveys the material (or modified versions of\n    it) with contractual assumptions of liability to the recipient, for\n    any liability that these contractual assumptions directly impose on\n    those licensors and authors.\n\n  All other non-permissive additional terms are considered \"further\nrestrictions\" within the meaning of section 10.  If the Program as you\nreceived it, or any part of it, contains a notice stating that it is\ngoverned by this License along with a term that is a further\nrestriction, you may remove that term.  If a license document contains\na further restriction but permits relicensing or conveying under this\nLicense, you may add to a covered work material governed by the terms\nof that license document, provided that the further restriction does\nnot survive such relicensing or conveying.\n\n  If you add terms to a covered work in accord with this section, you\nmust place, in the relevant source files, a statement of the\nadditional terms that apply to those files, or a notice indicating\nwhere to find the applicable terms.\n\n  Additional terms, permissive or non-permissive, may be stated in the\nform of a separately written license, or stated as exceptions;\nthe above requirements apply either way.\n\n  8. Termination.\n\n  You may not propagate or modify a covered work except as expressly\nprovided under this License.  Any attempt otherwise to propagate or\nmodify it is void, and will automatically terminate your rights under\nthis License (including any patent licenses granted under the third\nparagraph of section 11).\n\n  However, if you cease all violation of this License, then your\nlicense from a particular copyright holder is reinstated (a)\nprovisionally, unless and until the copyright holder explicitly and\nfinally terminates your license, and (b) permanently, if the copyright\nholder fails to notify you of the violation by some reasonable means\nprior to 60 days after the cessation.\n\n  Moreover, your license from a particular copyright holder is\nreinstated permanently if the copyright holder notifies you of the\nviolation by some reasonable means, this is the first time you have\nreceived notice of violation of this License (for any work) from that\ncopyright holder, and you cure the violation prior to 30 days after\nyour receipt of the notice.\n\n  Termination of your rights under this section does not terminate the\nlicenses of parties who have received copies or rights from you under\nthis License.  If your rights have been terminated and not permanently\nreinstated, you do not qualify to receive new licenses for the same\nmaterial under section 10.\n\n  9. Acceptance Not Required for Having Copies.\n\n  You are not required to accept this License in order to receive or\nrun a copy of the Program.  Ancillary propagation of a covered work\noccurring solely as a consequence of using peer-to-peer transmission\nto receive a copy likewise does not require acceptance.  However,\nnothing other than this License grants you permission to propagate or\nmodify any covered work.  These actions infringe copyright if you do\nnot accept this License.  Therefore, by modifying or propagating a\ncovered work, you indicate your acceptance of this License to do so.\n\n  10. Automatic Licensing of Downstream Recipients.\n\n  Each time you convey a covered work, the recipient automatically\nreceives a license from the original licensors, to run, modify and\npropagate that work, subject to this License.  You are not responsible\nfor enforcing compliance by third parties with this License.\n\n  An \"entity transaction\" is a transaction transferring control of an\norganization, or substantially all assets of one, or subdividing an\norganization, or merging organizations.  If propagation of a covered\nwork results from an entity transaction, each party to that\ntransaction who receives a copy of the work also receives whatever\nlicenses to the work the party's predecessor in interest had or could\ngive under the previous paragraph, plus a right to possession of the\nCorresponding Source of the work from the predecessor in interest, if\nthe predecessor has it or can get it with reasonable efforts.\n\n  You may not impose any further restrictions on the exercise of the\nrights granted or affirmed under this License.  For example, you may\nnot impose a license fee, royalty, or other charge for exercise of\nrights granted under this License, and you may not initiate litigation\n(including a cross-claim or counterclaim in a lawsuit) alleging that\nany patent claim is infringed by making, using, selling, offering for\nsale, or importing the Program or any portion of it.\n\n  11. Patents.\n\n  A \"contributor\" is a copyright holder who authorizes use under this\nLicense of the Program or a work on which the Program is based.  The\nwork thus licensed is called the contributor's \"contributor version\".\n\n  A contributor's \"essential patent claims\" are all patent claims\nowned or controlled by the contributor, whether already acquired or\nhereafter acquired, that would be infringed by some manner, permitted\nby this License, of making, using, or selling its contributor version,\nbut do not include claims that would be infringed only as a\nconsequence of further modification of the contributor version.  For\npurposes of this definition, \"control\" includes the right to grant\npatent sublicenses in a manner consistent with the requirements of\nthis License.\n\n  Each contributor grants you a non-exclusive, worldwide, royalty-free\npatent license under the contributor's essential patent claims, to\nmake, use, sell, offer for sale, import and otherwise run, modify and\npropagate the contents of its contributor version.\n\n  In the following three paragraphs, a \"patent license\" is any express\nagreement or commitment, however denominated, not to enforce a patent\n(such as an express permission to practice a patent or covenant not to\nsue for patent infringement).  To \"grant\" such a patent license to a\nparty means to make such an agreement or commitment not to enforce a\npatent against the party.\n\n  If you convey a covered work, knowingly relying on a patent license,\nand the Corresponding Source of the work is not available for anyone\nto copy, free of charge and under the terms of this License, through a\npublicly available network server or other readily accessible means,\nthen you must either (1) cause the Corresponding Source to be so\navailable, or (2) arrange to deprive yourself of the benefit of the\npatent license for this particular work, or (3) arrange, in a manner\nconsistent with the requirements of this License, to extend the patent\nlicense to downstream recipients.  \"Knowingly relying\" means you have\nactual knowledge that, but for the patent license, your conveying the\ncovered work in a country, or your recipient's use of the covered work\nin a country, would infringe one or more identifiable patents in that\ncountry that you have reason to believe are valid.\n\n  If, pursuant to or in connection with a single transaction or\narrangement, you convey, or propagate by procuring conveyance of, a\ncovered work, and grant a patent license to some of the parties\nreceiving the covered work authorizing them to use, propagate, modify\nor convey a specific copy of the covered work, then the patent license\nyou grant is automatically extended to all recipients of the covered\nwork and works based on it.\n\n  A patent license is \"discriminatory\" if it does not include within\nthe scope of its coverage, prohibits the exercise of, or is\nconditioned on the non-exercise of one or more of the rights that are\nspecifically granted under this License.  You may not convey a covered\nwork if you are a party to an arrangement with a third party that is\nin the business of distributing software, under which you make payment\nto the third party based on the extent of your activity of conveying\nthe work, and under which the third party grants, to any of the\nparties who would receive the covered work from you, a discriminatory\npatent license (a) in connection with copies of the covered work\nconveyed by you (or copies made from those copies), or (b) primarily\nfor and in connection with specific products or compilations that\ncontain the covered work, unless you entered into that arrangement,\nor that patent license was granted, prior to 28 March 2007.\n\n  Nothing in this License shall be construed as excluding or limiting\nany implied license or other defenses to infringement that may\notherwise be available to you under applicable law.\n\n  12. No Surrender of Others' Freedom.\n\n  If conditions are imposed on you (whether by court order, agreement or\notherwise) that contradict the conditions of this License, they do not\nexcuse you from the conditions of this License.  If you cannot convey a\ncovered work so as to satisfy simultaneously your obligations under this\nLicense and any other pertinent obligations, then as a consequence you may\nnot convey it at all.  For example, if you agree to terms that obligate you\nto collect a royalty for further conveying from those to whom you convey\nthe Program, the only way you could satisfy both those terms and this\nLicense would be to refrain entirely from conveying the Program.\n\n  13. Use with the GNU Affero General Public License.\n\n  Notwithstanding any other provision of this License, you have\npermission to link or combine any covered work with a work licensed\nunder version 3 of the GNU Affero General Public License into a single\ncombined work, and to convey the resulting work.  The terms of this\nLicense will continue to apply to the part which is the covered work,\nbut the special requirements of the GNU Affero General Public License,\nsection 13, concerning interaction through a network will apply to the\ncombination as such.\n\n  14. Revised Versions of this License.\n\n  The Free Software Foundation may publish revised and/or new versions of\nthe GNU General Public License from time to time.  Such new versions will\nbe similar in spirit to the present version, but may differ in detail to\naddress new problems or concerns.\n\n  Each version is given a distinguishing version number.  If the\nProgram specifies that a certain numbered version of the GNU General\nPublic License \"or any later version\" applies to it, you have the\noption of following the terms and conditions either of that numbered\nversion or of any later version published by the Free Software\nFoundation.  If the Program does not specify a version number of the\nGNU General Public License, you may choose any version ever published\nby the Free Software Foundation.\n\n  If the Program specifies that a proxy can decide which future\nversions of the GNU General Public License can be used, that proxy's\npublic statement of acceptance of a version permanently authorizes you\nto choose that version for the Program.\n\n  Later license versions may give you additional or different\npermissions.  However, no additional obligations are imposed on any\nauthor or copyright holder as a result of your choosing to follow a\nlater version.\n\n  15. Disclaimer of Warranty.\n\n  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY\nAPPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\nHOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY\nOF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,\nTHE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\nPURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM\nIS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF\nALL NECESSARY SERVICING, REPAIR OR CORRECTION.\n\n  16. Limitation of Liability.\n\n  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING\nWILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS\nTHE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY\nGENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE\nUSE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF\nDATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD\nPARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),\nEVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF\nSUCH DAMAGES.\n\n  17. Interpretation of Sections 15 and 16.\n\n  If the disclaimer of warranty and limitation of liability provided\nabove cannot be given local legal effect according to their terms,\nreviewing courts shall apply local law that most closely approximates\nan absolute waiver of all civil liability in connection with the\nProgram, unless a warranty or assumption of liability accompanies a\ncopy of the Program in return for a fee.\n\n                     END OF TERMS AND CONDITIONS\n"
 }
 ```
 
 **Output:**
 ```
-<path>/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp</path>
-<type>file</type>
-<content>1: #include <jni.h>
-2: #include <string>
-3: #include <cstring>
-4: #include <android/log.h>
-5: #include <espeak-ng/speak_lib.h>
-6: 
-7: #define TAG "EspeakJNI"
-8: #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
-9: #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
-10: 
-11: static bool g_initialized = false;
-12: 
-13: extern "C" {
-14: 
-15: JNIEXPORT jint JNICALL
-16: Java_com_example_mytts_engine_EspeakBridge_nativeInit(
-17:         JNIEnv *env, jobject /* this */, jstring dataPath) {
-18:     if (g_initialized) {
-19:         LOGI("eSpeak already initialized, skipping");
-20:         return 0;
-21:     }
-22: 
-23:     const char *path = env->GetStringUTFChars(dataPath, nullptr);
-24:     if (!path) {
-25:         LOGE("Failed to get data path string");
-26:         return -1;
-27:     }
-28: 
-29:     LOGI("Initializing eSpeak with data path: %s", path);
-30: 
-31:     // AUDIO_OUTPUT_SYNCHRONOUS = no audio, just text processing
-32:     // buflength = 0 (default, not used for synchronous)
-33:     // options = 0 (no phoneme events needed)
-34:     int sampleRate = espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 0, path, 0);
-35: 
-36:     env->ReleaseStringUTFChars(dataPath, path);
-37: 
-38:     if (sampleRate == -1) {
-39:         LOGE("espeak_Initialize failed");
-40:         return -1;
-41:     }
-42: 
-43:     LOGI("eSpeak initialized, sample rate: %d", sampleRate);
-44: 
-45:     // Set American English voice
-46:     espeak_ERROR err = espeak_SetVoiceByName("en-us");
-47:     if (err != EE_OK) {
-48:         LOGE("espeak_SetVoiceByName(en-us) failed: %d", err);
-49:         return -2;
-50:     }
-51: 
-52:     g_initialized = true;
-53:     LOGI("eSpeak ready (en-us)");
-54:     return 0;
-55: }
-56: 
-57: JNIEXPORT jstring JNICALL
-58: Java_com_example_mytts_engine_EspeakBridge_nativeTextToPhonemes(
-59:         JNIEnv *env, jobject /* this */, jstring text) {
-60:     if (!g_initialized) {
-61:         LOGE("eSpeak not initialized");
-62:         return env->NewStringUTF("");
-63:     }
-64: 
-65:     const char *inputText = env->GetStringUTFChars(text, nullptr);
-66:     if (!inputText) {
-67:         return env->NewStringUTF("");
-68:     }
-69: 
-70:     // phonememode bits:
-71:     //   bit 1 (0x02): IPA output (UTF-8)
-72:     //   bit 7 (0x80): use bits 8-23 as tie character for multi-letter phonemes
-73:     //   bits 8-23: tie character ('^' = 0x5E)
-74:     // Result: 0x02 | 0x80 | (0x5E << 8) = 0x5E82
-75:     int phonememode = 0x02 | 0x80 | ('^' << 8);
-76: 
-77:     std::string result;
-78:     const void *textPtr = inputText;
-79: 
-80:     while (textPtr != nullptr) {
-81:         const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);
-82:         if (phonemes && *phonemes) {
-83:             if (!result.empty()) {
-84:                 result += ' ';  // space between clauses
-85:             }
-86:             result += phonemes;
-87:         }
-88:     }
-89: 
-90:     env->ReleaseStringUTFChars(text, inputText);
-91:     return env->NewStringUTF(result.c_str());
-92: }
-93: 
-94: JNIEXPORT void JNICALL
-95: Java_com_example_mytts_engine_EspeakBridge_nativeTerminate(
-96:         JNIEnv * /* env */, jobject /* this */) {
-97:     if (g_initialized) {
-98:         espeak_Terminate();
-99:         g_initialized = false;
-100:         LOGI("eSpeak terminated");
-101:     }
-102: }
-103: 
-104: } // extern "C"
-
-(End of file - total 104 lines)
-</content>
+Wrote file successfully.
 ```
 
 ---
 
-## Assistant (Plan · claude-opus-4.6 · 101.2s)
-
-_Thinking:_
-
-Now I see the key issue. Let me trace the flow:
-
-1. `espeak_TextToPhonemes()` processes text **clause by clause**. Each call to the function processes one clause and advances the `textPtr` to the next clause.
-2. The comma (or other punctuation) is the **clause delimiter** — eSpeak uses it to know where to break, but it's NOT included in the phoneme output of either clause.
-3. Between clauses, line 84 just adds a space: `result += ' ';`
-
-So for "They may not even do that, they are now hinting at charging models for being available on Siri.":
-
-
-- Clause 1: "They may not even do that" → IPA phonemes
-- Space added
-- Clause 2: "they are now hinting at charging models for being available on Siri." → IPA phonemes
-
-The comma between "that" and "they" is **consumed by eSpeak as a clause boundary** and replaced with just a space. The Kokoro model never sees the comma in the phoneme stream, so it has no way to know a pause should go there. The solution is to preserve the original punctuation character between clauses in the phoneme stream so the Kokoro model can recognize where pauses should occur.
-
-The challenge is that `espeak_TextToPhonemes()` doesn't directly tell us which punctuation caused the clause break. I need to track the text position before and after each call to identify what character(s) were consumed between clauses. Since `textPtr` points into the original text, I can compare positions before and after processing to extract the punctuation that was skipped over. I need to track `textPtr` before and after each call to find the delimiter that caused the clause split, then extract that punctuation from the original text to insert into the result.
-
-Writing the clause processing loop... Now I'm calling the eSpeak function to get phonemes for each clause, and the text pointer advances automatically. I need to figure out what punctuation separated the clauses by scanning the original text between where the previous clause ended and where the current one started, looking for delimiters like commas or semicolons.
-
-Actually, I think I've been overcomplicating this—the key insight is that `textPtr` points to the start of each clause before the call, and after the call it points to the start of the next clause, so the delimiter sits right between them. Writing the delimiter extraction logic...
-
-Actually, I'm realizing the issue — scanning forward from `prevClauseStart` would pick up punctuation inside the clause text itself, not just the delimiter between clauses. I need a different approach since I only know where each clause starts, not where it ends.
-
-The key is that after each `espeak_TextToPhonemes` call, `textPtr` advances past the processed text and the delimiter, so it points to the beginning of the next clause. I'm uncertain about whether eSpeak also consumes the whitespace after the delimiter, but the safest strategy is to track where we are after processing each clause and use that to determine the boundaries.
-
-I'm setting up a loop that processes clauses one at a time, keeping track of where each clause ends so I can identify the punctuation that separated them. For each clause, I'll extract the phonemes and then scan the text between the previous end position and the current clause start to find what delimiter was used.
-
-Wait, I'm realizing there's an issue with my logic here—`clauseStart` should equal `lastEnd` from the previous iteration since `textPtr` advances through the same text. Let me reconsider how I'm tracking these positions. I need to trace through the pointer movement more carefully. Before each call to `espeak_TextToPhonemes`, I'll save the current position, then after the call I can see how far the pointer advanced—the punctuation between clauses should be somewhere in that span of text that was just processed. Writing the backward scan logic... Handling punctuation between clauses...
-
-For the first clause, there's nothing to prepend since we're starting fresh. On subsequent clauses, I'm scanning backward from the current position to locate the delimiter that ended the previous clause, skipping over any whitespace in the process. This approach should handle most cases cleanly, though I'm wondering about edge cases like multiple sentences within a single chunk—typically the TextChunker produces one sentence per chunk, so that shouldn't be a problem, but I should verify how periods and other sentence-ending punctuation interact with the clause-breaking logic.
-
-Looking at the valid characters, I see that commas, periods, exclamation marks, and question marks are all supported, so I could preserve any of these as clause boundaries. The question is whether periods and sentence-final punctuation should be treated the same way as commas and semicolons, or if they need special handling since they typically mark the end of a sentence rather than a mid-sentence pause. a period might be included in the phoneme output since it affects intonation. Let me verify what eSpeak actually outputs, but for now I'll focus on handling commas, semicolons, and colons as mid-sentence clause boundaries that eSpeak consumes. The Kokoro tokenizer already supports all these punctuation marks, so the plan is to trace through eSpeak's `espeak_TextToPhonemes()` behavior and see how it handles clause delimiters in the current JNI implementation.
-
-The issue is that eSpeak strips these punctuation characters when processing clauses, so the phoneme stream loses them entirely. My fix is to detect which punctuation character delimited each clause and reinsert it into the phoneme output before passing it to Kokoro, so the model can properly interpret pauses and intonation. This requires modifying the C++ code to scan backward and capture the delimiter, then inject it back into the phoneme stream between clauses.
-
-Found it. The issue is in the JNI layer, `espeak_jni.cpp:80-88`:
-
-```cpp
-while (textPtr != nullptr) {
-    const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);
-    if (phonemes && *phonemes) {
-        if (!result.empty()) {
-            result += ' ';  // <-- THIS: just a space between clauses
-        }
-        result += phonemes;
-    }
-}
-```
-
-### How it works
-
-`espeak_TextToPhonemes()` processes text **clause by clause**. Commas, semicolons, colons, etc. are **clause delimiters** — eSpeak uses them to break the text, processes each clause, and **consumes the punctuation**. The current code just joins clauses with a space.
-
-So for your example:
-```
-"They may not even do that, they are now hinting at charging models for being available on Siri."
-```
-
-eSpeak produces two clauses:
-1. `"They may not even do that"` → IPA phonemes
-2. `"they are now hinting at charging models for being available on Siri."` → IPA phonemes
-
-Joined with just a space: `[phonemes1] [phonemes2]`
-
-The **comma is lost**. The Kokoro model never sees it, so it can't insert the appropriate pause. The pause after "do" that you hear is the model's own prosody inference (semantic structure), not from punctuation.
-
-### Why the model CAN handle this
-
-Looking at `VALID_CHARS` in PhonemeConverter, comma `,` is already in the Kokoro vocabulary:
-```
-val punctuation = ";:,.!?¡¿—…\"«»\u201C\u201D "
-```
-
-The model was trained with punctuation in its phoneme input. If we pass `,` between clauses, it should produce the natural comma pause.
-
-### Proposed fix
-
-In `espeak_jni.cpp`, before processing each clause (except the first), **scan backward** from the current `textPtr` to find the punctuation character eSpeak consumed, and insert it into the phoneme stream:
-
-```cpp
-while (textPtr != nullptr) {
-    // Before processing: look backward to find clause-ending punctuation
-    if (!result.empty()) {
-        const char *p = (const char *)textPtr;
-        char delimiter = 0;
-        // Scan backward past whitespace
-        while (p > inputText && (*(p-1) == ' ' || *(p-1) == '\t' || *(p-1) == '\n')) {
-            p--;
-        }
-        if (p > inputText) {
-            char c = *(p-1);
-            if (c == ',' || c == ';' || c == ':') {
-                delimiter = c;
-            }
-        }
-        result += delimiter ? delimiter : ' ';
-        result += ' ';
-    }
-
-    const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);
-    if (phonemes && *phonemes) {
-        result += phonemes;
-    }
-}
-```
-
-Result would become: `[phonemes1], [phonemes2]` — the model sees the comma and can produce the pause.
-
-### What about periods, `!`, `?`
-
-These are sentence-final punctuation. Since TextChunker already splits at sentence boundaries, each chunk is typically one sentence. Periods within a chunk (from merged tiny chunks) could also be preserved, but that's a separate concern. I'd suggest starting with just `,` `;` `:` — the mid-sentence clause delimiters — and see how it sounds.
-
-Shall I proceed with this fix?
-
----
-
-## User
-
-excellent! let's fix it and commit
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.8s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Fix espeak_jni.cpp: preserve clause-boundary punctuation in phoneme stream",
-      "priority": "high",
-      "status": "in_progress"
-    },
-    {
-      "content": "Build and verify compilation",
-      "priority": "high",
-      "status": "pending"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Fix espeak_jni.cpp: preserve clause-boundary punctuation in phoneme stream",
-    "priority": "high",
-    "status": "in_progress"
-  },
-  {
-    "content": "Build and verify compilation",
-    "priority": "high",
-    "status": "pending"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp",
-  "newString": "    std::string result;\n    const void *textPtr = inputText;\n\n    while (textPtr != nullptr) {\n        // Before processing the next clause, find the punctuation that\n        // eSpeak consumed as a clause delimiter.  eSpeak's\n        // TextToPhonemes() splits at commas, semicolons, colons, etc.\n        // and advances textPtr past them — so the punctuation is just\n        // before the current textPtr position (possibly preceded by\n        // whitespace).  Reinserting it lets the Kokoro model produce\n        // natural pauses at clause boundaries.\n        if (!result.empty()) {\n            const char *p = (const char *)textPtr;\n            char delimiter = 0;\n            // Scan backward past whitespace to find the punctuation char\n            while (p > inputText && (*(p-1) == ' ' || *(p-1) == '\\t' || *(p-1) == '\\n')) {\n                p--;\n            }\n            if (p > inputText) {\n                char c = *(p-1);\n                if (c == ',' || c == ';' || c == ':') {\n                    delimiter = c;\n                }\n            }\n            if (delimiter) {\n                result += delimiter;\n                result += ' ';\n            } else {\n                result += ' ';\n            }\n        }\n\n        const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);\n        if (phonemes && *phonemes) {\n            result += phonemes;\n        }\n    }",
-  "oldString": "    std::string result;\n    const void *textPtr = inputText;\n\n    while (textPtr != nullptr) {\n        const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);\n        if (phonemes && *phonemes) {\n            if (!result.empty()) {\n                result += ' ';  // space between clauses\n            }\n            result += phonemes;\n        }\n    }"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-
-LSP errors detected in this file, please fix:
-<diagnostics file="/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp">
-ERROR [1:10] 'jni.h' file not found
-ERROR [15:1] Unknown type name 'JNIEXPORT'
-ERROR [15:16] Expected ';' after top level declarator (fix available)
-ERROR [57:1] Unknown type name 'JNIEXPORT'
-ERROR [57:19] Expected ';' after top level declarator (fix available)
-ERROR [119:1] Unknown type name 'JNIEXPORT'
-ERROR [120:1] Expected ';' after top level declarator (fix available)
-</diagnostics>
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-_Thinking:_
-
-Those LSP errors are just because the JNI headers aren't available to the editor's language server — they come from the Android NDK which is only available during the CMake build. These are normal for Android NDK projects. The build will resolve them.
-
-Those LSP errors are just missing NDK headers in the editor — normal for Android JNI code. Let me build to verify actual compilation:
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Fix espeak_jni.cpp: preserve clause-boundary punctuation in phoneme stream",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Build and verify compilation",
-      "priority": "high",
-      "status": "in_progress"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Fix espeak_jni.cpp: preserve clause-boundary punctuation in phoneme stream",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Build and verify compilation",
-    "priority": "high",
-    "status": "in_progress"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.8s)
+## Assistant (Build · Claude Sonnet 4.6 · 6.8s)
 
 **Tool: bash**
 
 **Input:**
 ```json
 {
-  "command": "cd /Users/cyb/works/mytts && JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew assembleDebug 2>&1 | tail -20",
-  "description": "Build debug APK to verify C++ compiles",
-  "timeout": 180000
+  "command": "git add LICENSE && git commit -m \"Add GPL 3.0 license with third-party component notices\"",
+  "description": "Commit LICENSE file",
+  "workdir": "/Users/cyb/works/mytts"
 }
 ```
 
 **Output:**
 ```
-> Task :app:processDebugJavaRes UP-TO-DATE
-> Task :app:mergeDebugJavaResource UP-TO-DATE
-> Task :app:checkDebugDuplicateClasses UP-TO-DATE
-> Task :app:mergeExtDexDebug UP-TO-DATE
-> Task :app:mergeLibDexDebug UP-TO-DATE
-> Task :app:mergeProjectDexDebug UP-TO-DATE
-> Task :app:configureCMakeDebug[arm64-v8a]
-> Task :app:buildCMakeDebug[arm64-v8a]
-> Task :app:mergeDebugJniLibFolders UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
-> Task :app:writeDebugAppMetadata UP-TO-DATE
-> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:mergeDebugNativeLibs
-> Task :app:stripDebugDebugSymbols
-> Task :app:packageDebug
-> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
-> Task :app:assembleDebug
-
-BUILD SUCCESSFUL in 2s
-39 actionable tasks: 5 executed, 34 up-to-date
+[master 83dc5dc] Add GPL 3.0 license with third-party component notices
+ 1 file changed, 651 insertions(+)
+ create mode 100644 LICENSE
 
 ```
 
 ---
 
-## Assistant (Build · claude-opus-4.6 · 14.3s)
+## Assistant (Build · Claude Sonnet 4.6 · 20.7s)
 
-Build successful. Now let me commit:
+Done. Committed as `83dc5dc`.
 
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Fix espeak_jni.cpp: preserve clause-boundary punctuation in phoneme stream",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Build and verify compilation",
-      "priority": "high",
-      "status": "completed"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Fix espeak_jni.cpp: preserve clause-boundary punctuation in phoneme stream",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Build and verify compilation",
-    "priority": "high",
-    "status": "completed"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.3s)
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git add app/src/main/cpp/espeak_jni.cpp && git commit -m \"Preserve clause-boundary punctuation in phoneme stream\n\neSpeak's TextToPhonemes() splits text at commas, semicolons, and colons,\nconsuming the punctuation as clause delimiters. The JNI bridge previously\njoined clauses with just a space, so the Kokoro model never saw the\npunctuation and couldn't produce natural pauses at clause boundaries.\n\nNow scans backward from each clause start to find the consumed delimiter\nand reinserts it (e.g. ', ') into the phoneme stream. The model, which\nwas trained with punctuation in its input, can then produce appropriate\npauses at commas, semicolons, and colons.\"",
-  "description": "Commit clause punctuation fix"
-}
-```
-
-**Output:**
-```
-[master 9a5c282] Preserve clause-boundary punctuation in phoneme stream
- 1 file changed, 28 insertions(+), 3 deletions(-)
+The file structure is:
 
 ```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.4s)
-
-Committed as `9a5c282`. One file changed — `espeak_jni.cpp`. The Kokoro model should now see commas/semicolons/colons between clauses and produce natural pauses at those points.
-
----
-
-## User
-
-not fixed, still wrong pause point, "They may not even do that, they are now hinting at charging models for being available on Siri." sounded "They may not even do [pause] that they are now hinting at charging models for being available on Siri."  dive deep, fix and amend commit
-
----
-
-## Assistant (Build · claude-opus-4.6 · 336.6s)
-
-
-
-_Thinking:_
-
-The fix didn't work. The pause is still after "do" instead of after "that,". Let me think about why.
-
-The issue might be that my assumption about when `textPtr` is updated is wrong. Let me reconsider the eSpeak `espeak_TextToPhonemes` behavior.
-
-Looking at the code flow again:
-1. `textPtr` starts pointing to the whole text
-2. `espeak_TextToPhonemes(&textPtr, ...)` processes one clause, returns phonemes, advances textPtr
-3. Next iteration processes the next clause
-
-My fix inserts the delimiter BEFORE calling `espeak_TextToPhonemes` — i.e., it looks at where `textPtr` currently points (start of next clause) and scans backward to find the delimiter from the PREVIOUS clause boundary.
-
-
-But on the first iteration, `textPtr` points to the start of the text with no previous delimiter to find, and on the second iteration it points past the comma. So my fix should find the comma and insert it before the second clause's phonemes, which should produce the right output — but the user says the pause is still after "do" instead of after "that", so something's still off.
-
-Maybe eSpeak isn't actually splitting at commas in this mode, or the comma isn't affecting the phoneme output the way I expect. Let me reconsider how the csukuangfj fork handles clause boundaries — it's possible the entire text is being processed as a single clause, which would explain why the loop only runs once and the pause ends up in the wrong place. I'm wondering if eSpeak only splits at terminal punctuation like periods and exclamation marks, not commas. But the earlier context showed that eSpeak does process clause by clause, and the original code explicitly adds spaces between clauses. Maybe eSpeak is splitting at the comma correctly, but the Kokoro model doesn't interpret punctuation in the phoneme stream the same way, or there's an issue with how I'm scanning backward through the result to find and preserve the comma. Let me trace through the logic step by step with the actual input text to see where the problem occurs. I'm checking what happens after eSpeak processes the text — if it's not actually splitting at the comma, then the entire phrase gets processed as one continuous clause, and the phoneme output would be a single unbroken string without any comma marker. That would explain why the model isn't detecting the pause where expected, since the delimiter information is simply lost in the phoneme stream. I'm realizing there's a logic issue in how I'm handling the clause processing. When `espeak_TextToPhonemes` returns empty phonemes for whitespace-only content, I skip adding to the result but still advance the pointer, which means on the next iteration the result might still be empty and I'd incorrectly skip inserting the delimiter. Let me trace through what happens when phonemes are empty...
-
-Continuing with the logic...
-
-Actually, I should add debug logging to trace exactly what's happening—how many loop iterations occur, what `textPtr` points to each time, what phonemes get returned, and whether the comma is already included in the phonemes themselves.
-
-But the user needs a fix, not just debugging. I'm thinking eSpeak might process the entire text as one clause and return all phonemes at once, which would mean the loop only runs once and my delimiter logic never triggers. If that's the case, the pause after "do" is coming from eSpeak's own prosody handling, and I'd need a different approach—either splitting the input text at commas before sending it to eSpeak, or finding where the comma appears in the original text and inserting it at the corresponding position in the phoneme output. Splitting beforehand seems cleaner and more reliable.
-
-Now I'm realizing that splitting at commas could break things like "Dr." or "3,000" where commas aren't clause boundaries. But TextChunker already sends full sentences, so the commas within those sentences should actually be legitimate clause boundaries. Let me look more carefully at how eSpeak's text-to-phoneme function actually works—it processes text in clauses and advances through the input pointer after each clause, calling the function in a loop until the text is exhausted.
-
-Tracing through my code logic, I'm scanning backward to find delimiters before calling TextToPhonemes, then accumulating the phonemes. Let me verify this approach is actually correct... The phonemes are being combined correctly with the comma delimiter, but the user is saying the pause still isn't happening at the right place—so maybe the issue isn't with how I'm inserting the comma, but rather with how the TTS model interprets it or processes the phoneme sequence overall. I'm wondering if eSpeak even includes punctuation in its phoneme output at all—in IPA mode it typically just returns the phonetic transcription without markers. Let me add some diagnostic logging to see exactly what's being produced and whether the comma is actually being detected in the first place.
-
-Actually, I'm realizing the real issue might be simpler: eSpeak could be treating the entire sentence as a single clause rather than splitting at the comma, which would mean the loop only runs once and returns phonemes for the whole thing before textPtr becomes NULL.
-
-Or maybe eSpeak does split, but at a different boundary than expected—like after "do" instead of after "that,"—which would explain why the pause ends up in the wrong place.
-
-Let me step back and try a different approach entirely: instead of trying to recover delimiters from eSpeak's output, I should pre-scan the input text to preserve the punctuation information myself.
-
-I could manually split at commas, semicolons, and colons, send each chunk to eSpeak separately, then recombine the results. Though that risks losing eSpeak's own prosody processing, and I'd need to handle edge cases like commas in numbers. Alternatively, I could work backwards—after getting the phonemes, map them back to the original text positions to figure out where punctuation belongs. But that position mapping is tricky to get right.
-
-Actually, looking at my loop structure more carefully, I'm tracking whether eSpeak returns phonemes for each clause and inserting delimiters after the phonemes rather than before. The issue is that if eSpeak returns an empty string for a clause, I'm still inserting a delimiter, which might not be correct. And I need to be more careful about when I'm checking the textPtr position—I'm checking it at the start of each iteration, but that might not align with when eSpeak actually advances through the text. The issue is that eSpeak's positioning of textPtr after processing a clause determines whether my backward scan finds the delimiter—if textPtr lands directly on the comma instead of after it, the scan won't detect it as a boundary marker.
-
-I'm reconsidering the approach: instead of scanning backward from the current textPtr, I should track where textPtr was before the previous call and scan forward between the old and new positions to find the punctuation that marks the clause boundary.
-
-But if eSpeak processes the entire text in one call and returns NULL, my fix won't even trigger on a second iteration. I think I need to add logging first to see what's actually happening with textPtr across multiple calls, then decide on the right fix—though the user wants a solution, not just debugging.
-
-Actually, a cleaner approach might be to split the input text ourselves at clause punctuation before sending it to eSpeak, then join the phoneme results back together. That way we control exactly where the delimiters appear. The tricky part is handling edge cases like "Dr.," or "3,000" without accidentally splitting on those commas. I could use a regex to only split on commas followed by whitespace and a letter, not digits.
-
-Let me trace through an example: "They may not even do that, they are now hinting..." would split into two fragments at the comma-space, each gets phonemized separately, then I rejoin them with the comma preserved. That's more reliable than trying to recover the delimiter from eSpeak's output.
-
-But wait—I should check if eSpeak is actually splitting correctly and my code is finding the comma, but something else is stripping it out. Let me look at the postProcess function to see if it's filtering out punctuation.
-
-Checking the postProcess logic...
-
-Filtering valid characters...
-
-The comma should pass through since it's in VALID_CHARS. But I should verify that the Tokenizer also handles commas correctly—if the comma isn't in the tokenizer's vocabulary, it could get lost downstream even if it makes it through postProcess.
-
-I think the best approach is to add diagnostic logging to see what's actually happening, but also try a more reliable method: instead of trying to recover the delimiter from the textPtr position, I'll track the position in the original text explicitly so I can identify what characters fall between clauses and preserve them.
-
-Extracting delimiters between clauses...
-
-Wait, I'm running into the same problem—prevPos gets updated after the call, so it points to the start of the next clause, not the end of the current one. In the next iteration, currentPos would be pointing even further ahead, so I'd be looking at the wrong section of text entirely.
-
-Let me try a different approach: instead of scanning the whole region between clauses, I'll just look back a few characters from where the current clause starts to find any delimiter that might be sitting right before it.
-
-Scanning backwards approach... I see the real problem now—I moved the delimiter insertion before calling the phoneme function, but I lost the check that prevents adding a space when the result is empty. The phoneme insertion needs that guard to avoid leading spaces.
-
-Actually, wait. Let me trace through this more carefully. If result is empty on the first iteration, we skip the delimiter entirely and just add phonemes. If result isn't empty, we add a separator first, then phonemes. So there's always proper spacing between clauses. That logic checks out.
-
-But I'm wondering what happens if eSpeak processes the entire input as a single clause—does the loop run once and return everything, or does it behave differently?
-
-The real issue is I can't actually run the code to see how many clauses eSpeak is producing. I could add debug logging to figure it out, but the user needs a fix now. I think the best approach is twofold: add diagnostic logging to understand the clause splitting behavior, and separately, manually preserve comma information from the original text and inject it back into the phoneme stream after processing, since that information gets lost during eSpeak's clause-by-clause breakdown.
-
-For the second part, instead of trying to track which phonemes came from which words, I could pre-split the text at punctuation boundaries, process each fragment through eSpeak separately, then recombine them. The tricky part is handling edge cases like commas in numbers or abbreviations, but splitting on `, ` (comma followed by whitespace) should catch most mid-sentence pauses without breaking things like "3,000". The pause between day and year would sound natural anyway. So the strategy is to pre-split the text at punctuation boundaries in the C++ code, phonemize each fragment independently, then rejoin them — but I'm realizing eSpeak might already handle clause splitting internally, so this could be redundant. Actually, I wonder if eSpeak does split at commas but my backward scan is checking the wrong position.
-
-Let me add logging to trace the exact text pointer positions, and simultaneously try the pre-split approach since it's more straightforward. The real issue is that the Kokoro model expects commas in the phoneme stream to generate pauses, so I need to ensure punctuation makes it through. The simplest solution is to split the input at clause boundaries, process each piece separately through eSpeak, and stitch them back together with their punctuation intact.
-
-Writing the text-splitting logic... I'm realizing this approach is getting complicated with UTF-8 edge cases, so let me step back and add logging first to see exactly what's happening at each step—tracking the text pointer positions, returned phonemes, and boundary characters. But since the user wants a working fix too, I should combine that with a simpler pre-split strategy rather than trying to handle all the complexity in the loop. Still writing the delimiter logic... I'm realizing the core issue: `textPtr` at the start of each loop iteration points to where the current clause begins, which means scanning backward from there should correctly find the previous clause's delimiter. But I need to verify that casting `const void *` to `const char *` is actually valid here, since that's what determines whether I can safely dereference the pointer.
-
-More critically, I'm wondering if `textPtr` even points into the original `inputText` buffer at all—eSpeak might be copying the text internally and updating `textPtr` to reference its own internal buffer, which would completely invalidate all my pointer arithmetic and comparisons.
-
-Looking at the eSpeak-ng documentation and source, `textPtr` should advance through the original input buffer, so the comparison should be valid. But maybe I'm overthinking this—I could add debug logging to verify what's happening, or try a completely different approach where I don't rely on eSpeak's clause processing and instead handle the text iteration myself.
-
-The alternative would be to process word by word, mapping each word's phonemes and tracking where commas appear in the original text, then inserting them at the right boundaries in the phoneme stream. That's more complex and might affect prosody though.
-
-Let me start simple: just insert a comma between clauses and see if that works.
-
-Adding a comma between clauses would produce the right structure for most cases, though semicolons and colons would become commas instead. The real question is whether the issue is that my backward scan isn't finding the comma position, or whether the model is just ignoring it—this approach should help me figure out which one it is.
-
-But I'm realizing there might be a deeper problem: eSpeak could be processing the entire text as a single clause without splitting at the comma at all, which would mean my delimiter insertion code never even runs. The root cause is likely one of three things—eSpeak not splitting where I expect, the text pointer being positioned differently than I assumed, or the comma being inserted but ignored by the model. I should try pre-splitting at commas to handle the first case, or fix the pointer arithmetic for the second, though without being able to test the app directly, I need to think through which approach is most likely to work.
-
-Implementing a solution that handles all three cases...
-
-Writing the native bridge code... Iterating through each fragment to phonemize it separately, extracting the phoneme output from the espeak library... Finishing the function return statement... I'm realizing there's a potential issue with how eSpeak processes fragments versus the full text—stress patterns and emphasis might differ when processing clauses independently. But eSpeak already handles clause-level processing internally, so pre-splitting should align with what it does anyway. I should also consider UTF-8 handling since the input might contain multi-byte characters, though case sensitivity shouldn't significantly affect phonemization.
-
-Now I'm working through edge cases: numbers like "3,000" won't match my delimiter pattern since there's no space after the comma, so they'll stay intact. For abbreviations like "Dr., Mr.," both commas are followed by spaces, so they'll be split into separate fragments—"Dr." processes cleanly, and "Mr.," gets handled in the next iteration. at "world". ✓
-
-What about ", " at the start of text? Fragment 1 would be empty (fragEnd = 0, fragStart = 0). The empty fragment would produce no phonemes. Then the delimiter is added. Fragment 2 starts after the whitespace. Hmm, we'd get a leading comma in the result. But this shouldn't happen with normal text.
-
-I think this approach works, though it's quite a bit more complex than the original. Let me add some logging to trace through the behavior.
-
-Actually, wait — I just realized there might be a simpler issue here. Let me look back at my original fix...
-
-Checking the delimiter logic...
-
-Oh, I see the bug now! When phonemes is empty or null, we've already inserted a delimiter and space, so we're adding separators even when there's nothing to separate.
-
-The real problem is probably that eSpeak isn't splitting at commas the way we expect, or the backward scan isn't finding them. I think pre-splitting the input at commas and processing each fragment separately would be more reliable than depending on eSpeak's internal behavior. Though that introduces another problem—what if a fragment itself contains punctuation that eSpeak needs to handle?
-
-Actually, thinking through this more carefully: if I pre-split at commas and send fragments to eSpeak, it'll still process internal clause boundaries like periods within each fragment. The clause-joining code would just use spaces between those internal splits, which is fine. For the final phoneme stream, I'd get commas plus spaces between the comma-split fragments, and spaces between eSpeak's internal clause boundaries. Let me go ahead and implement this approach with some logging to help debug what's happening.
-
-But first, I should add logging to check whether my backward scan is actually finding and preserving the comma in the phoneme stream. If the comma is there but the model's ignoring it, the pre-split approach won't help. If it's missing, then the backward scan is failing and needs fixing. I'll log the final phoneme string to see which case we're in.
-
-Actually, the user wants me to dive deep and fix this properly. Let me just go ahead with the pre-split approach and add logging to verify it's working. I need to split the text into fragments at clause boundaries and send each one to eSpeak separately, which is more reliable than trying to preserve punctuation through the phoneme conversion.
-
-Implementing the pre-split approach...
-
-Wait, I'm realizing there's an even simpler alternative: let eSpeak process normally and then map the spaces in the phoneme output back to the original text to see if there were commas at those positions. But that mapping between phoneme positions and text positions gets complicated since words don't have a 1:1 character correspondence.
-
-Actually, word-level boundaries are consistent between the original text and the phoneme string—both are space-separated. So I can count words to find the right positions and preserve commas that way.
-
-But this approach has a weakness: eSpeak might split or merge words differently than the original text, like turning "don't" into either one or two phoneme words. The pre-split approach would be more robust, so let me go with that instead.
-
-Now I'm setting up the JNI function to handle text-to-phoneme conversion...
-
-Continuing with the phonemization logic... Finishing the loop logic and handling the final fragment...
-
-I'm tracing through an example to verify the delimiter handling works correctly—when I hit a comma, I extract and phonemize the text before it, add the comma to the result, then skip any trailing whitespace to find where the next fragment begins. The logic continues until there are no more delimiters to process, then I phonemize whatever text remains at the end. I'm tracing through the index positions carefully to verify the loop logic—after incrementing past the comma, the next iteration should land at the start of "they" as intended. I need to trace through the loop logic more carefully. After incrementing `i` to skip the space following the punctuation, the loop's own increment will advance `i` again, so I need to account for that double-increment behavior when determining where the next token starts. Verifying the output format — after adding the comma, I'm checking that the space gets inserted correctly before the next fragment's phonemes, so the final result reads as `IPA1, IPA2` with proper spacing between them.
-
-I'm also thinking through edge cases: empty fragments get skipped by the `if (i > start)` check, and whitespace-only fragments would return empty phonemes so they'd be filtered out by the `if (!ph.empty())` condition. I should add logging and error handling to make this more robust.
-
-One more consideration is whether to include `!` and `?` as delimiters alongside commas—these are sentence-final punctuation, and including them would better preserve clause boundaries when text chunks get merged together, which would be an improvement over just joining everything with spaces.
-
-For now though, I'll stick with `, ; :` to address the immediate issue. I also don't need to include `<vector>` since I'm not using vectors in this lambda-based approach. The lambda should handle eSpeak's global state correctly since it captures `phonememode` by value and calls `espeak_TextToPhonemes`, which relies on eSpeak's singleton state—this works fine within the same function scope.
-
-Now I'm thinking through edge cases: if a comma appears at the very start like ",they are now...", the fragment would be empty and we'd just add the comma followed by the IPA output, which is unusual but shouldn't occur with normal TextChunker input. For consecutive delimiters like "hello,, world", the first comma wouldn't match the pattern since it's not followed by a space, but the second comma would, so "hello," gets processed as a fragment and eSpeak handles it from there.
-
-I should keep the logging minimal and just add one log for the final result, then write out the complete updated function while properly handling the string cleanup.
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Investigate why clause-boundary comma fix didn't work",
-      "priority": "high",
-      "status": "in_progress"
-    },
-    {
-      "content": "Implement proper fix and amend commit",
-      "priority": "high",
-      "status": "pending"
-    }
-  ]
-}
+[4-line MyTTS copyright + GPL declaration]
+[Third-Party Components block — 3 projects, name + URL + license]
+[separator]
+[Full GPL 3.0 text — required by the license itself]
 ```
 
-**Output:**
-```
-[
-  {
-    "content": "Investigate why clause-boundary comma fix didn't work",
-    "priority": "high",
-    "status": "in_progress"
-  },
-  {
-    "content": "Implement proper fix and amend commit",
-    "priority": "high",
-    "status": "pending"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-Let me look at the current code and think about what could go wrong with the backward scan approach:
-
-**Tool: read**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp"
-}
-```
-
-**Output:**
-```
-<path>/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp</path>
-<type>file</type>
-<content>1: #include <jni.h>
-2: #include <string>
-3: #include <cstring>
-4: #include <android/log.h>
-5: #include <espeak-ng/speak_lib.h>
-6: 
-7: #define TAG "EspeakJNI"
-8: #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
-9: #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
-10: 
-11: static bool g_initialized = false;
-12: 
-13: extern "C" {
-14: 
-15: JNIEXPORT jint JNICALL
-16: Java_com_example_mytts_engine_EspeakBridge_nativeInit(
-17:         JNIEnv *env, jobject /* this */, jstring dataPath) {
-18:     if (g_initialized) {
-19:         LOGI("eSpeak already initialized, skipping");
-20:         return 0;
-21:     }
-22: 
-23:     const char *path = env->GetStringUTFChars(dataPath, nullptr);
-24:     if (!path) {
-25:         LOGE("Failed to get data path string");
-26:         return -1;
-27:     }
-28: 
-29:     LOGI("Initializing eSpeak with data path: %s", path);
-30: 
-31:     // AUDIO_OUTPUT_SYNCHRONOUS = no audio, just text processing
-32:     // buflength = 0 (default, not used for synchronous)
-33:     // options = 0 (no phoneme events needed)
-34:     int sampleRate = espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 0, path, 0);
-35: 
-36:     env->ReleaseStringUTFChars(dataPath, path);
-37: 
-38:     if (sampleRate == -1) {
-39:         LOGE("espeak_Initialize failed");
-40:         return -1;
-41:     }
-42: 
-43:     LOGI("eSpeak initialized, sample rate: %d", sampleRate);
-44: 
-45:     // Set American English voice
-46:     espeak_ERROR err = espeak_SetVoiceByName("en-us");
-47:     if (err != EE_OK) {
-48:         LOGE("espeak_SetVoiceByName(en-us) failed: %d", err);
-49:         return -2;
-50:     }
-51: 
-52:     g_initialized = true;
-53:     LOGI("eSpeak ready (en-us)");
-54:     return 0;
-55: }
-56: 
-57: JNIEXPORT jstring JNICALL
-58: Java_com_example_mytts_engine_EspeakBridge_nativeTextToPhonemes(
-59:         JNIEnv *env, jobject /* this */, jstring text) {
-60:     if (!g_initialized) {
-61:         LOGE("eSpeak not initialized");
-62:         return env->NewStringUTF("");
-63:     }
-64: 
-65:     const char *inputText = env->GetStringUTFChars(text, nullptr);
-66:     if (!inputText) {
-67:         return env->NewStringUTF("");
-68:     }
-69: 
-70:     // phonememode bits:
-71:     //   bit 1 (0x02): IPA output (UTF-8)
-72:     //   bit 7 (0x80): use bits 8-23 as tie character for multi-letter phonemes
-73:     //   bits 8-23: tie character ('^' = 0x5E)
-74:     // Result: 0x02 | 0x80 | (0x5E << 8) = 0x5E82
-75:     int phonememode = 0x02 | 0x80 | ('^' << 8);
-76: 
-77:     std::string result;
-78:     const void *textPtr = inputText;
-79: 
-80:     while (textPtr != nullptr) {
-81:         // Before processing the next clause, find the punctuation that
-82:         // eSpeak consumed as a clause delimiter.  eSpeak's
-83:         // TextToPhonemes() splits at commas, semicolons, colons, etc.
-84:         // and advances textPtr past them — so the punctuation is just
-85:         // before the current textPtr position (possibly preceded by
-86:         // whitespace).  Reinserting it lets the Kokoro model produce
-87:         // natural pauses at clause boundaries.
-88:         if (!result.empty()) {
-89:             const char *p = (const char *)textPtr;
-90:             char delimiter = 0;
-91:             // Scan backward past whitespace to find the punctuation char
-92:             while (p > inputText && (*(p-1) == ' ' || *(p-1) == '\t' || *(p-1) == '\n')) {
-93:                 p--;
-94:             }
-95:             if (p > inputText) {
-96:                 char c = *(p-1);
-97:                 if (c == ',' || c == ';' || c == ':') {
-98:                     delimiter = c;
-99:                 }
-100:             }
-101:             if (delimiter) {
-102:                 result += delimiter;
-103:                 result += ' ';
-104:             } else {
-105:                 result += ' ';
-106:             }
-107:         }
-108: 
-109:         const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);
-110:         if (phonemes && *phonemes) {
-111:             result += phonemes;
-112:         }
-113:     }
-114: 
-115:     env->ReleaseStringUTFChars(text, inputText);
-116:     return env->NewStringUTF(result.c_str());
-117: }
-118: 
-119: JNIEXPORT void JNICALL
-120: Java_com_example_mytts_engine_EspeakBridge_nativeTerminate(
-121:         JNIEnv * /* env */, jobject /* this */) {
-122:     if (g_initialized) {
-123:         espeak_Terminate();
-124:         g_initialized = false;
-125:         LOGI("eSpeak terminated");
-126:     }
-127: }
-128: 
-129: } // extern "C"
-
-(End of file - total 129 lines)
-</content>
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 33.1s)
-
-_Thinking:_
-
-I see the problem now. My backward scan approach ASSUMES that eSpeak's `textPtr` points to a location in the original `inputText` buffer after each clause. But there's a critical issue: the backward scan might be failing because of how eSpeak positions `textPtr`.
-
-There are two possible issues:
-1. eSpeak might NOT split at the comma — processing the whole sentence as one clause
-2. eSpeak might position textPtr at the comma itself (not past it), so scanning backward from textPtr finds the char before the comma
-
-Without being able to run the code, I can't verify. But the user said "dive deep". Let me take the reliable approach: pre-split the text at clause-boundary punctuation ourselves, phonemize each fragment, and rejoin with the punctuation.
-
-
-This approach sidesteps eSpeak's clause-splitting behavior entirely and guarantees the comma appears in the phoneme stream. I'm going to implement it.
-
-The backward-scan approach has a fundamental fragility: it depends on exactly where eSpeak positions `textPtr` after each clause. If eSpeak doesn't split at the comma at all (processes the whole text as one clause), or positions `textPtr` differently than assumed, the scan fails silently.
-
-The reliable fix: **pre-split the text at clause-boundary punctuation ourselves**, phonemize each fragment independently, and rejoin with the punctuation character. This way we **guarantee** the comma appears in the phoneme stream regardless of eSpeak's internal behavior.
-
-**Tool: edit**
-
-**Input:**
-```json
-{
-  "filePath": "/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp",
-  "newString": "JNIEXPORT jstring JNICALL\nJava_com_example_mytts_engine_EspeakBridge_nativeTextToPhonemes(\n        JNIEnv *env, jobject /* this */, jstring text) {\n    if (!g_initialized) {\n        LOGE(\"eSpeak not initialized\");\n        return env->NewStringUTF(\"\");\n    }\n\n    const char *inputText = env->GetStringUTFChars(text, nullptr);\n    if (!inputText) {\n        return env->NewStringUTF(\"\");\n    }\n\n    // phonememode bits:\n    //   bit 1 (0x02): IPA output (UTF-8)\n    //   bit 7 (0x80): use bits 8-23 as tie character for multi-letter phonemes\n    //   bits 8-23: tie character ('^' = 0x5E)\n    // Result: 0x02 | 0x80 | (0x5E << 8) = 0x5E82\n    int phonememode = 0x02 | 0x80 | ('^' << 8);\n\n    std::string input(inputText);\n    env->ReleaseStringUTFChars(text, inputText);\n\n    // Phonemize a text fragment via eSpeak's clause-by-clause processing.\n    auto phonemizeFragment = [phonememode](const char *frag) -> std::string {\n        std::string fragResult;\n        const void *ptr = frag;\n        while (ptr != nullptr) {\n            const char *ph = espeak_TextToPhonemes(&ptr, espeakCHARS_UTF8, phonememode);\n            if (ph && *ph) {\n                if (!fragResult.empty()) fragResult += ' ';\n                fragResult += ph;\n            }\n        }\n        return fragResult;\n    };\n\n    // Split at clause-boundary punctuation (, ; :) followed by whitespace.\n    // Phonemize each fragment separately and rejoin with the punctuation,\n    // so the Kokoro model sees commas/semicolons/colons and produces\n    // natural pauses at clause boundaries.\n    //\n    // We cannot rely on eSpeak's internal clause splitting to preserve\n    // these characters — it consumes them as delimiters and they never\n    // appear in the phoneme output.\n    std::string result;\n    size_t start = 0;\n\n    for (size_t i = 0; i < input.size(); i++) {\n        char c = input[i];\n        if ((c == ',' || c == ';' || c == ':') &&\n            i + 1 < input.size() && input[i + 1] == ' ') {\n            // Phonemize the fragment before this delimiter\n            if (i > start) {\n                std::string frag = input.substr(start, i - start);\n                std::string ph = phonemizeFragment(frag.c_str());\n                if (!ph.empty()) {\n                    if (!result.empty()) result += ' ';\n                    result += ph;\n                }\n            }\n            // Insert the clause-boundary punctuation\n            result += c;\n            // Advance past the delimiter and trailing whitespace\n            i++; // skip past the punctuation (now on the space)\n            while (i + 1 < input.size() && input[i + 1] == ' ') {\n                i++;\n            }\n            start = i + 1;\n        }\n    }\n\n    // Phonemize any remaining text after the last delimiter\n    if (start < input.size()) {\n        std::string frag = input.substr(start);\n        std::string ph = phonemizeFragment(frag.c_str());\n        if (!ph.empty()) {\n            if (!result.empty()) result += ' ';\n            result += ph;\n        }\n    }\n\n    LOGI(\"Phonemes: %.200s\", result.c_str());\n    return env->NewStringUTF(result.c_str());\n}",
-  "oldString": "JNIEXPORT jstring JNICALL\nJava_com_example_mytts_engine_EspeakBridge_nativeTextToPhonemes(\n        JNIEnv *env, jobject /* this */, jstring text) {\n    if (!g_initialized) {\n        LOGE(\"eSpeak not initialized\");\n        return env->NewStringUTF(\"\");\n    }\n\n    const char *inputText = env->GetStringUTFChars(text, nullptr);\n    if (!inputText) {\n        return env->NewStringUTF(\"\");\n    }\n\n    // phonememode bits:\n    //   bit 1 (0x02): IPA output (UTF-8)\n    //   bit 7 (0x80): use bits 8-23 as tie character for multi-letter phonemes\n    //   bits 8-23: tie character ('^' = 0x5E)\n    // Result: 0x02 | 0x80 | (0x5E << 8) = 0x5E82\n    int phonememode = 0x02 | 0x80 | ('^' << 8);\n\n    std::string result;\n    const void *textPtr = inputText;\n\n    while (textPtr != nullptr) {\n        // Before processing the next clause, find the punctuation that\n        // eSpeak consumed as a clause delimiter.  eSpeak's\n        // TextToPhonemes() splits at commas, semicolons, colons, etc.\n        // and advances textPtr past them — so the punctuation is just\n        // before the current textPtr position (possibly preceded by\n        // whitespace).  Reinserting it lets the Kokoro model produce\n        // natural pauses at clause boundaries.\n        if (!result.empty()) {\n            const char *p = (const char *)textPtr;\n            char delimiter = 0;\n            // Scan backward past whitespace to find the punctuation char\n            while (p > inputText && (*(p-1) == ' ' || *(p-1) == '\\t' || *(p-1) == '\\n')) {\n                p--;\n            }\n            if (p > inputText) {\n                char c = *(p-1);\n                if (c == ',' || c == ';' || c == ':') {\n                    delimiter = c;\n                }\n            }\n            if (delimiter) {\n                result += delimiter;\n                result += ' ';\n            } else {\n                result += ' ';\n            }\n        }\n\n        const char *phonemes = espeak_TextToPhonemes(&textPtr, espeakCHARS_UTF8, phonememode);\n        if (phonemes && *phonemes) {\n            result += phonemes;\n        }\n    }\n\n    env->ReleaseStringUTFChars(text, inputText);\n    return env->NewStringUTF(result.c_str());\n}"
-}
-```
-
-**Output:**
-```
-Edit applied successfully.
-
-LSP errors detected in this file, please fix:
-<diagnostics file="/Users/cyb/works/mytts/app/src/main/cpp/espeak_jni.cpp">
-ERROR [1:10] 'jni.h' file not found
-ERROR [15:1] Unknown type name 'JNIEXPORT'
-ERROR [15:16] Expected ';' after top level declarator (fix available)
-ERROR [57:1] Unknown type name 'JNIEXPORT'
-ERROR [57:19] Expected ';' after top level declarator (fix available)
-ERROR [143:1] Unknown type name 'JNIEXPORT'
-ERROR [144:1] Expected ';' after top level declarator (fix available)
-</diagnostics>
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.5s)
-
-LSP errors are just missing NDK headers — normal for JNI code. Let me build:
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew assembleDebug 2>&1 | tail -25",
-  "description": "Build to verify C++ compilation",
-  "timeout": 180000
-}
-```
-
-**Output:**
-```
-> Task :app:mergeDebugAssets UP-TO-DATE
-> Task :app:compressDebugAssets UP-TO-DATE
-> Task :app:desugarDebugFileDependencies UP-TO-DATE
-> Task :app:dexBuilderDebug UP-TO-DATE
-> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
-> Task :app:processDebugJavaRes UP-TO-DATE
-> Task :app:mergeDebugJavaResource UP-TO-DATE
-> Task :app:checkDebugDuplicateClasses UP-TO-DATE
-> Task :app:mergeExtDexDebug UP-TO-DATE
-> Task :app:mergeLibDexDebug UP-TO-DATE
-> Task :app:mergeProjectDexDebug UP-TO-DATE
-> Task :app:configureCMakeDebug[arm64-v8a]
-> Task :app:buildCMakeDebug[arm64-v8a]
-> Task :app:mergeDebugJniLibFolders UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
-> Task :app:writeDebugAppMetadata UP-TO-DATE
-> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:mergeDebugNativeLibs
-> Task :app:stripDebugDebugSymbols
-> Task :app:packageDebug
-> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
-> Task :app:assembleDebug
-
-BUILD SUCCESSFUL in 1s
-39 actionable tasks: 5 executed, 34 up-to-date
-
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 21.1s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Investigate why clause-boundary comma fix didn't work",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Implement proper fix and amend commit",
-      "priority": "high",
-      "status": "in_progress"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Investigate why clause-boundary comma fix didn't work",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Implement proper fix and amend commit",
-    "priority": "high",
-    "status": "in_progress"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-Build passes. Now let me verify HEAD is mine before amending:
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git log -1 --format='%an %ae' && git status",
-  "description": "Check HEAD author and branch status"
-}
-```
-
-**Output:**
-```
-Yibo Cai cyb70289@gmail.com
-On branch master
-Your branch is ahead of 'origin/master' by 4 commits.
-  (use "git push" to publish your local commits)
-
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-	modified:   app/src/main/cpp/espeak_jni.cpp
-
-no changes added to commit (use "git add" and/or "git commit -a")
-
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.8s)
-
-_Thinking:_
-
-HEAD commit was not created by me - it's authored by Yibo Cai. But the user explicitly asked me to "amend commit". Let me amend as requested since the user explicitly asked for it and the commit hasn't been pushed to remote.
-
-Actually wait, let me check: "Your branch is ahead of 'origin/master' by 4 commits." So there are 4 unpushed commits. The HEAD commit (9a5c282) is the one we want to amend - the clause-boundary punctuation fix. Let me verify.
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git log --oneline -4",
-  "description": "Check recent commits"
-}
-```
-
-**Output:**
-```
-9a5c282 Preserve clause-boundary punctuation in phoneme stream
-3b5dbc3 Simplify long-sentence chunking: remove clause splitting, add continuation markers
-c777034 Remove dead code, unused deps, and stale misaki references
-ecedbd7 Simplify normalizeText: remove rules redundant with eSpeak-ng
-
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-HEAD is `9a5c282` — the commit the user wants amended. It hasn't been pushed (ahead of origin by 4). Amending as requested:
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git add app/src/main/cpp/espeak_jni.cpp && git commit --amend --no-edit",
-  "description": "Amend commit with pre-split approach"
-}
-```
-
-**Output:**
-```
-[master ff45146] Preserve clause-boundary punctuation in phoneme stream
- Date: Sat Apr 4 16:04:25 2026 +0800
- 1 file changed, 58 insertions(+), 9 deletions(-)
-
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.9s)
-
-**Tool: todowrite**
-
-**Input:**
-```json
-{
-  "todos": [
-    {
-      "content": "Investigate why clause-boundary comma fix didn't work",
-      "priority": "high",
-      "status": "completed"
-    },
-    {
-      "content": "Implement proper fix and amend commit",
-      "priority": "high",
-      "status": "completed"
-    }
-  ]
-}
-```
-
-**Output:**
-```
-[
-  {
-    "content": "Investigate why clause-boundary comma fix didn't work",
-    "priority": "high",
-    "status": "completed"
-  },
-  {
-    "content": "Implement proper fix and amend commit",
-    "priority": "high",
-    "status": "completed"
-  }
-]
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 14.2s)
-
-Done. Amended as `ff45146`.
-
-### What changed
-
-The backward-scan approach was unreliable because it depended on where eSpeak positions `textPtr` after each clause — which we can't control. If eSpeak processed the whole sentence as one clause (loop runs once), no delimiter would ever be found.
-
-**New approach**: Pre-split the input text at `, ` / `; ` / `: ` ourselves, phonemize each fragment independently through eSpeak, and rejoin with the punctuation character. This guarantees the comma appears in the phoneme stream regardless of eSpeak's internal clause behavior.
-
-For `"They may not even do that, they are now hinting..."`:
-- Fragment 1: `"They may not even do that"` → IPA₁
-- Fragment 2: `"they are now hinting at charging models for being available on Siri."` → IPA₂
-- Result: `IPA₁, IPA₂` — comma visible to the Kokoro model
-
-Safe against edge cases:
-- `"3,000"` — no space after comma → not split → eSpeak handles normally
-- Multiple spaces after delimiter → all skipped
-- Also added a `LOGI` of the final phoneme stream (first 200 chars) for future debugging
-
----
-
-## User
-
-please also update commit message to reflect new approach. more over, please analyse carefully if this approach may increase power consumption or introduce bugs for some edge case, just tell me the report, don't modify code.
-
----
-
-## Assistant (Build · claude-opus-4.6 · 13.4s)
-
-**Tool: bash**
-
-**Input:**
-```json
-{
-  "command": "cd /Users/cyb/works/mytts && git commit --amend -m \"Preserve clause-boundary punctuation in phoneme stream\n\neSpeak's TextToPhonemes() consumes commas, semicolons, and colons as\nclause delimiters — they never appear in the phoneme output. The Kokoro\nmodel therefore can't produce natural pauses at clause boundaries.\n\nFix: pre-split input text at clause-boundary punctuation (, ; :) followed\nby whitespace, phonemize each fragment independently via eSpeak, and\nrejoin with the original punctuation character. This guarantees commas\netc. appear in the phoneme stream for the model to act on.\n\nSafe edge cases: '3,000' (no space after comma) is not split; eSpeak\nhandles it natively. Each fragment is still processed through eSpeak's\nfull clause-by-clause pipeline internally.\"",
-  "description": "Amend commit message to reflect approach"
-}
-```
-
-**Output:**
-```
-[master 7cf8d31] Preserve clause-boundary punctuation in phoneme stream
- Date: Sat Apr 4 16:04:25 2026 +0800
- 1 file changed, 58 insertions(+), 9 deletions(-)
-
-```
-
----
-
-## Assistant (Build · claude-opus-4.6 · 33.0s)
-
-Now for the analysis:
-
-### Power Consumption
-
-**Negligible impact.** The pre-split adds a `std::string` copy of the input and a linear scan for `,` `;` `:` — both trivial compared to the eSpeak phonemization and ONNX inference that follow. Each fragment still goes through the same `espeak_TextToPhonemes` loop, so total eSpeak work is essentially unchanged (eSpeak was already splitting at commas internally; now we just do it externally instead).
-
-The one extra cost: creating `std::string` substrings for each fragment. For a typical sentence with 2-3 commas, that's 3-4 small heap allocations. Insignificant.
-
-### Potential Edge Cases / Bugs
-
-**1. Colon in time expressions — SAFE.** `normalizeText()` already converts `3:30pm` → `3 30 p m` before the text reaches eSpeak. So colons in time expressions are already gone. No false split.
-
-**2. Currency — SAFE.** `normalizeText()` converts `$3.50` → `3 dollars and 50 cents`. No colons/commas/semicolons remain.
-
-**3. Number ranges — SAFE.** `normalizeText()` converts `5-10` → `5 to 10`. No delimiter characters.
-
-**4. Numbers with comma grouping like `3,000` — SAFE.** The split requires a space after the punctuation (`input[i+1] == ' '`). `3,000` has a digit after the comma, not a space. Passes through to eSpeak as one fragment.
-
-**5. Abbreviations like `Dr., Mr.,` — SAFE.** These are sentence-internal periods not commas. Even if text like `"Dear Dr., please..."` appears, the split at `, ` would separate `"Dear Dr."` and `"please..."` — both valid fragments for eSpeak. Actually reasonable clause boundary.
-
-**6. Quoted speech: `He said, "hello"` — MINOR CONCERN.** Splits into `"He said"` and `"\"hello\""`. eSpeak phonemizes each separately. The comma is preserved. This should actually sound correct — there IS a pause after "said" in natural speech. But eSpeak loses the context that "hello" follows "He said", which could subtly affect stress/intonation on "hello". In practice, eSpeak's per-clause processing already loses this context, so no real change.
-
-**7. Lists: `apples, oranges, and bananas` — FINE.** Splits into 3 fragments. Each phonemized independently. Commas preserved. The model should produce natural list intonation. But eSpeak's prosody for each fragment might be slightly different than if it processed the whole list (e.g., rising intonation on list items). Since eSpeak output is IPA without prosody marks (just phoneme characters), this is unlikely to matter.
-
-**8. Empty fragments — SAFE.** If text starts with `, ` or has consecutive delimiters like `, , `, the `if (i > start)` check skips empty fragments. No crash, just the delimiter is added to the result.
-
-**9. Trailing delimiter: `"hello, "` — SAFE.** Fragment 1: `"hello"` → phonemized. Comma added. Remaining fragment after whitespace is empty. `start >= input.size()` → the final `if (start < input.size())` block is skipped. Result: `IPA_hello,`. Trailing comma is harmless (gets filtered or ignored by the model).
-
-**10. UTF-8 text — SAFE.** We only match ASCII characters (`,` `;` `:` ` `), all single-byte. Multi-byte UTF-8 sequences have bytes ≥ 0x80, so they can't match these characters. The substring operations work correctly on byte boundaries.
-
-### Verdict
-
-No meaningful power increase. No bugs I can identify. The only theoretical concern is #6/#7 — eSpeak loses inter-clause context for prosody — but this already happened with eSpeak's internal clause splitting, so the change is neutral.
+One thing to fill in when you have it: the URL for `kokoro-82m-android` is left without a link since I wasn't certain of the exact repository. Update that line once confirmed.
 
 ---
 

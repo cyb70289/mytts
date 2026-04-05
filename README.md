@@ -18,7 +18,14 @@ Tested on Snapdragon devices with ONNX Runtime 1.20.0 CPU inference. English onl
 - [Kokoro-82M-Android](https://github.com/puff-dayo/Kokoro-82M-Android) -- reference project for running Kokoro on Android
 - **Claude Opus 4.6 + OpenCode** -- all the coding and documentation
 
-# Demo
+## Usage
+
+- Select speaker (recommend `af_sarah`, prefix: <ins>a</ins>merican, <ins>b</ins>ritish, <ins>f</ins>emale, <ins>m</ins>ale)
+- Paste text
+- Play/Pause/Resume/Stop
+- Double tap text block to start playing there (only in stopped status)
+
+## Demo
 **Make sure to unmute the video**
 
 https://github.com/user-attachments/assets/dc986f61-66c8-434f-8302-cced1b48c647
