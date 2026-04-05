@@ -50,6 +50,9 @@ class KokoroEngine(private val context: Context) {
             setInterOpNumThreads(1)
             // Graph optimization
             setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
+            // Flush denormal floats to zero — prevents rare but catastrophic
+            // slowdowns when near-zero values hit the slow denormal path on ARM.
+            addConfigEntry("session.set_denormal_as_zero", "1")
         }
 
         val modelBytes = context.assets.open(MODEL_FILE).use { it.readBytes() }

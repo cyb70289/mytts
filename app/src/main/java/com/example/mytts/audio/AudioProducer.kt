@@ -54,8 +54,9 @@ class AudioProducer(
 
         running.set(true)
         producerThread = Thread({
-            // Run at default priority so Android doesn't throttle when screen is off
-            Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT)
+            // Foreground priority so Android's EAS scheduler favors performance
+            // cores and doesn't deprioritize us when the screen is off.
+            Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND)
             produceLoop()
         }, "AudioProducer").also { it.start() }
     }
