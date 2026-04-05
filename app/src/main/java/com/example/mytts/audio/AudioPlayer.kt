@@ -6,18 +6,20 @@ import android.media.AudioTrack
 import android.os.Process
 import android.util.Log
 import com.example.mytts.BuildConfig
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.PI
 import kotlin.math.sin
 
 /**
- * Audio playback consumer that reads PCM chunks from a queue and plays via AudioTrack.
- * Runs on its own thread with elevated priority.
+ * Audio playback consumer that reads PCM chunks from an [AudioBufferQueue]
+ * and plays them via AudioTrack. Runs on its own thread with elevated priority.
+ *
+ * The queue is owned externally (by PlaybackController) and shared with the
+ * AudioProducer. Capacity is measured in audio duration, not chunk count.
  */
 class AudioPlayer(
     private val sampleRate: Int = 24000,
+    private val queue: AudioBufferQueue,
     private val onChunkStarted: (chunkIndex: Int) -> Unit = {},
     private val onPlaybackFinished: () -> Unit = {}
 ) {
@@ -32,15 +34,8 @@ class AudioPlayer(
         private const val HINT_INTERVAL_MS = 1000L  // repeat once per second
     }
 
-    data class AudioChunk(
-        val pcm: FloatArray,
-        val chunkIndex: Int
-    )
-
-    private val queue = LinkedBlockingQueue<AudioChunk>(4)
     private val running = AtomicBoolean(false)
     private val paused = AtomicBoolean(false)
-    private val producerDone = AtomicBoolean(false)
     private var audioTrack: AudioTrack? = null
     private var hintTrack: AudioTrack? = null  // Separate static track for hint tones
     private var playerThread: Thread? = null
@@ -100,7 +95,6 @@ class AudioPlayer(
 
         running.set(true)
         paused.set(false)
-        producerDone.set(false)
         stoppedExplicitly.set(false)
 
         playerThread = Thread({
@@ -126,16 +120,12 @@ class AudioPlayer(
                     continue
                 }
 
-                val chunk = try {
-                    queue.poll(200, TimeUnit.MILLISECONDS)
-                } catch (_: InterruptedException) {
-                    break
-                }
+                val entry = queue.take(200)
 
-                if (chunk == null) {
-                    // Queue empty: if producer is done, we've played everything
-                    if (producerDone.get()) {
-                        if (BuildConfig.DEBUG) Log.d(TAG, "Queue drained and producer done — finishing playback")
+                if (entry == null) {
+                    // Queue empty: if producer is done and queue is drained, finish
+                    if (queue.isClosed) {
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Queue drained and closed — finishing playback")
                         naturalEnd = true
                         break
                     }
@@ -154,9 +144,9 @@ class AudioPlayer(
 
                 // Real chunk arrived — reset hint cooldown
                 lastHintTimeMs = 0L
-                onChunkStarted(chunk.chunkIndex)
+                onChunkStarted(entry.chunkIndex)
 
-                var pcm = chunk.pcm
+                var pcm = entry.pcm
                 if (pcm.isEmpty()) continue
 
                 // Apply crossfade with previous chunk's tail to avoid pops
@@ -251,30 +241,6 @@ class AudioPlayer(
         return tone
     }
 
-    /**
-     * Enqueue a PCM audio chunk for playback.
-     * Blocks if the queue is full — the JDK's LinkedBlockingQueue handles
-     * backpressure internally using lock/condition signaling, so the producer
-     * thread wakes instantly when a slot opens (no sleep-polling delay).
-     */
-    fun enqueue(pcm: FloatArray, chunkIndex: Int): Boolean {
-        if (!running.get()) return false
-        return try {
-            queue.put(AudioChunk(pcm, chunkIndex))
-            true
-        } catch (e: InterruptedException) {
-            false
-        }
-    }
-
-    /**
-     * Signal that the producer has finished submitting all chunks.
-     * The player will drain remaining queue items and then stop.
-     */
-    fun markProducerDone() {
-        producerDone.set(true)
-    }
-
     fun pause() {
         paused.set(true)
         audioTrack?.pause()
@@ -306,7 +272,6 @@ class AudioPlayer(
         }
 
         // Now clean up the player thread (may block briefly)
-        queue.clear()
         playerThread?.interrupt()
         playerThread?.join(500)
         playerThread = null

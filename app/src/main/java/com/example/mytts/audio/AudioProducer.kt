@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Producer thread that converts text chunks to audio using the Kokoro engine.
- * Runs inference on a background thread and feeds PCM to the AudioPlayer.
+ * Runs inference on a background thread and feeds PCM into an [AudioBufferQueue].
  *
  * On API 31+, uses PerformanceHintManager to tell the system about the
  * workload pattern so it can make better CPU frequency/core decisions,
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class AudioProducer(
     private val context: Context,
     private val engine: KokoroEngine,
-    private val player: AudioPlayer,
+    private val queue: AudioBufferQueue,
     private val onChunkReady: (chunkIndex: Int) -> Unit = {},
     private val onError: (chunkIndex: Int, error: Throwable) -> Unit = { _, _ -> }
 ) {
@@ -159,7 +159,7 @@ class AudioProducer(
                         // (skip gap if next chunk continues the same sentence)
                         val nextIsContinuation = (i + 1 < chunks.size) && chunks[i + 1].isContinuation
                         val trimmed = trimAndPadSilence(pcm, KokoroEngine.SAMPLE_RATE, addGap = !nextIsContinuation)
-                        player.enqueue(trimmed, i)
+                        if (!queue.put(trimmed, i)) break  // queue closed (stopped)
                         onChunkReady(i)
                     }
                 } catch (e: Exception) {
@@ -177,10 +177,10 @@ class AudioProducer(
 
         closeHintSession()
 
-        // Signal end: let player drain its queue naturally then stop
+        // Signal end: let player drain the queue naturally then stop
         if (running.get()) {
             if (BuildConfig.DEBUG) Log.d(TAG, "Producer finished all chunks")
-            player.markProducerDone()
+            queue.close()
         }
     }
 

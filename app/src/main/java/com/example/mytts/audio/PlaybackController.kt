@@ -53,6 +53,7 @@ class PlaybackController(
     private var engine: KokoroEngine? = null
     private var player: AudioPlayer? = null
     private var producer: AudioProducer? = null
+    private var audioQueue: AudioBufferQueue? = null
     private var textProcessor: TextProcessor? = null
     private var preparedChunks: List<PreparedChunk> = emptyList()
     private var processJob: Job? = null
@@ -113,9 +114,14 @@ class PlaybackController(
                 // Find the starting chunk based on cursor position
                 val startIndex = findChunkAtOffset(cursorPosition)
 
+                // Create shared audio buffer queue (duration-based capacity)
+                val bufferQueue = AudioBufferQueue(KokoroEngine.SAMPLE_RATE)
+                audioQueue = bufferQueue
+
                 // Create player
                 val audioPlayer = AudioPlayer(
                     sampleRate = KokoroEngine.SAMPLE_RATE,
+                    queue = bufferQueue,
                     onChunkStarted = { index ->
                         _currentChunkIndex.value = index
                     },
@@ -133,7 +139,7 @@ class PlaybackController(
                 val audioProducer = AudioProducer(
                     context = context,
                     engine = engine!!,
-                    player = audioPlayer,
+                    queue = bufferQueue,
                     onChunkReady = { index ->
                         // First chunk ready - start playback
                         if (index == startIndex && _state.value == State.LOADING) {
@@ -203,12 +209,16 @@ class PlaybackController(
 
         scope.launch(Dispatchers.Default) {
             try {
+                // Clear the queue first — unblocks the producer if it's waiting
+                // on queue.put(), and tells the player the stream is over.
+                audioQueue?.clear()
                 // Stop player FIRST for instant silence (pause+flush is immediate),
                 // then stop producer (may block briefly waiting for ONNX inference).
                 player?.stop()
                 player = null
                 producer?.stop()
                 producer = null
+                audioQueue = null
             } catch (e: Exception) {
                 Log.e(TAG, "Error during stop cleanup", e)
             }
@@ -380,10 +390,12 @@ class PlaybackController(
      */
     fun release() {
         // Synchronous cleanup for release — bypass the async stop
+        audioQueue?.clear()
         producer?.stop()
         producer = null
         player?.stop()
         player = null
+        audioQueue = null
         preparedChunks = emptyList()
         textProcessor = null
         _state.value = State.STOPPED
