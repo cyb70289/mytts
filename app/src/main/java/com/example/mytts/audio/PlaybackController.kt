@@ -131,6 +131,7 @@ class PlaybackController(
 
                 // Create producer
                 val audioProducer = AudioProducer(
+                    context = context,
                     engine = engine!!,
                     player = audioPlayer,
                     onChunkReady = { index ->

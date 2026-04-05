@@ -1,5 +1,8 @@
 package com.example.mytts.audio
 
+import android.content.Context
+import android.os.Build
+import android.os.PerformanceHintManager
 import android.os.Process
 import android.util.Log
 import com.example.mytts.BuildConfig
@@ -9,8 +12,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Producer thread that converts text chunks to audio using the Kokoro engine.
  * Runs inference on a background thread and feeds PCM to the AudioPlayer.
+ *
+ * On API 31+, uses PerformanceHintManager to tell the system about the
+ * workload pattern so it can make better CPU frequency/core decisions,
+ * especially important when the screen is off.
  */
 class AudioProducer(
+    private val context: Context,
     private val engine: KokoroEngine,
     private val player: AudioPlayer,
     private val onChunkReady: (chunkIndex: Int) -> Unit = {},
@@ -22,10 +30,15 @@ class AudioProducer(
         private const val SILENCE_THRESHOLD = 0.01f
         // Target silence gap between chunks in milliseconds
         private const val GAP_BETWEEN_CHUNKS_MS = 300
+        // Target inference duration hint for PerformanceHintManager (2 seconds).
+        // Set slightly below typical inference time to encourage the system to
+        // boost CPU frequency rather than coast on efficiency cores.
+        private const val TARGET_INFERENCE_NANOS = 2_000_000_000L
     }
 
     private val running = AtomicBoolean(false)
     private var producerThread: Thread? = null
+    private var hintSession: Any? = null // PerformanceHintManager.Session (API 31+)
 
     private var chunks: List<PreparedChunk> = emptyList()
     private var voiceName: String = ""
@@ -61,7 +74,54 @@ class AudioProducer(
         }, "AudioProducer").also { it.start() }
     }
 
+    /**
+     * Create a PerformanceHintManager session for the current thread.
+     * Must be called ON the producer thread so we get the correct TID.
+     * Returns the session object, or null if unavailable.
+     */
+    private fun createHintSession(): Any? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+        return try {
+            val phm = context.getSystemService(Context.PERFORMANCE_HINT_SERVICE)
+                    as? PerformanceHintManager ?: return null
+            val tids = intArrayOf(Process.myTid())
+            val session = phm.createHintSession(tids, TARGET_INFERENCE_NANOS)
+            if (BuildConfig.DEBUG) Log.d(TAG, "PerformanceHintManager session created for TID ${tids[0]}")
+            session
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to create PerformanceHintManager session", e)
+            null
+        }
+    }
+
+    /**
+     * Report actual inference duration to the hint session.
+     */
+    private fun reportWorkDuration(durationNanos: Long) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        try {
+            (hintSession as? PerformanceHintManager.Session)
+                ?.reportActualWorkDuration(durationNanos)
+        } catch (_: Exception) {
+            // Ignore — hint session may have been closed
+        }
+    }
+
+    /**
+     * Close the hint session.
+     */
+    private fun closeHintSession() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        try {
+            (hintSession as? PerformanceHintManager.Session)?.close()
+        } catch (_: Exception) {}
+        hintSession = null
+    }
+
     private fun produceLoop() {
+        // Create performance hint session on the producer thread
+        hintSession = createHintSession()
+
         // Dump all chunks for debugging — verify no stale chunks from previous text
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "=== Producer starting: ${chunks.size} chunks, startIndex=$startIndex, voice=$voiceName ===")
@@ -83,13 +143,16 @@ class AudioProducer(
 
                 try {
                     if (BuildConfig.DEBUG) Log.d(TAG, "Synthesizing chunk $i: '${text.take(50)}...'")
-                    val startTime = System.currentTimeMillis()
+                    val startTime = System.nanoTime()
 
                     val pcm = engine.speakNormalized(text, voiceName, speed)
 
-                    val elapsed = System.currentTimeMillis() - startTime
+                    val elapsedNanos = System.nanoTime() - startTime
+                    reportWorkDuration(elapsedNanos)
+
+                    val elapsedMs = elapsedNanos / 1_000_000
                     val audioDuration = pcm.size * 1000L / KokoroEngine.SAMPLE_RATE
-                    if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsed}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsed.toFloat() / audioDuration))
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Chunk $i: ${elapsedMs}ms inference, ${audioDuration}ms audio (RTF: %.2f)".format(elapsedMs.toFloat() / audioDuration))
 
                     if (pcm.isNotEmpty() && running.get()) {
                         // Trim trailing silence and add a controlled gap
@@ -108,8 +171,11 @@ class AudioProducer(
             }
         } catch (_: InterruptedException) {
             if (BuildConfig.DEBUG) Log.d(TAG, "Producer interrupted")
+            closeHintSession()
             return
         }
+
+        closeHintSession()
 
         // Signal end: let player drain its queue naturally then stop
         if (running.get()) {
@@ -125,6 +191,7 @@ class AudioProducer(
         // the next start() calls stop() anyway so orphaned threads self-exit.
         producerThread?.join(500)
         producerThread = null
+        closeHintSession()
     }
 
     /**
