@@ -24,7 +24,7 @@ class AudioBufferQueue(private val sampleRate: Int) {
          * protection. 15 s ≈ 1.44 MB — enough to survive a ~10 s inference
          * stall when the screen is off and the CPU is throttled.
          */
-        const val MAX_BUFFER_SECONDS = 15f
+        const val MAX_BUFFER_SECONDS = 10f
     }
 
     /** A single entry: PCM audio + the index of the originating PreparedChunk. */
@@ -51,13 +51,16 @@ class AudioBufferQueue(private val sampleRate: Int) {
         get() = lock.withLock { deque.size }
 
     /**
-     * Add a chunk. Blocks if the buffer is full (by duration).
+     * Add a chunk. Blocks only when the buffer has already reached [maxSamples].
+     * Accepts chunks that push total above the limit as long as the buffer was
+     * below the limit when called — this keeps the producer running and starting
+     * the next inference sooner, reducing underrun risk.
      *
      * @return true if the chunk was added, false if the queue was closed.
      */
     fun put(pcm: FloatArray, chunkIndex: Int): Boolean {
         lock.withLock {
-            while (totalSamples > 0 && totalSamples + pcm.size > maxSamples && !isClosed) {
+            while (totalSamples >= maxSamples && !isClosed) {
                 notFull.await()
             }
             if (isClosed) return false
