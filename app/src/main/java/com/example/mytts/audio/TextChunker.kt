@@ -96,6 +96,12 @@ object TextChunker {
 
     /**
      * Split by word boundaries when a sentence exceeds [MAX_WORDS_PER_CHUNK].
+     * Prefers splitting after clause-boundary punctuation (`, ; :`) so that
+     * each chunk ends at a natural prosodic break — the model generates
+     * appropriate trailing intonation and the gap between chunks sounds
+     * intentional rather than artificial. Falls back to a plain word-boundary
+     * split when no punctuation is found.
+     *
      * The first sub-chunk keeps [isContinuation]=false; subsequent ones are
      * marked true so the audio layer omits the inter-sentence silence gap.
      */
@@ -111,15 +117,27 @@ object TextChunker {
             pos += word.length
 
             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
-                val chunkText = currentWords.joinToString("")
+                // Scan backward for the last clause-boundary punctuation.
+                // Splitting there gives the model a natural prosodic endpoint.
+                var splitAt = currentWords.size  // default: take all
+                for (j in currentWords.size - 1 downTo 1) {
+                    val w = currentWords[j - 1].trimEnd()
+                    if (w.endsWith(',') || w.endsWith(';') || w.endsWith(':')) {
+                        splitAt = j
+                        break
+                    }
+                }
+
+                val emitWords = currentWords.subList(0, splitAt)
+                val chunkText = emitWords.joinToString("")
                 chunks.add(TextChunk(
                     chunkText,
                     baseOffset + chunkStart,
-                    baseOffset + pos,
+                    baseOffset + chunkStart + chunkText.length,
                     isContinuation = chunks.isNotEmpty()
                 ))
-                chunkStart = pos
-                currentWords = mutableListOf()
+                chunkStart += chunkText.length
+                currentWords = currentWords.subList(splitAt, currentWords.size).toMutableList()
             }
         }
 
@@ -128,7 +146,7 @@ object TextChunker {
             chunks.add(TextChunk(
                 chunkText,
                 baseOffset + chunkStart,
-                baseOffset + pos,
+                baseOffset + chunkStart + chunkText.length,
                 isContinuation = chunks.isNotEmpty()
             ))
         }
