@@ -26,8 +26,6 @@ object TextChunker {
     // Approximate: 1 word ≈ 5-8 phoneme tokens. 400 tokens ≈ 50-80 words.
     // Use conservative limit of ~50 words per chunk for safety.
     private const val MAX_WORDS_PER_CHUNK = 50
-    // Minimum chunk size to avoid tiny fragments
-    private const val MIN_WORDS_PER_CHUNK = 3
 
     /**
      * Split text into chunks with offset tracking.
@@ -57,8 +55,7 @@ object TextChunker {
             }
         }
 
-        // Merge tiny chunks with their neighbors (only non-continuation chunks)
-        return mergeSmallChunks(chunks)
+        return chunks
     }
 
     /**
@@ -101,8 +98,6 @@ object TextChunker {
      * Split by word boundaries when a sentence exceeds [MAX_WORDS_PER_CHUNK].
      * The first sub-chunk keeps [isContinuation]=false; subsequent ones are
      * marked true so the audio layer omits the inter-sentence silence gap.
-     * Tiny tails (< [MIN_WORDS_PER_CHUNK] words) are absorbed into the
-     * previous sub-chunk to avoid sentence-final fragments.
      */
     private fun splitByWords(text: String, baseOffset: Int): List<TextChunk> {
         val words = text.split(Regex("(?<=\\s)"))
@@ -116,13 +111,6 @@ object TextChunker {
             pos += word.length
 
             if (currentWords.size >= MAX_WORDS_PER_CHUNK) {
-                // Check if remaining words would form a tiny tail
-                val remaining = words.size - (index + 1)
-                if (remaining in 1 until MIN_WORDS_PER_CHUNK) {
-                    // Don't split yet — absorb the tail into this chunk
-                    continue
-                }
-
                 val chunkText = currentWords.joinToString("")
                 chunks.add(TextChunk(
                     chunkText,
@@ -146,36 +134,5 @@ object TextChunker {
         }
 
         return chunks
-    }
-
-    /**
-     * Merge chunks that are too small with their next neighbor.
-     * Continuation chunks (from word-boundary splits) are left as-is since
-     * [splitByWords] already absorbs tiny tails.
-     */
-    private fun mergeSmallChunks(chunks: List<TextChunk>): List<TextChunk> {
-        if (chunks.size <= 1) return chunks
-
-        val merged = mutableListOf<TextChunk>()
-        var i = 0
-        while (i < chunks.size) {
-            var current = chunks[i]
-            val wordCount = current.text.trim().split(Regex("\\s+")).size
-
-            // If tiny and there's a next chunk, merge with next
-            if (wordCount < MIN_WORDS_PER_CHUNK && i + 1 < chunks.size) {
-                val next = chunks[i + 1]
-                current = TextChunk(
-                    current.text + next.text,
-                    current.startOffset,
-                    next.endOffset
-                )
-                i += 2
-            } else {
-                i++
-            }
-            merged.add(current)
-        }
-        return merged
     }
 }
