@@ -163,99 +163,10 @@ Should show `Verified using v2 scheme (APK Signature Scheme v2): true`.
 
 ---
 
-## Emulator Testing
-
-> **Important**: The Kokoro model runs inference on CPU. On an emulator the inference
-> will be significantly slower than on a real arm64 device. Expect ~10-30 seconds per
-> chunk on emulator vs ~1-2 seconds on a Snapdragon 8 Elite.
-
-### Create an Emulator (if you don't have one)
-
-Option A - **Android Studio**: Tools > Device Manager > Create Virtual Device >
-select a phone (e.g. Pixel 9 Pro), choose API 35 arm64-v8a system image.
-
-Option B - **Command line**:
+## View logs
 
 ```bash
-# List available system images
-$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list | grep "system-images.*arm64"
-
-# Install an image (if needed)
-$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "system-images;android-35;google_apis_playstore;arm64-v8a"
-
-# Create AVD
-$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-  -n MyTTS_Test \
-  -k "system-images;android-35;google_apis_playstore;arm64-v8a" \
-  -d "pixel_6"
-```
-
-### Launch Emulator
-
-```bash
-# List available AVDs
-emulator -list-avds
-
-# Launch (example)
-emulator -avd MyTTS_Test &
-```
-
-Or launch from Android Studio Device Manager.
-
-### Install and Run
-
-```bash
-# Install debug APK
-adb install app/build/outputs/apk/debug/app-debug.apk
-
-# Or install release APK
-adb install app/build/outputs/apk/release/app-release.apk
-
-# Launch the app
-adb shell am start -n com.example.mytts/.MainActivity
-
-# View logs
-adb logcat -s KokoroEngine:* EspeakJNI:* EspeakBridge:* AudioPlayer:* AudioProducer:* PlaybackController:* PhonemeConverter:*
-```
-
-### Uninstall
-
-```bash
-adb uninstall com.example.mytts
-```
-
----
-
-## Install on Physical Device (Redmi K90 Pro Max)
-
-### Enable Developer Options
-
-1. Go to **Settings > About phone**
-2. Tap **MIUI version** 7 times to enable Developer Options
-3. Go to **Settings > Additional settings > Developer options**
-4. Enable **USB debugging**
-5. (Optional) Enable **Install via USB**
-
-### Connect and Install
-
-```bash
-# Verify device is connected
-adb devices
-
-# Install release APK
-adb install app/build/outputs/apk/release/app-release.apk
-
-# Launch
-adb shell am start -n com.example.mytts/.MainActivity
-```
-
-### Wireless debugging (optional)
-
-```bash
-# On the phone: Developer options > Wireless debugging > Pair device
-adb pair <ip>:<port>    # enter pairing code
-adb connect <ip>:<port>
-adb install app/build/outputs/apk/release/app-release.apk
+adb logcat -s KokoroEngine:* EspeakJNI:* EspeakBridge:* AudioPlayer:* AudioProducer:* PlaybackController:* PhonemeConverter:* PlaybackService:* VoiceStyleLoader:*
 ```
 
 ---
@@ -266,7 +177,9 @@ adb install app/build/outputs/apk/release/app-release.apk
 mytts/
 ├── BUILD.md                          # This file
 ├── README.md                         # Project overview
-├── plan.txt                          # Original requirements
+├── AGENTS.md                         # AI agent instructions
+├── LICENSE
+├── opencode-session.md               # OpenCode session logs
 ├── release.keystore                  # Release signing key
 ├── build.gradle.kts                  # Root build config
 ├── settings.gradle.kts               # Project settings
@@ -292,6 +205,7 @@ mytts/
         │   ├── MainActivity.kt       # Activity host, service binding
         │   ├── MyTTSApplication.kt   # App-level init, temp cleanup
         │   ├── audio/
+        │   │   ├── AudioBufferQueue.kt  # Thread-safe PCM buffer queue
         │   │   ├── AudioPlayer.kt    # AudioTrack consumer, crossfade
         │   │   ├── AudioProducer.kt  # Background inference thread
         │   │   ├── PlaybackController.kt  # State machine orchestrator
@@ -313,7 +227,12 @@ mytts/
         │   └── util/
         │       └── PreferencesManager.kt  # SharedPreferences
         └── res/
+            ├── drawable/
+            │   ├── ic_launcher_background.xml
+            │   └── ic_launcher_foreground.xml
             ├── mipmap-hdpi/ic_launcher.xml
+            ├── mipmap-xhdpi/ic_launcher.xml
+            ├── mipmap-xxhdpi/ic_launcher.xml
             └── values/
                 ├── strings.xml
                 └── themes.xml
@@ -349,95 +268,6 @@ functionality is used -- no audio synthesis from eSpeak.
   instructions that crash on the target device.
 - **eSpeak-ng is only for phonemization** -- the ONNX model generates all audio.
 - **English only** -- only `en_dict` and `lang/gmw/en*` data files are bundled.
-
----
-
-## Troubleshooting
-
-### Build fails with CMake errors about eSpeak-ng
-
-The first build downloads eSpeak-ng source (~17 MB) via CMake FetchContent. If your
-network is restricted, pre-download the archive:
-```bash
-curl -L -o /tmp/espeak-ng-f6fed6c58b5e0998b8e68c6610125e2d07d595a7.zip \
-  "https://github.com/csukuangfj/espeak-ng/archive/f6fed6c58b5e0998b8e68c6610125e2d07d595a7.zip"
-```
-CMake checks `/tmp/` for a cached copy before downloading.
-
-### App crashes on launch with "model_quantized.onnx not found"
-You haven't downloaded the model assets. See [Download Model Assets](#download-model-assets).
-
-### eSpeak-ng fails to initialize
-Check that `espeak-ng-data/` is present in assets with the required files (`phondata`,
-`phonindex`, `phontab`, `intonations`, `en_dict`, `lang/gmw/en`, `lang/gmw/en-US`).
-Check logcat for `EspeakJNI` and `EspeakBridge` tags.
-
-### Very slow inference on emulator
-This is expected. Kokoro inference is CPU-intensive and emulators are much slower
-than real hardware. Test on a physical device for realistic performance.
-
-### "FOREGROUND_SERVICE" permission denied on Android 14+
-Grant the notification permission when prompted. The app requests `POST_NOTIFICATIONS`
-at startup on Android 13+.
-
-### "Error: Not a valid .npy file" or voice loading fails
-Kokoro v1.0 voices are `.bin` files (raw float32), not `.npy`. Make sure you
-downloaded from the correct URLs (see [Voice style files](#2-voice-style-files-bin)).
-Each `.bin` file should be exactly 522,240 bytes. If files are only 15 bytes, they
-contain a "Entry not found" error from HuggingFace -- re-download with the correct URL.
-
-### ORT session creation fails with "SME instruction" error
-You're using an ONNX Runtime version newer than 1.20.0. The project pins to 1.20.0
-specifically because newer versions emit ARM SME instructions unsupported on many
-devices. Check `app/build.gradle.kts` has `onnxruntime-android:1.20.0`.
-
----
-
-## Creating a Release
-
-### 1. Update version
-
-Edit `app/build.gradle.kts` and set `versionName` and `versionCode`:
-
-```kotlin
-versionCode = 1
-versionName = "0.1"
-```
-
-### 2. Build the release APK
-
-```bash
-./gradlew assembleRelease
-```
-
-Output: `app/build/outputs/apk/release/app-release.apk`
-
-### 3. Commit, tag, and push
-
-```bash
-git add -A
-git commit -m "Release v0.1"
-git tag v0.1
-git push origin master --tags
-```
-
-### 4. Create GitHub release
-
-Go to <https://github.com/cyb70289/mytts/releases/new>, select the tag `v0.1`,
-write release notes, and attach the APK file:
-
-```
-app/build/outputs/apk/release/app-release.apk
-```
-
-Or use the `gh` CLI if available:
-
-```bash
-gh release create v0.1 \
-  app/build/outputs/apk/release/app-release.apk \
-  --title "v0.1" \
-  --notes "Initial release of MyTTS - offline text-to-speech powered by Kokoro-82M."
-```
 
 ---
 
