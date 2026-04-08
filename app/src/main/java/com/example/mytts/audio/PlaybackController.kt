@@ -90,7 +90,7 @@ class PlaybackController(
         if (_state.value == State.PLAYING || _state.value == State.LOADING || _state.value == State.STOPPING) return
 
         _state.value = State.LOADING
-        _statusMessage.value = "Preparing..."
+        _statusMessage.value = null
         _currentChunkIndex.value = -1
 
         val modelSpeed = if (slowMode) 0.75f else 1.0f
