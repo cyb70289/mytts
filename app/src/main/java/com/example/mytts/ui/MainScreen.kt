@@ -43,6 +43,8 @@ fun MainScreen(
     val statusMessage by controller.statusMessage.collectAsState()
     val stoppedAtOffset by controller.stoppedAtOffset.collectAsState()
     val isProcessing by controller.isProcessing.collectAsState()
+    val estimatedTotalDurationMs by controller.estimatedTotalDurationMs.collectAsState()
+    val estimatedCurrentPositionMs by controller.estimatedCurrentPositionMs.collectAsState()
 
     val savedText by prefs.text.collectAsState()
     val savedCursor by prefs.cursorPosition.collectAsState()
@@ -62,6 +64,14 @@ fun MainScreen(
     val isLoading = playbackState == PlaybackController.State.LOADING
     val isStopped = playbackState == PlaybackController.State.STOPPED
     val isStopping = playbackState == PlaybackController.State.STOPPING
+    val safeTotalDurationMs = estimatedTotalDurationMs.coerceAtLeast(0L)
+    val safeCurrentPositionMs = estimatedCurrentPositionMs.coerceIn(0L, safeTotalDurationMs)
+    val remainingDurationMs = (safeTotalDurationMs - safeCurrentPositionMs).coerceAtLeast(0L)
+    val progress = if (safeTotalDurationMs > 0L) {
+        (safeCurrentPositionMs.toFloat() / safeTotalDurationMs).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
 
     val scrollState = rememberScrollState()
     val clipboardManager = LocalClipboardManager.current
@@ -82,6 +92,9 @@ fun MainScreen(
             stoppedHighlightRange = controller.getChunkRangeAtOffset(
                 cursorPosition.coerceIn(0, currentText.length)
             )
+        }
+        if (isStopped) {
+            controller.previewEstimatedPosition(cursorPosition.coerceIn(0, currentText.length))
         }
     }
 
@@ -162,6 +175,19 @@ fun MainScreen(
     LaunchedEffect(currentText) {
         delay(500) // debounce
         prefs.saveText(currentText)
+    }
+
+    LaunchedEffect(slowMode) {
+        controller.refreshTimelineEstimate(slowMode)
+        if (isStopped && !isProcessing) {
+            controller.previewEstimatedPosition(cursorPosition.coerceIn(0, currentText.length))
+        }
+    }
+
+    LaunchedEffect(isProcessing, isStopped) {
+        if (!isProcessing && isStopped) {
+            controller.previewEstimatedPosition(cursorPosition.coerceIn(0, currentText.length))
+        }
     }
 
     Column(
@@ -270,6 +296,33 @@ fun MainScreen(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = formatDurationHhMmSs(safeCurrentPositionMs),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(4.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+            Text(
+                text = formatDurationHhMmSs(remainingDurationMs),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -436,4 +489,12 @@ fun MainScreen(
             }
         }
     }
+}
+
+private fun formatDurationHhMmSs(durationMs: Long): String {
+    val totalSeconds = (durationMs.coerceAtLeast(0L) / 1000L).toInt()
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return "%02d:%02d:%02d".format(hours, minutes, seconds)
 }

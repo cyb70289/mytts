@@ -1,6 +1,7 @@
 package com.example.mytts.audio
 
 import android.content.Context
+import android.os.SystemClock
 import android.util.Log
 import com.example.mytts.BuildConfig
 import com.example.mytts.engine.KokoroEngine
@@ -50,13 +51,29 @@ class PlaybackController(
     private val _stoppedAtOffset = MutableStateFlow(-1)
     val stoppedAtOffset: StateFlow<Int> = _stoppedAtOffset.asStateFlow()
 
+    /** Estimated full playback duration for the currently prepared text. */
+    private val _estimatedTotalDurationMs = MutableStateFlow(0L)
+    val estimatedTotalDurationMs: StateFlow<Long> = _estimatedTotalDurationMs.asStateFlow()
+
+    /** Estimated current playback position within the full text timeline. */
+    private val _estimatedCurrentPositionMs = MutableStateFlow(0L)
+    val estimatedCurrentPositionMs: StateFlow<Long> = _estimatedCurrentPositionMs.asStateFlow()
+
     private var engine: KokoroEngine? = null
     private var player: AudioPlayer? = null
     private var producer: AudioProducer? = null
     private var audioQueue: AudioBufferQueue? = null
     private var textProcessor: TextProcessor? = null
     private var preparedChunks: List<PreparedChunk> = emptyList()
+    private var estimatedChunkDurationsMs: LongArray = longArrayOf()
     private var processJob: Job? = null
+    private var progressJob: Job? = null
+    private var estimateSpeed = 1.0f
+    private var progressAnchorMs = 0L
+    private var progressAnchorRealtimeMs = 0L
+    private var sessionStartIndex = -1
+    private var sessionStartProgressMs = 0L
+    private var sessionChunkStarted = false
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var initJob: Job? = null
@@ -75,6 +92,9 @@ class PlaybackController(
         _state.value = State.LOADING
         _statusMessage.value = "Preparing..."
         _currentChunkIndex.value = -1
+
+        val modelSpeed = if (slowMode) 0.75f else 1.0f
+        estimateSpeed = modelSpeed
 
         scope.launch(Dispatchers.Default) {
             try {
@@ -99,6 +119,7 @@ class PlaybackController(
                 if (preparedChunks.isEmpty() && text.isNotBlank()) {
                     textProcessor?.let { tp ->
                         preparedChunks = tp.processText(text)
+                        recomputeEstimatedTimeline()
                     }
                 }
 
@@ -113,6 +134,12 @@ class PlaybackController(
 
                 // Find the starting chunk based on cursor position
                 val startIndex = findChunkAtOffset(cursorPosition)
+                val startProgressMs = estimateProgressAtOffset(cursorPosition)
+                sessionStartIndex = startIndex
+                sessionStartProgressMs = startProgressMs
+                sessionChunkStarted = false
+                progressAnchorMs = startProgressMs
+                _estimatedCurrentPositionMs.value = startProgressMs
 
                 // Create shared audio buffer queue (duration-based capacity)
                 val bufferQueue = AudioBufferQueue(KokoroEngine.SAMPLE_RATE)
@@ -124,9 +151,27 @@ class PlaybackController(
                     queue = bufferQueue,
                     onChunkStarted = { index ->
                         _currentChunkIndex.value = index
+                        val anchorMs = if (!sessionChunkStarted && index == sessionStartIndex) {
+                            sessionChunkStarted = true
+                            sessionStartProgressMs
+                        } else {
+                            cumulativeDurationBefore(index)
+                        }
+                        progressAnchorMs = anchorMs
+                        progressAnchorRealtimeMs = SystemClock.elapsedRealtime()
+                        _estimatedCurrentPositionMs.value = anchorMs.coerceAtMost(_estimatedTotalDurationMs.value)
+                        if (_state.value == State.LOADING) {
+                            _state.value = State.PLAYING
+                            _statusMessage.value = null
+                        }
+                        if (_state.value == State.PLAYING) {
+                            startProgressTicker()
+                        }
                     },
                     onPlaybackFinished = {
                         scope.launch(Dispatchers.Main) {
+                            stopProgressTicker()
+                            _estimatedCurrentPositionMs.value = _estimatedTotalDurationMs.value
                             if (_state.value != State.STOPPED) {
                                 stop()
                             }
@@ -144,7 +189,6 @@ class PlaybackController(
                         // First chunk ready - start playback
                         if (index == startIndex && _state.value == State.LOADING) {
                             scope.launch(Dispatchers.Main) {
-                                _state.value = State.PLAYING
                                 _statusMessage.value = null
                             }
                         }
@@ -162,7 +206,6 @@ class PlaybackController(
                 // Slow mode uses the model's speed parameter (0.75) to generate
                 // naturally slower speech with correct pitch, instead of reducing
                 // the AudioTrack sample rate which would lower the pitch.
-                val modelSpeed = if (slowMode) 0.75f else 1.0f
                 audioPlayer.start()
                 audioProducer.start(preparedChunks, voiceName, speed = modelSpeed, fromIndex = startIndex)
 
@@ -178,14 +221,19 @@ class PlaybackController(
 
     fun pause() {
         if (_state.value != State.PLAYING) return
+        stopProgressTicker()
+        _estimatedCurrentPositionMs.value = currentEstimatedPosition()
         player?.pause()
         _state.value = State.PAUSED
     }
 
     fun resume() {
         if (_state.value != State.PAUSED) return
+        progressAnchorMs = _estimatedCurrentPositionMs.value
+        progressAnchorRealtimeMs = SystemClock.elapsedRealtime()
         player?.resume()
         _state.value = State.PLAYING
+        startProgressTicker()
     }
 
     fun togglePlayPause(text: String, cursorPosition: Int, voiceName: String, slowMode: Boolean) {
@@ -203,9 +251,12 @@ class PlaybackController(
 
         // Capture the current playback offset before clearing anything
         val offset = getCurrentPlaybackOffset()
+        val estimatedPosition = maxOf(_estimatedCurrentPositionMs.value, currentEstimatedPosition())
 
         _state.value = State.STOPPING
         _statusMessage.value = null
+        stopProgressTicker()
+        _estimatedCurrentPositionMs.value = estimatedPosition
 
         scope.launch(Dispatchers.Default) {
             try {
@@ -301,9 +352,34 @@ class PlaybackController(
      * (e.g. paste) so stale offsets don't cause incorrect cursor placement.
      */
     fun resetPlaybackPosition() {
+        stopProgressTicker()
         _stoppedAtOffset.value = -1
         _currentChunkIndex.value = -1
         preparedChunks = emptyList()
+        estimatedChunkDurationsMs = longArrayOf()
+        _estimatedTotalDurationMs.value = 0L
+        _estimatedCurrentPositionMs.value = 0L
+        sessionStartIndex = -1
+        sessionStartProgressMs = 0L
+        sessionChunkStarted = false
+    }
+
+    /**
+     * Recompute timeline estimates using the current prepared chunks and speed.
+     * Call when slow mode changes or when new chunks are processed.
+     */
+    fun refreshTimelineEstimate(slowMode: Boolean) {
+        estimateSpeed = if (slowMode) 0.75f else 1.0f
+        recomputeEstimatedTimeline()
+    }
+
+    /**
+     * Update the estimated position preview while stopped, based on the selected
+     * cursor position. This keeps the time bar aligned with the next play start.
+     */
+    fun previewEstimatedPosition(offset: Int) {
+        if (_state.value != State.STOPPED) return
+        _estimatedCurrentPositionMs.value = estimateProgressAtOffset(offset)
     }
 
     /**
@@ -325,12 +401,16 @@ class PlaybackController(
             try {
                 val chunks = tp.processText(text)
                 preparedChunks = chunks
+                recomputeEstimatedTimeline()
                 if (BuildConfig.DEBUG) Log.d(TAG, "Text processed: ${chunks.size} chunks")
             } catch (e: CancellationException) {
                 throw e // Don't swallow cancellation
             } catch (e: Exception) {
                 Log.e(TAG, "Text processing failed", e)
                 preparedChunks = emptyList()
+                estimatedChunkDurationsMs = longArrayOf()
+                _estimatedTotalDurationMs.value = 0L
+                _estimatedCurrentPositionMs.value = 0L
             } finally {
                 withContext(Dispatchers.Main) {
                     _isProcessing.value = false
@@ -389,6 +469,7 @@ class PlaybackController(
      * Release all resources. Call when the app is being destroyed.
      */
     fun release() {
+        stopProgressTicker()
         // Synchronous cleanup for release — bypass the async stop
         audioQueue?.clear()
         producer?.stop()
@@ -404,5 +485,73 @@ class PlaybackController(
         engine?.release()
         engine = null
         scope.cancel()
+    }
+
+    private fun recomputeEstimatedTimeline() {
+        val chunks = preparedChunks
+        if (chunks.isEmpty()) {
+            estimatedChunkDurationsMs = longArrayOf()
+            _estimatedTotalDurationMs.value = 0L
+            _estimatedCurrentPositionMs.value = 0L
+            return
+        }
+
+        estimatedChunkDurationsMs = LongArray(chunks.size) { index ->
+            estimateChunkDurationMs(chunks[index], index)
+        }
+        _estimatedTotalDurationMs.value = estimatedChunkDurationsMs.sum()
+        _estimatedCurrentPositionMs.value = _estimatedCurrentPositionMs.value
+            .coerceIn(0L, _estimatedTotalDurationMs.value)
+    }
+
+    private fun estimateChunkDurationMs(chunk: PreparedChunk, index: Int): Long {
+        val wordCount = chunk.originalText.trim().split(Regex("\\s+")).count { it.isNotBlank() }
+        val spokenMs = kotlin.math.ceil(wordCount * 60000.0 / (180.0 * estimateSpeed)).toLong()
+        val clausePauseMs = chunk.originalText.count { it == ',' || it == ';' || it == ':' } * 150L
+        val sentencePauseMs = chunk.originalText.count { it == '.' || it == '!' || it == '?' } * 200L
+        val addGapMs = if (index + 1 >= preparedChunks.size || !preparedChunks[index + 1].isContinuation) 300L else 0L
+        return maxOf(500L, spokenMs + clausePauseMs + sentencePauseMs + addGapMs)
+    }
+
+    private fun cumulativeDurationBefore(index: Int): Long {
+        if (index <= 0 || estimatedChunkDurationsMs.isEmpty()) return 0L
+        return estimatedChunkDurationsMs.take(index.coerceAtMost(estimatedChunkDurationsMs.size)).sum()
+    }
+
+    private fun estimateProgressAtOffset(offset: Int): Long {
+        val chunks = preparedChunks
+        if (chunks.isEmpty() || estimatedChunkDurationsMs.isEmpty()) return 0L
+
+        val index = findChunkAtOffset(offset)
+        val chunk = chunks[index]
+        val chunkDuration = estimatedChunkDurationsMs.getOrElse(index) { 0L }
+        val clampedOffset = offset.coerceIn(chunk.startOffset, chunk.endOffset)
+        val chunkLength = (chunk.endOffset - chunk.startOffset).coerceAtLeast(1)
+        val chunkOffset = clampedOffset - chunk.startOffset
+        val withinChunkMs = chunkDuration * chunkOffset / chunkLength
+        return (cumulativeDurationBefore(index) + withinChunkMs)
+            .coerceIn(0L, _estimatedTotalDurationMs.value)
+    }
+
+    private fun startProgressTicker() {
+        stopProgressTicker()
+        progressAnchorRealtimeMs = SystemClock.elapsedRealtime()
+        progressJob = scope.launch(Dispatchers.Main) {
+            while (isActive && _state.value == State.PLAYING) {
+                _estimatedCurrentPositionMs.value = currentEstimatedPosition()
+                delay(250)
+            }
+        }
+    }
+
+    private fun stopProgressTicker() {
+        progressJob?.cancel()
+        progressJob = null
+    }
+
+    private fun currentEstimatedPosition(): Long {
+        if (_state.value != State.PLAYING) return _estimatedCurrentPositionMs.value
+        val elapsed = (SystemClock.elapsedRealtime() - progressAnchorRealtimeMs).coerceAtLeast(0L)
+        return (progressAnchorMs + elapsed).coerceIn(0L, _estimatedTotalDurationMs.value)
     }
 }
