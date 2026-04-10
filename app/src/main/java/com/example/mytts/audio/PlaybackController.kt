@@ -66,6 +66,7 @@ class PlaybackController(
     private var textProcessor: TextProcessor? = null
     private var preparedChunks: List<PreparedChunk> = emptyList()
     private var estimatedChunkDurationsMs: LongArray = longArrayOf()
+    private var baselineTotalDurationMs = 0L
     private var processJob: Job? = null
     private var progressJob: Job? = null
     private var estimateSpeed = 1.0f
@@ -139,6 +140,8 @@ class PlaybackController(
                 sessionStartProgressMs = startProgressMs
                 sessionChunkStarted = false
                 progressAnchorMs = startProgressMs
+                progressAnchorRealtimeMs = 0L
+                _estimatedTotalDurationMs.value = baselineTotalDurationMs
                 _estimatedCurrentPositionMs.value = startProgressMs
 
                 // Create shared audio buffer queue (duration-based capacity)
@@ -151,27 +154,29 @@ class PlaybackController(
                     queue = bufferQueue,
                     onChunkStarted = { index ->
                         _currentChunkIndex.value = index
-                        val anchorMs = if (!sessionChunkStarted && index == sessionStartIndex) {
+                        val isSessionStartChunk = if (!sessionChunkStarted && index == sessionStartIndex) {
                             sessionChunkStarted = true
-                            sessionStartProgressMs
+                            true
                         } else {
-                            cumulativeDurationBefore(index)
+                            false
                         }
-                        progressAnchorMs = anchorMs
-                        progressAnchorRealtimeMs = SystemClock.elapsedRealtime()
-                        _estimatedCurrentPositionMs.value = anchorMs.coerceAtMost(_estimatedTotalDurationMs.value)
+                        if (!isSessionStartChunk) {
+                            adjustRemainingEstimateForChunk(index)
+                        }
                         if (_state.value == State.LOADING) {
+                            progressAnchorRealtimeMs = SystemClock.elapsedRealtime()
+                            _estimatedCurrentPositionMs.value = progressAnchorMs
                             _state.value = State.PLAYING
                             _statusMessage.value = null
-                        }
-                        if (_state.value == State.PLAYING) {
                             startProgressTicker()
                         }
                     },
                     onPlaybackFinished = {
                         scope.launch(Dispatchers.Main) {
                             stopProgressTicker()
-                            _estimatedCurrentPositionMs.value = _estimatedTotalDurationMs.value
+                            val finalPositionMs = currentEstimatedPosition()
+                            _estimatedCurrentPositionMs.value = finalPositionMs
+                            _estimatedTotalDurationMs.value = finalPositionMs
                             if (_state.value != State.STOPPED) {
                                 stop()
                             }
@@ -357,6 +362,7 @@ class PlaybackController(
         _currentChunkIndex.value = -1
         preparedChunks = emptyList()
         estimatedChunkDurationsMs = longArrayOf()
+        baselineTotalDurationMs = 0L
         _estimatedTotalDurationMs.value = 0L
         _estimatedCurrentPositionMs.value = 0L
         sessionStartIndex = -1
@@ -379,6 +385,7 @@ class PlaybackController(
      */
     fun previewEstimatedPosition(offset: Int) {
         if (_state.value != State.STOPPED) return
+        _estimatedTotalDurationMs.value = baselineTotalDurationMs
         _estimatedCurrentPositionMs.value = estimateProgressAtOffset(offset)
     }
 
@@ -409,6 +416,7 @@ class PlaybackController(
                 Log.e(TAG, "Text processing failed", e)
                 preparedChunks = emptyList()
                 estimatedChunkDurationsMs = longArrayOf()
+                baselineTotalDurationMs = 0L
                 _estimatedTotalDurationMs.value = 0L
                 _estimatedCurrentPositionMs.value = 0L
             } finally {
@@ -491,6 +499,7 @@ class PlaybackController(
         val chunks = preparedChunks
         if (chunks.isEmpty()) {
             estimatedChunkDurationsMs = longArrayOf()
+            baselineTotalDurationMs = 0L
             _estimatedTotalDurationMs.value = 0L
             _estimatedCurrentPositionMs.value = 0L
             return
@@ -499,9 +508,10 @@ class PlaybackController(
         estimatedChunkDurationsMs = LongArray(chunks.size) { index ->
             estimateChunkDurationMs(chunks[index], index)
         }
-        _estimatedTotalDurationMs.value = estimatedChunkDurationsMs.sum()
+        baselineTotalDurationMs = estimatedChunkDurationsMs.sum()
+        _estimatedTotalDurationMs.value = baselineTotalDurationMs
         _estimatedCurrentPositionMs.value = _estimatedCurrentPositionMs.value
-            .coerceIn(0L, _estimatedTotalDurationMs.value)
+            .coerceIn(0L, baselineTotalDurationMs)
     }
 
     private fun estimateChunkDurationMs(chunk: PreparedChunk, index: Int): Long {
@@ -530,12 +540,11 @@ class PlaybackController(
         val chunkOffset = clampedOffset - chunk.startOffset
         val withinChunkMs = chunkDuration * chunkOffset / chunkLength
         return (cumulativeDurationBefore(index) + withinChunkMs)
-            .coerceIn(0L, _estimatedTotalDurationMs.value)
+            .coerceIn(0L, baselineTotalDurationMs)
     }
 
     private fun startProgressTicker() {
         stopProgressTicker()
-        progressAnchorRealtimeMs = SystemClock.elapsedRealtime()
         progressJob = scope.launch(Dispatchers.Main) {
             while (isActive && _state.value == State.PLAYING) {
                 _estimatedCurrentPositionMs.value = currentEstimatedPosition()
@@ -552,6 +561,14 @@ class PlaybackController(
     private fun currentEstimatedPosition(): Long {
         if (_state.value != State.PLAYING) return _estimatedCurrentPositionMs.value
         val elapsed = (SystemClock.elapsedRealtime() - progressAnchorRealtimeMs).coerceAtLeast(0L)
-        return (progressAnchorMs + elapsed).coerceIn(0L, _estimatedTotalDurationMs.value)
+        return (progressAnchorMs + elapsed).coerceAtLeast(0L)
+    }
+
+    private fun adjustRemainingEstimateForChunk(index: Int) {
+        if (estimatedChunkDurationsMs.isEmpty()) return
+        val currentPositionMs = currentEstimatedPosition()
+        val chunkStartMs = cumulativeDurationBefore(index)
+        val remainingFromChunkMs = (baselineTotalDurationMs - chunkStartMs).coerceAtLeast(0L)
+        _estimatedTotalDurationMs.value = maxOf(currentPositionMs, currentPositionMs + remainingFromChunkMs)
     }
 }

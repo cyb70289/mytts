@@ -65,10 +65,11 @@ fun MainScreen(
     val isStopped = playbackState == PlaybackController.State.STOPPED
     val isStopping = playbackState == PlaybackController.State.STOPPING
     val safeTotalDurationMs = estimatedTotalDurationMs.coerceAtLeast(0L)
-    val safeCurrentPositionMs = estimatedCurrentPositionMs.coerceIn(0L, safeTotalDurationMs)
-    val remainingDurationMs = (safeTotalDurationMs - safeCurrentPositionMs).coerceAtLeast(0L)
+    val displayCurrentPositionMs = estimatedCurrentPositionMs.coerceAtLeast(0L)
+    val progressCurrentPositionMs = displayCurrentPositionMs.coerceIn(0L, safeTotalDurationMs)
+    val remainingDurationMs = (safeTotalDurationMs - displayCurrentPositionMs).coerceAtLeast(0L)
     val progress = if (safeTotalDurationMs > 0L) {
-        (safeCurrentPositionMs.toFloat() / safeTotalDurationMs).coerceIn(0f, 1f)
+        (progressCurrentPositionMs.toFloat() / safeTotalDurationMs).coerceIn(0f, 1f)
     } else {
         0f
     }
@@ -306,7 +307,7 @@ fun MainScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = formatDurationHhMmSs(safeCurrentPositionMs),
+                text = formatDurationHhMmSs(displayCurrentPositionMs),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
